@@ -1,8 +1,6 @@
 package config
 
 import (
-	"fmt"
-
 	"github.com/layer5io/meshkit/errors"
 )
 
@@ -11,5 +9,5 @@ const (
 )
 
 func ErrInitConfig(err error) error {
-	return errors.NewDefault(ErrInitConfigCode, fmt.Sprintf("Error while config init", err.Error()))
+	return errors.NewDefault(ErrInitConfigCode, "Error while config init", err.Error())
 }
