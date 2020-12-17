@@ -3,8 +3,8 @@ package informers
 import (
 	"log"
 
-	broker "github.com/layer5io/meshery-operator/pkg/broker"
-	informers "github.com/layer5io/meshery-operator/pkg/informers"
+	broker "github.com/layer5io/meshsync/pkg/broker"
+	informers "github.com/layer5io/meshsync/pkg/informers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -101,6 +101,19 @@ func (c *Cluster) DeploymentInformer() cache.SharedIndexInformer {
 	)
 
 	return DeploymentInformer
+}
+
+// ServiceInformer - for Services
+func (c *Cluster) ServiceInformer() cache.SharedIndexInformer {
+	// get informer
+	ServiceInformer := c.client.GetServiceInformer().Informer()
+
+	// register event handlers
+	ServiceInformer.AddEventHandler(
+		c.resourceEventHandlerFuncs("Service"),
+	)
+
+	return ServiceInformer
 }
 
 // PodInformer - for Pods
