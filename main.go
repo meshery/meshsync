@@ -6,11 +6,11 @@ import (
 	"time"
 
 	configprovider "github.com/layer5io/meshery-adapter-library/config/provider"
-	"github.com/layer5io/meshery-operator/pkg/broker"
 	"github.com/layer5io/meshkit/logger"
 	service "github.com/layer5io/meshsync/api/grpc"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/meshsync"
+	"github.com/layer5io/meshsync/pkg/broker"
 )
 
 var (
