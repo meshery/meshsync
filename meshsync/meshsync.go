@@ -2,11 +2,11 @@ package meshsync
 
 import (
 	"github.com/layer5io/meshery-adapter-library/config"
-	"github.com/layer5io/meshery-operator/pkg/broker"
-	"github.com/layer5io/meshery-operator/pkg/discovery"
-	"github.com/layer5io/meshery-operator/pkg/informers"
 	"github.com/layer5io/meshkit/logger"
 	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
+	"github.com/layer5io/meshsync/pkg/broker"
+	"github.com/layer5io/meshsync/pkg/discovery"
+	"github.com/layer5io/meshsync/pkg/informers"
 
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"

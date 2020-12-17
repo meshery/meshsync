@@ -3,8 +3,8 @@ package pipeline
 import (
 	"log"
 
-	broker "github.com/layer5io/meshery-operator/pkg/broker"
-	discovery "github.com/layer5io/meshery-operator/pkg/discovery"
+	broker "github.com/layer5io/meshsync/pkg/broker"
+	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
 )
 

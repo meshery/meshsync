@@ -1,8 +1,8 @@
 package informers
 
 import (
-	broker "github.com/layer5io/meshery-operator/pkg/broker"
-	inf "github.com/layer5io/meshery-operator/pkg/informers"
+	broker "github.com/layer5io/meshsync/pkg/broker"
+	inf "github.com/layer5io/meshsync/pkg/informers"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 

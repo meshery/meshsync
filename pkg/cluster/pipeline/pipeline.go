@@ -1,8 +1,8 @@
 package pipeline
 
 import (
-	broker "github.com/layer5io/meshery-operator/pkg/broker"
-	discovery "github.com/layer5io/meshery-operator/pkg/discovery"
+	broker "github.com/layer5io/meshsync/pkg/broker"
+	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
 )
 
@@ -32,6 +32,7 @@ func Initialize(client *discovery.Client, broker broker.Handler) *pipeline.Pipel
 	// Local discovery
 	ldstage := LocalDiscoveryStage
 	ldstage.AddStep(NewDeployment(client, broker))
+	ldstage.AddStep(NewService(client, broker))
 	ldstage.AddStep(NewPod(client, broker))
 
 	// Create Pipeline

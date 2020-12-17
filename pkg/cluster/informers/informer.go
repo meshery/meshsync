@@ -1,8 +1,8 @@
 package informers
 
 import (
-	broker "github.com/layer5io/meshery-operator/pkg/broker"
-	inf "github.com/layer5io/meshery-operator/pkg/informers"
+	broker "github.com/layer5io/meshsync/pkg/broker"
+	inf "github.com/layer5io/meshsync/pkg/informers"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -14,6 +14,7 @@ func Initialize(client *inf.Client, broker broker.Handler) error {
 	go c.NodeInformer().Run(wait.NeverStop)
 	go c.NamespaceInformer().Run(wait.NeverStop)
 	go c.DeploymentInformer().Run(wait.NeverStop)
+	go c.ServiceInformer().Run(wait.NeverStop)
 	go c.PodInformer().Run(wait.NeverStop)
 
 	return nil
