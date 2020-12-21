@@ -8,26 +8,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type generalKubernetesResource struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-	Spec              interface{} `json:"spec,omitempty"`
-	Status            interface{} `json:"status,omitempty"`
-}
-
-func ConvInterface(obj interface{}) Object {
-	jsonObj, _ := json.Marshal(obj)
-	tempObject := generalKubernetesResource{}
-	json.Unmarshal(jsonObj, &tempObject)
-
-	return ConvModelObject(
-		tempObject.TypeMeta,
-		tempObject.ObjectMeta,
-		tempObject.Spec,
-		tempObject.Status,
-	)
-}
-
 func ConvModelObject(typeMeta metav1.TypeMeta, objectMeta metav1.ObjectMeta, spec interface{}, status interface{}) Object {
 	kubernetesResource := getKubernetesResource()
 	kubernetesResourceTypeMeta := getKubernetesResourceTypeMeta(typeMeta, kubernetesResource.ResourceTypeMetaID)
