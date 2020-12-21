@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/layer5io/meshsync/internal/cache"
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -44,9 +45,12 @@ func (d *Service) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, service := range services {
 			// publishing discovered Service
-			err := d.broker.Publish(Subject, broker.Message{
-				Object: service,
-			})
+			err := d.broker.Publish(Subject, model.ConvModelObject(
+				service.TypeMeta,
+				service.ObjectMeta,
+				service.Spec,
+				service.Status,
+			))
 			if err != nil {
 				log.Printf("Error publishing service named %s", service.Name)
 			} else {

@@ -10,6 +10,7 @@ go 1.13
 
 require (
 	github.com/golang/protobuf v1.4.3
+	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/layer5io/meshery-adapter-library v0.1.9
 	github.com/layer5io/meshery-operator v0.2.0

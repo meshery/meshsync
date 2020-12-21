@@ -3,6 +3,7 @@ package informers
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	informers "github.com/layer5io/meshsync/pkg/informers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,9 +30,7 @@ func New(client *informers.Client, broker broker.Handler) *Cluster {
 func (c *Cluster) resourceEventHandlerFuncs(resourceType string) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			err := c.broker.Publish(Subject, broker.Message{
-				Object: obj,
-			})
+			err := c.broker.Publish(Subject, model.ConvInterface(obj))
 			if err != nil {
 				log.Println("Error publishing resource")
 			}
@@ -39,9 +38,7 @@ func (c *Cluster) resourceEventHandlerFuncs(resourceType string) cache.ResourceE
 			log.Printf("%s Named: %s - added", resourceType, object.GetName())
 		},
 		UpdateFunc: func(new interface{}, old interface{}) {
-			err := c.broker.Publish(Subject, broker.Message{
-				Object: new,
-			})
+			err := c.broker.Publish(Subject, model.ConvInterface(new))
 			if err != nil {
 				log.Println("Error publishing resource")
 			}
@@ -49,9 +46,7 @@ func (c *Cluster) resourceEventHandlerFuncs(resourceType string) cache.ResourceE
 			log.Printf("%s Named: %s - updated", resourceType, object.GetName())
 		},
 		DeleteFunc: func(obj interface{}) {
-			err := c.broker.Publish(Subject, broker.Message{
-				Object: obj,
-			})
+			err := c.broker.Publish(Subject, model.ConvInterface(obj))
 			if err != nil {
 				log.Println("Error publishing resource")
 			}
