@@ -3,6 +3,7 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -44,9 +45,12 @@ func (vs *VirtualService) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, virtualService := range virtualServices {
 			// publishing discovered virtualService
-			err := vs.broker.Publish(Subject, broker.Message{
-				Object: virtualService,
-			})
+			err := vs.broker.Publish(Subject, model.ConvModelObject(
+				virtualService.TypeMeta,
+				virtualService.ObjectMeta,
+				virtualService.Spec,
+				virtualService.Status,
+			))
 			if err != nil {
 				log.Printf("Error publishing virtual service named %s", virtualService.Name)
 			} else {

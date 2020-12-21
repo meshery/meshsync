@@ -3,6 +3,7 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -40,9 +41,12 @@ func (pa *PeerAuthentication) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, peerAuthentication := range peerAuthentications {
 			// publishing discovered peerAuthentication
-			err := pa.broker.Publish(Subject, broker.Message{
-				Object: peerAuthentication,
-			})
+			err := pa.broker.Publish(Subject, model.ConvModelObject(
+				peerAuthentication.TypeMeta,
+				peerAuthentication.ObjectMeta,
+				peerAuthentication.Spec,
+				peerAuthentication.Status,
+			))
 			if err != nil {
 				log.Printf("Error publishing peer authentication named %s", peerAuthentication.Name)
 			} else {
