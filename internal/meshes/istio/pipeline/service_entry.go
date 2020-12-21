@@ -41,7 +41,6 @@ func (se *ServiceEntry) Exec(request *pipeline.Request) *pipeline.Result {
 		for _, serviceEntry := range serviceEntries {
 			// publishing discovered serviceEntry
 			err := se.broker.Publish(Subject, broker.Message{
-				Type:   "ServiceEntry",
 				Object: serviceEntry,
 			})
 			if err != nil {

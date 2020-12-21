@@ -41,7 +41,6 @@ func (pa *PeerAuthentication) Exec(request *pipeline.Request) *pipeline.Result {
 		for _, peerAuthentication := range peerAuthentications {
 			// publishing discovered peerAuthentication
 			err := pa.broker.Publish(Subject, broker.Message{
-				Type:   "PeerAuthentication",
 				Object: peerAuthentication,
 			})
 			if err != nil {

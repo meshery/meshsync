@@ -5,11 +5,11 @@ import (
 	networkingV1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	securityV1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 
+	informers "github.com/layer5io/meshsync/internal/meshes/istio/informers"
+	pipeline "github.com/layer5io/meshsync/internal/meshes/istio/pipeline"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	inf "github.com/layer5io/meshsync/pkg/informers"
-	informers "github.com/layer5io/meshsync/pkg/meshes/istio/informers"
-	pipeline "github.com/layer5io/meshsync/pkg/meshes/istio/pipeline"
 )
 
 type Resources struct {

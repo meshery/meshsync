@@ -8,32 +8,32 @@ import (
 	"github.com/myntra/pipeline"
 )
 
-// Service will implement step interface for Services
-type Service struct {
+// Deployment will implement step interface for Deployments
+type Deployment struct {
 	pipeline.StepContext
 	client *discovery.Client
 	broker broker.Handler
 }
 
-// NewService - constructor
-func NewService(client *discovery.Client, broker broker.Handler) *Service {
-	return &Service{
+// NewDeployment - constructor
+func NewDeployment(client *discovery.Client, broker broker.Handler) *Deployment {
+	return &Deployment{
 		client: client,
 		broker: broker,
 	}
 }
 
 // Exec - step interface
-func (d *Service) Exec(request *pipeline.Request) *pipeline.Result {
+func (d *Deployment) Exec(request *pipeline.Request) *pipeline.Result {
 	// it will contain a pipeline to run
-	log.Println("Service Discovery Started")
+	log.Println("Deployment Discovery Started")
 
 	// get all namespaces
 	namespaces := NamespaceName
 
 	for _, namespace := range namespaces {
-		// get Services
-		services, err := d.client.ListServices(namespace)
+		// get Deployments
+		deployments, err := d.client.ListDeployments(namespace)
 		if err != nil {
 			return &pipeline.Result{
 				Error: err,
@@ -41,16 +41,15 @@ func (d *Service) Exec(request *pipeline.Request) *pipeline.Result {
 		}
 
 		// processing
-		for _, service := range services {
-			// publishing discovered Service
+		for _, deployment := range deployments {
+			// publishing discovered deployment
 			err := d.broker.Publish(Subject, broker.Message{
-				Type:   "Service",
-				Object: service,
+				Object: deployment,
 			})
 			if err != nil {
-				log.Printf("Error publishing service named %s", service.Name)
+				log.Printf("Error publishing deployment named %s", deployment.Name)
 			} else {
-				log.Printf("Published service named %s", service.Name)
+				log.Printf("Published deployment named %s", deployment.Name)
 			}
 		}
 	}
@@ -62,7 +61,7 @@ func (d *Service) Exec(request *pipeline.Request) *pipeline.Result {
 }
 
 // Cancel - step interface
-func (d *Service) Cancel() error {
+func (d *Deployment) Cancel() error {
 	d.Status("cancel step")
 	return nil
 }

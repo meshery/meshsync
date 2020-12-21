@@ -40,7 +40,6 @@ func (n *Node) Exec(request *pipeline.Request) *pipeline.Result {
 	for _, node := range nodes {
 		// publishing discovered node
 		err := n.broker.Publish(Subject, broker.Message{
-			Type:   "Node",
 			Object: node,
 		})
 		if err != nil {

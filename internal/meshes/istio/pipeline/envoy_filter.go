@@ -41,7 +41,6 @@ func (ef *EnvoyFilter) Exec(request *pipeline.Request) *pipeline.Result {
 		for _, envoyFilter := range envoyFilters {
 			// publishing discovered envoyFilter
 			err := ef.broker.Publish(Subject, broker.Message{
-				Type:   "EnvoyFilter",
 				Object: envoyFilter,
 			})
 			if err != nil {

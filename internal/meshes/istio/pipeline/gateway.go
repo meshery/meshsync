@@ -41,7 +41,6 @@ func (g *Gateway) Exec(request *pipeline.Request) *pipeline.Result {
 		for _, gateway := range gateways {
 			// publishing discovered gateway
 			err := g.broker.Publish(Subject, broker.Message{
-				Type:   "Gateway",
 				Object: gateway,
 			})
 			if err != nil {
