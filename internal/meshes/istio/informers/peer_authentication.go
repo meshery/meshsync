@@ -3,7 +3,7 @@ package informers
 import (
 	"log"
 
-	broker "github.com/layer5io/meshsync/pkg/broker"
+	"github.com/layer5io/meshsync/internal/model"
 	v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -18,10 +18,12 @@ func (i *Istio) PeerAuthenticationInformer() cache.SharedIndexInformer {
 			AddFunc: func(obj interface{}) {
 				PeerAuthentication := obj.(*v1beta1.PeerAuthentication)
 				log.Printf("PeerAuthentication Named: %s - added", PeerAuthentication.Name)
-				err := i.broker.Publish(Subject, broker.Message{
-					Type:   "PeerAuthentication",
-					Object: PeerAuthentication,
-				})
+				err := i.broker.Publish(Subject, model.ConvModelObject(
+					PeerAuthentication.TypeMeta,
+					PeerAuthentication.ObjectMeta,
+					PeerAuthentication.Spec,
+					PeerAuthentication.Status,
+				))
 				if err != nil {
 					log.Println("NATS: Error publishing PeerAuthentication")
 				}
@@ -29,10 +31,12 @@ func (i *Istio) PeerAuthenticationInformer() cache.SharedIndexInformer {
 			UpdateFunc: func(new interface{}, old interface{}) {
 				PeerAuthentication := new.(*v1beta1.PeerAuthentication)
 				log.Printf("PeerAuthentication Named: %s - updated", PeerAuthentication.Name)
-				err := i.broker.Publish(Subject, broker.Message{
-					Type:   "PeerAuthentication",
-					Object: PeerAuthentication,
-				})
+				err := i.broker.Publish(Subject, model.ConvModelObject(
+					PeerAuthentication.TypeMeta,
+					PeerAuthentication.ObjectMeta,
+					PeerAuthentication.Spec,
+					PeerAuthentication.Status,
+				))
 				if err != nil {
 					log.Println("NATS: Error publishing PeerAuthentication")
 				}
@@ -40,10 +44,12 @@ func (i *Istio) PeerAuthenticationInformer() cache.SharedIndexInformer {
 			DeleteFunc: func(obj interface{}) {
 				PeerAuthentication := obj.(*v1beta1.PeerAuthentication)
 				log.Printf("PeerAuthentication Named: %s - deleted", PeerAuthentication.Name)
-				err := i.broker.Publish(Subject, broker.Message{
-					Type:   "PeerAuthentication",
-					Object: PeerAuthentication,
-				})
+				err := i.broker.Publish(Subject, model.ConvModelObject(
+					PeerAuthentication.TypeMeta,
+					PeerAuthentication.ObjectMeta,
+					PeerAuthentication.Spec,
+					PeerAuthentication.Status,
+				))
 				if err != nil {
 					log.Println("NATS: Error publishing PeerAuthentication")
 				}
