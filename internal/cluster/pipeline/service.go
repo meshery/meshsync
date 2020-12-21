@@ -3,6 +3,7 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/cache"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -29,7 +30,7 @@ func (d *Service) Exec(request *pipeline.Request) *pipeline.Result {
 	log.Println("Service Discovery Started")
 
 	// get all namespaces
-	namespaces := NamespaceName
+	namespaces := cache.Storage["NamespaceNames"]
 
 	for _, namespace := range namespaces {
 		// get Services

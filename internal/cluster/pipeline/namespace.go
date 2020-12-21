@@ -8,7 +8,7 @@ import (
 	"github.com/myntra/pipeline"
 )
 
-var NamespaceName []string
+// var NamespaceName []string
 
 // Namespace will implement step interface for Namespaces
 type Namespace struct {
@@ -50,7 +50,7 @@ func (n *Namespace) Exec(request *pipeline.Request) *pipeline.Result {
 			log.Printf("Published namespace named %s", namespace.Name)
 		}
 
-		NamespaceName = append(NamespaceName, namespace.Name)
+		// NamespaceName = append(NamespaceName, namespace.Name)
 	}
 
 	// no data is feeded to future steps or stages
