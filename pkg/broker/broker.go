@@ -13,8 +13,8 @@ type Message struct {
 }
 
 type PublishInterface interface {
-	Publish(string, Message) error
-	PublishWithCallback(string, string, Message) error
+	Publish(string, interface{}) error
+	PublishWithCallback(string, string, interface{}) error
 }
 
 type SubscribeInterface interface {
