@@ -41,7 +41,6 @@ func (ra *RequestAuthenticaton) Exec(request *pipeline.Request) *pipeline.Result
 		for _, requestAuthentication := range requestAuthentications {
 			// publishing discovered requestAuthentication
 			err := ra.broker.Publish(Subject, broker.Message{
-				Type:   "RequestAuthentication",
 				Object: requestAuthentication,
 			})
 			if err != nil {

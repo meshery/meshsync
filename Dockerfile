@@ -8,11 +8,7 @@ COPY go.sum go.sum
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download
 # Copy the go source
-COPY pkg/meshsync/meshsync.go meshsync.go
-COPY pkg/meshsync/cluster/ cluster/
-COPY pkg/meshsync/meshes/ meshes/
-COPY pkg/meshsync/proto/ proto/
-COPY pkg/meshsync/service/ service/
+COPY . .
 # Build
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o meshery-meshsync meshsync.go
 

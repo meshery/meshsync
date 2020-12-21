@@ -1,8 +1,8 @@
 package meshsync
 
 import (
-	"github.com/layer5io/meshsync/pkg/cluster"
-	"github.com/layer5io/meshsync/pkg/meshes/istio"
+	"github.com/layer5io/meshsync/internal/cluster"
+	"github.com/layer5io/meshsync/internal/meshes/istio"
 )
 
 func (h *Handler) StartDiscovery() error {

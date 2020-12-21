@@ -42,7 +42,6 @@ func (n *Namespace) Exec(request *pipeline.Request) *pipeline.Result {
 	for _, namespace := range namespaces {
 		// publishing discovered namespace
 		err := n.broker.Publish(Subject, broker.Message{
-			Type:   "Namespace",
 			Object: namespace,
 		})
 		if err != nil {

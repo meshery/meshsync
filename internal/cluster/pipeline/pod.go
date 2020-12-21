@@ -44,7 +44,6 @@ func (p *Pod) Exec(request *pipeline.Request) *pipeline.Result {
 		for _, pod := range pods {
 			// publishing discovered pod
 			err := p.broker.Publish(Subject, broker.Message{
-				Type:   "Pod",
 				Object: pod,
 			})
 			if err != nil {

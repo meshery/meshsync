@@ -1,6 +1,9 @@
 package nats
 
-import nats "github.com/nats-io/nats.go"
+import (
+	"github.com/layer5io/meshsync/pkg/broker"
+	nats "github.com/nats-io/nats.go"
+)
 
 // Nats will implement Nats subscribe and publish functionality
 type Nats struct {
@@ -8,7 +11,7 @@ type Nats struct {
 }
 
 // New - constructor
-func New(serverURL string) (*Nats, error) {
+func New(serverURL string) (broker.Handler, error) {
 	nc, err := nats.Connect(serverURL)
 	if err != nil {
 		return nil, ErrConnect(err)
@@ -21,7 +24,7 @@ func New(serverURL string) (*Nats, error) {
 }
 
 // Publish - to publish messages
-func (n *Nats) Publish(subject string, message interface{}) error {
+func (n *Nats) Publish(subject string, message broker.Message) error {
 	err := n.ec.Publish(subject, message)
 	if err != nil {
 		return ErrPublish(err)
@@ -35,7 +38,7 @@ func (n *Nats) Publish(subject string, message interface{}) error {
 // reply - this string will be used by the replier to publish replies
 // message - message send by the requestor to replier
 // TODO Ques: After this the requestor have to subscribe to the reply subject
-func (n *Nats) PublishWithCallback(request, reply string, message interface{}) error {
+func (n *Nats) PublishWithCallback(request, reply string, message broker.Message) error {
 	err := n.ec.PublishRequest(request, reply, message)
 	if err != nil {
 		return ErrPublishRequest(err)

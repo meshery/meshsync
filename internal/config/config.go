@@ -45,6 +45,6 @@ func New(provider string) (config.Handler, error) {
 }
 
 func initConfig(cfg config.Handler) error {
-	cfg.SetKey(BrokerURL, "")
+	cfg.SetKey(BrokerURL, "nats://localhost:4222")
 	return nil
 }

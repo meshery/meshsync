@@ -30,7 +30,6 @@ func (c *Cluster) resourceEventHandlerFuncs(resourceType string) cache.ResourceE
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			err := c.broker.Publish(Subject, broker.Message{
-				Type:   resourceType,
 				Object: obj,
 			})
 			if err != nil {
@@ -41,7 +40,6 @@ func (c *Cluster) resourceEventHandlerFuncs(resourceType string) cache.ResourceE
 		},
 		UpdateFunc: func(new interface{}, old interface{}) {
 			err := c.broker.Publish(Subject, broker.Message{
-				Type:   resourceType,
 				Object: new,
 			})
 			if err != nil {
@@ -52,7 +50,6 @@ func (c *Cluster) resourceEventHandlerFuncs(resourceType string) cache.ResourceE
 		},
 		DeleteFunc: func(obj interface{}) {
 			err := c.broker.Publish(Subject, broker.Message{
-				Type:   resourceType,
 				Object: obj,
 			})
 			if err != nil {

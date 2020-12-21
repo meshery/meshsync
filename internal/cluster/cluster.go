@@ -1,11 +1,11 @@
 package cluster
 
 import (
+	informers "github.com/layer5io/meshsync/internal/cluster/informers"
+	pipeline "github.com/layer5io/meshsync/internal/cluster/pipeline"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	inf "github.com/layer5io/meshsync/pkg/informers"
-	informers "github.com/layer5io/meshsync/pkg/cluster/informers"
-	pipeline "github.com/layer5io/meshsync/pkg/cluster/pipeline"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
@@ -22,7 +22,7 @@ type GlobalResources struct {
 
 type LocalResources struct {
 	Deployments []appsv1.Deployment `json:"deployments,omitempty"`
-	Services []corev1.Service `json:"Services,omitempty"`
+	Services    []corev1.Service    `json:"Services,omitempty"`
 	Pods        []corev1.Pod        `json:"pods,omitempty"`
 }
 

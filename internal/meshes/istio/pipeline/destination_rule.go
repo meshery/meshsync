@@ -40,7 +40,6 @@ func (dr *DestinationRule) Exec(request *pipeline.Request) *pipeline.Result {
 		for _, destinationRule := range destinationRules {
 			// publishing discovered destinationRule
 			err := dr.broker.Publish(Subject, broker.Message{
-				Type:   "DestinationRule",
 				Object: destinationRule,
 			})
 			if err != nil {

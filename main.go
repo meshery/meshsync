@@ -10,7 +10,7 @@ import (
 	service "github.com/layer5io/meshsync/api/grpc"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/meshsync"
-	"github.com/layer5io/meshsync/pkg/broker"
+	"github.com/layer5io/meshsync/pkg/broker/nats"
 )
 
 var (
@@ -35,7 +35,7 @@ func main() {
 	}
 
 	// Initialize Broker instance
-	br, err := broker.New(broker.NATSKey, cfg.GetKey(config.BrokerURL))
+	br, err := nats.New(cfg.GetKey(config.BrokerURL))
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)

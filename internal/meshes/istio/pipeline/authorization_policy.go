@@ -40,7 +40,6 @@ func (ap *AuthorizationPolicy) Exec(request *pipeline.Request) *pipeline.Result 
 		for _, authorizationPolicy := range authorizationPolicies {
 			// publishing discovered authorizationPolicy
 			err := ap.broker.Publish(Subject, broker.Message{
-				Type:   "authorizationPolicy",
 				Object: authorizationPolicy,
 			})
 			if err != nil {

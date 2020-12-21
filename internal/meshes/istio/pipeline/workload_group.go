@@ -41,7 +41,6 @@ func (wg *WorkloadGroup) Exec(request *pipeline.Request) *pipeline.Result {
 		for _, workloadGroup := range workloadGroups {
 			// publishing discovered workloadGroup
 			err := wg.broker.Publish(Subject, broker.Message{
-				Type:   "WorkloadGroup",
 				Object: workloadGroup,
 			})
 			if err != nil {

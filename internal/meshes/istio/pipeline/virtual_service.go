@@ -45,7 +45,6 @@ func (vs *VirtualService) Exec(request *pipeline.Request) *pipeline.Result {
 		for _, virtualService := range virtualServices {
 			// publishing discovered virtualService
 			err := vs.broker.Publish(Subject, broker.Message{
-				Type:   "VirtualService",
 				Object: virtualService,
 			})
 			if err != nil {

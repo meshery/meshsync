@@ -41,7 +41,6 @@ func (s *Sidecar) Exec(request *pipeline.Request) *pipeline.Result {
 		for _, sidecar := range sidecars {
 			// publishing discovered sidecar
 			err := s.broker.Publish(Subject, broker.Message{
-				Type:   "Sidecar",
 				Object: sidecar,
 			})
 			if err != nil {

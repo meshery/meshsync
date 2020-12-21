@@ -41,7 +41,6 @@ func (we *WorkloadEntry) Exec(request *pipeline.Request) *pipeline.Result {
 		for _, workloadEntry := range workloadEntries {
 			// publishing discovered workloadEntry
 			err := we.broker.Publish(Subject, broker.Message{
-				Type:   "WorkloadEntry",
 				Object: workloadEntry,
 			})
 			if err != nil {
