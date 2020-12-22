@@ -50,12 +50,16 @@ func (n *Nats) PublishWithCallback(request, reply string, message *broker.Messag
 // TODO Ques: Do we want to unsubscribe
 // TODO will the method-user just subsribe, how will it handle the received messages?
 func (n *Nats) Subscribe(subject, queue string, message *broker.Message) error {
-	// no handler
-	// TODO there should be a callback that handler received messges
-	_, err := n.ec.QueueSubscribe(subject, queue, func() {})
+	msgch := make(chan *broker.Message)
+	sub, err := n.ec.BindRecvQueueChan(subject, queue, msgch)
 	if err != nil {
 		return ErrQueueSubscribe(err)
 	}
+
+	msg := <-msgch
+	*message = *msg
+
+	_ = sub.Unsubscribe()
 	return nil
 }
 
@@ -63,20 +67,22 @@ func (n *Nats) Subscribe(subject, queue string, message *broker.Message) error {
 // request is the subject to which the this thing is listening
 // when there will be a request
 func (n *Nats) SubscribeWithCallback(subject, queue string, message *broker.Message) error {
-	// no handler
-	_, err := n.ec.QueueSubscribe(subject, queue, func() {})
+	msgch := make(chan *broker.Message)
+	sub, err := n.ec.BindRecvQueueChan(subject, queue, msgch)
 	if err != nil {
 		return ErrQueueSubscribe(err)
 	}
+
+	msg := <-msgch
+	*message = *msg
+
+	_ = sub.Unsubscribe()
 	return nil
 }
 
-// SubscribeWithHandler - for handling request-reply protocol
-// request is the subject to which the this thing is listening
-// when there will be a request
-func (n *Nats) SubscribeWithChannel(subject, queue string, message chan *broker.Message) error {
-	// no handler
-	_, err := n.ec.QueueSubscribe(subject, queue, func() {})
+// SubscribeWithChannel will publish all the messages received to the given channel
+func (n *Nats) SubscribeWithChannel(subject, queue string, ch chan *broker.Message) error {
+	_, err := n.ec.BindRecvQueueChan(subject, queue, ch)
 	if err != nil {
 		return ErrQueueSubscribe(err)
 	}

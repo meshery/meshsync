@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/layer5io/meshsync/internal/cache"
-	"github.com/layer5io/meshsync/internal/model"
+	"github.com/layer5io/meshsync/pkg/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
