@@ -7,16 +7,20 @@ categories:
       - 'kind/enhancement'
   - title: '🐛 Bug Fixes'
     labels:
-      - 'fix'
-      - 'bugfix'
+      - 'kind/fix'
+      - 'kind/bugfix'
       - 'kind/bug'
   - title: '🧰 Maintenance'
     labels: 
       - 'kind/chore'
-      - 'chore'
+      - 'area/ci'
+      - 'area/tests'
+  - title: 📖 Documentation
+    label: area/docs 
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 template: |
   ## What's New
+  **General**
   $CHANGES
   
   ## Contributors
