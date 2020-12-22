@@ -3,6 +3,7 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -39,9 +40,12 @@ func (n *Node) Exec(request *pipeline.Request) *pipeline.Result {
 	// processing
 	for _, node := range nodes {
 		// publishing discovered node
-		err := n.broker.Publish(Subject, broker.Message{
-			Object: node,
-		})
+		err := n.broker.Publish(Subject, model.ConvModelObject(
+			node.TypeMeta,
+			node.ObjectMeta,
+			node.Spec,
+			node.Status,
+		))
 		if err != nil {
 			log.Printf("Error publishing node named %s", node.Name)
 		} else {

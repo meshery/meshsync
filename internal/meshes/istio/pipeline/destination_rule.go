@@ -3,6 +3,7 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -39,9 +40,12 @@ func (dr *DestinationRule) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, destinationRule := range destinationRules {
 			// publishing discovered destinationRule
-			err := dr.broker.Publish(Subject, broker.Message{
-				Object: destinationRule,
-			})
+			err := dr.broker.Publish(Subject, model.ConvModelObject(
+				destinationRule.TypeMeta,
+				destinationRule.ObjectMeta,
+				destinationRule.Spec,
+				destinationRule.Status,
+			))
 			if err != nil {
 				log.Printf("Error publishing destination rule named %s", destinationRule.Name)
 			} else {

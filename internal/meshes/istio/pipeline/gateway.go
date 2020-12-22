@@ -3,6 +3,7 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -40,9 +41,12 @@ func (g *Gateway) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, gateway := range gateways {
 			// publishing discovered gateway
-			err := g.broker.Publish(Subject, broker.Message{
-				Object: gateway,
-			})
+			err := g.broker.Publish(Subject, model.ConvModelObject(
+				gateway.TypeMeta,
+				gateway.ObjectMeta,
+				gateway.Spec,
+				gateway.Status,
+			))
 			if err != nil {
 				log.Printf("Error publishing gateway named %s", gateway.Name)
 			} else {

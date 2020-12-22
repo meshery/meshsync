@@ -3,6 +3,7 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -40,9 +41,12 @@ func (ef *EnvoyFilter) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, envoyFilter := range envoyFilters {
 			// publishing discovered envoyFilter
-			err := ef.broker.Publish(Subject, broker.Message{
-				Object: envoyFilter,
-			})
+			err := ef.broker.Publish(Subject, model.ConvModelObject(
+				envoyFilter.TypeMeta,
+				envoyFilter.ObjectMeta,
+				envoyFilter.Spec,
+				envoyFilter.Status,
+			))
 			if err != nil {
 				log.Printf("Error publishing envoy filter named %s", envoyFilter.Name)
 			} else {

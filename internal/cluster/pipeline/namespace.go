@@ -3,12 +3,13 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
 )
 
-var NamespaceName []string
+// var NamespaceName []string
 
 // Namespace will implement step interface for Namespaces
 type Namespace struct {
@@ -41,16 +42,19 @@ func (n *Namespace) Exec(request *pipeline.Request) *pipeline.Result {
 	// processing
 	for _, namespace := range namespaces {
 		// publishing discovered namespace
-		err := n.broker.Publish(Subject, broker.Message{
-			Object: namespace,
-		})
+		err := n.broker.Publish(Subject, model.ConvModelObject(
+			namespace.TypeMeta,
+			namespace.ObjectMeta,
+			namespace.Spec,
+			namespace.Status,
+		))
 		if err != nil {
 			log.Printf("Error publishing namespace named %s", namespace.Name)
 		} else {
 			log.Printf("Published namespace named %s", namespace.Name)
 		}
 
-		NamespaceName = append(NamespaceName, namespace.Name)
+		// NamespaceName = append(NamespaceName, namespace.Name)
 	}
 
 	// no data is feeded to future steps or stages

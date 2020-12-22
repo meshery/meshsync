@@ -3,6 +3,8 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/cache"
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -29,7 +31,7 @@ func (p *Pod) Exec(request *pipeline.Request) *pipeline.Result {
 	log.Println("Pod Discovery Started")
 
 	// get all namespaces
-	namespaces := NamespaceName
+	namespaces := cache.Storage["NamespaceNames"]
 
 	for _, namespace := range namespaces {
 		// get Pods
@@ -43,9 +45,12 @@ func (p *Pod) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, pod := range pods {
 			// publishing discovered pod
-			err := p.broker.Publish(Subject, broker.Message{
-				Object: pod,
-			})
+			err := p.broker.Publish(Subject, model.ConvModelObject(
+				pod.TypeMeta,
+				pod.ObjectMeta,
+				pod.Spec,
+				pod.Status,
+			))
 			if err != nil {
 				log.Printf("Error publishing pod named %s", pod.Name)
 			} else {

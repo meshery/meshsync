@@ -3,6 +3,7 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -40,9 +41,12 @@ func (we *WorkloadEntry) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, workloadEntry := range workloadEntries {
 			// publishing discovered workloadEntry
-			err := we.broker.Publish(Subject, broker.Message{
-				Object: workloadEntry,
-			})
+			err := we.broker.Publish(Subject, model.ConvModelObject(
+				workloadEntry.TypeMeta,
+				workloadEntry.ObjectMeta,
+				workloadEntry.Spec,
+				workloadEntry.Status,
+			))
 			if err != nil {
 				log.Printf("Error publishing workload entry named %s", workloadEntry.Name)
 			} else {

@@ -3,6 +3,7 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -39,9 +40,12 @@ func (ap *AuthorizationPolicy) Exec(request *pipeline.Request) *pipeline.Result 
 		// processing
 		for _, authorizationPolicy := range authorizationPolicies {
 			// publishing discovered authorizationPolicy
-			err := ap.broker.Publish(Subject, broker.Message{
-				Object: authorizationPolicy,
-			})
+			err := ap.broker.Publish(Subject, model.ConvModelObject(
+				authorizationPolicy.TypeMeta,
+				authorizationPolicy.ObjectMeta,
+				authorizationPolicy.Spec,
+				authorizationPolicy.Status,
+			))
 			if err != nil {
 				log.Printf("Error publishing authorizationPolicy named %s", authorizationPolicy.Name)
 			} else {

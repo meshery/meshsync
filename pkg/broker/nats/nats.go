@@ -24,7 +24,7 @@ func New(serverURL string) (broker.Handler, error) {
 }
 
 // Publish - to publish messages
-func (n *Nats) Publish(subject string, message broker.Message) error {
+func (n *Nats) Publish(subject string, message interface{}) error {
 	err := n.ec.Publish(subject, message)
 	if err != nil {
 		return ErrPublish(err)
@@ -38,7 +38,7 @@ func (n *Nats) Publish(subject string, message broker.Message) error {
 // reply - this string will be used by the replier to publish replies
 // message - message send by the requestor to replier
 // TODO Ques: After this the requestor have to subscribe to the reply subject
-func (n *Nats) PublishWithCallback(request, reply string, message broker.Message) error {
+func (n *Nats) PublishWithCallback(request, reply string, message interface{}) error {
 	err := n.ec.PublishRequest(request, reply, message)
 	if err != nil {
 		return ErrPublishRequest(err)

@@ -3,6 +3,8 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/cache"
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -29,7 +31,7 @@ func (d *Deployment) Exec(request *pipeline.Request) *pipeline.Result {
 	log.Println("Deployment Discovery Started")
 
 	// get all namespaces
-	namespaces := NamespaceName
+	namespaces := cache.Storage["NamespaceNames"]
 
 	for _, namespace := range namespaces {
 		// get Deployments
@@ -43,9 +45,12 @@ func (d *Deployment) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, deployment := range deployments {
 			// publishing discovered deployment
-			err := d.broker.Publish(Subject, broker.Message{
-				Object: deployment,
-			})
+			err := d.broker.Publish(Subject, model.ConvModelObject(
+				deployment.TypeMeta,
+				deployment.ObjectMeta,
+				deployment.Spec,
+				deployment.Status,
+			))
 			if err != nil {
 				log.Printf("Error publishing deployment named %s", deployment.Name)
 			} else {

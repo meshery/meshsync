@@ -3,7 +3,7 @@ package informers
 import (
 	"log"
 
-	broker "github.com/layer5io/meshsync/pkg/broker"
+	"github.com/layer5io/meshsync/internal/model"
 	v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -18,10 +18,12 @@ func (i *Istio) AuthorizationPolicyInformer() cache.SharedIndexInformer {
 			AddFunc: func(obj interface{}) {
 				AuthorizationPolicy := obj.(*v1beta1.AuthorizationPolicy)
 				log.Printf("AuthorizationPolicy Named: %s - added", AuthorizationPolicy.Name)
-				err := i.broker.Publish(Subject, broker.Message{
-					Type:   "AuthorizationPolicy",
-					Object: AuthorizationPolicy,
-				})
+				err := i.broker.Publish(Subject, model.ConvModelObject(
+					AuthorizationPolicy.TypeMeta,
+					AuthorizationPolicy.ObjectMeta,
+					AuthorizationPolicy.Spec,
+					AuthorizationPolicy.Status,
+				))
 				if err != nil {
 					log.Println("NATS: Error publishing AuthorizationPolicy")
 				}
@@ -29,10 +31,12 @@ func (i *Istio) AuthorizationPolicyInformer() cache.SharedIndexInformer {
 			UpdateFunc: func(new interface{}, old interface{}) {
 				AuthorizationPolicy := new.(*v1beta1.AuthorizationPolicy)
 				log.Printf("AuthorizationPolicy Named: %s - updated", AuthorizationPolicy.Name)
-				err := i.broker.Publish(Subject, broker.Message{
-					Type:   "AuthorizationPolicy",
-					Object: AuthorizationPolicy,
-				})
+				err := i.broker.Publish(Subject, model.ConvModelObject(
+					AuthorizationPolicy.TypeMeta,
+					AuthorizationPolicy.ObjectMeta,
+					AuthorizationPolicy.Spec,
+					AuthorizationPolicy.Status,
+				))
 				if err != nil {
 					log.Println("NATS: Error publishing AuthorizationPolicy")
 				}
@@ -40,10 +44,12 @@ func (i *Istio) AuthorizationPolicyInformer() cache.SharedIndexInformer {
 			DeleteFunc: func(obj interface{}) {
 				AuthorizationPolicy := obj.(*v1beta1.AuthorizationPolicy)
 				log.Printf("AuthorizationPolicy Named: %s - deleted", AuthorizationPolicy.Name)
-				err := i.broker.Publish(Subject, broker.Message{
-					Type:   "AuthorizationPolicy",
-					Object: AuthorizationPolicy,
-				})
+				err := i.broker.Publish(Subject, model.ConvModelObject(
+					AuthorizationPolicy.TypeMeta,
+					AuthorizationPolicy.ObjectMeta,
+					AuthorizationPolicy.Spec,
+					AuthorizationPolicy.Status,
+				))
 				if err != nil {
 					log.Println("NATS: Error publishing AuthorizationPolicy")
 				}

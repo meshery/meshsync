@@ -3,6 +3,7 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/myntra/pipeline"
@@ -40,9 +41,12 @@ func (se *ServiceEntry) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, serviceEntry := range serviceEntries {
 			// publishing discovered serviceEntry
-			err := se.broker.Publish(Subject, broker.Message{
-				Object: serviceEntry,
-			})
+			err := se.broker.Publish(Subject, model.ConvModelObject(
+				serviceEntry.TypeMeta,
+				serviceEntry.ObjectMeta,
+				serviceEntry.Spec,
+				serviceEntry.Status,
+			))
 			if err != nil {
 				log.Printf("Error publishing service entry named %s", serviceEntry.Name)
 			} else {
