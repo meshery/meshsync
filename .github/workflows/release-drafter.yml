@@ -18,8 +18,3 @@ jobs:
           config-name: release-drafter.yml
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASEDRAFTER_PAT }}
-      - name: Write release to file
-        run: |
-          CONTENT=${{ steps.release_drafter.outputs.body }}
-          TAG=${{ steps.release_drafter.outputs.tag_name }}
-          prinf '%b\n' "---\nlayout: default\n---\n\n${CONTENT}" > ./docs/_releases/${TAG}.md
