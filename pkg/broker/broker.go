@@ -13,13 +13,14 @@ type Message struct {
 }
 
 type PublishInterface interface {
-	Publish(string, interface{}) error
-	PublishWithCallback(string, string, interface{}) error
+	Publish(string, *Message) error
+	PublishWithCallback(string, string, *Message) error
 }
 
 type SubscribeInterface interface {
-	Subscribe(string, string) error
-	SubscribeWithHandler(string, string) error
+	Subscribe(string, string, *Message) error
+	SubscribeWithCallback(string, string, *Message) error
+	SubscribeWithChannel(string, string, chan *Message) error
 }
 
 type Handler interface {

@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/layer5io/meshsync/internal/model"
+	broker "github.com/layer5io/meshsync/pkg/broker"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -18,32 +19,35 @@ func (c *Cluster) DeploymentInformer() cache.SharedIndexInformer {
 			AddFunc: func(obj interface{}) {
 				deployment := obj.(*v1.Deployment)
 				log.Printf("Deployment Named: %s - added", deployment.Name)
-				c.broker.Publish(Subject, model.ConvModelObject(
-					deployment.TypeMeta,
-					deployment.ObjectMeta,
-					deployment.Spec,
-					deployment.Status,
-				))
+				c.broker.Publish(Subject, &broker.Message{
+					Object: model.ConvObject(
+						deployment.TypeMeta,
+						deployment.ObjectMeta,
+						deployment.Spec,
+						deployment.Status,
+					)})
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
 				deployment := new.(*v1.Deployment)
 				log.Printf("Deployment Named: %s - updated", deployment.Name)
-				c.broker.Publish(Subject, model.ConvModelObject(
-					deployment.TypeMeta,
-					deployment.ObjectMeta,
-					deployment.Spec,
-					deployment.Status,
-				))
+				c.broker.Publish(Subject, &broker.Message{
+					Object: model.ConvObject(
+						deployment.TypeMeta,
+						deployment.ObjectMeta,
+						deployment.Spec,
+						deployment.Status,
+					)})
 			},
 			DeleteFunc: func(obj interface{}) {
 				deployment := obj.(*v1.Deployment)
 				log.Printf("Deployment Named: %s - deleted", deployment.Name)
-				c.broker.Publish(Subject, model.ConvModelObject(
-					deployment.TypeMeta,
-					deployment.ObjectMeta,
-					deployment.Spec,
-					deployment.Status,
-				))
+				c.broker.Publish(Subject, &broker.Message{
+					Object: model.ConvObject(
+						deployment.TypeMeta,
+						deployment.ObjectMeta,
+						deployment.Spec,
+						deployment.Status,
+					)})
 			},
 		},
 	)

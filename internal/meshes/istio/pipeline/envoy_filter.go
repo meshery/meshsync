@@ -41,12 +41,13 @@ func (ef *EnvoyFilter) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, envoyFilter := range envoyFilters {
 			// publishing discovered envoyFilter
-			err := ef.broker.Publish(Subject, model.ConvModelObject(
-				envoyFilter.TypeMeta,
-				envoyFilter.ObjectMeta,
-				envoyFilter.Spec,
-				envoyFilter.Status,
-			))
+			err := ef.broker.Publish(Subject, &broker.Message{
+				Object: model.ConvObject(
+					envoyFilter.TypeMeta,
+					envoyFilter.ObjectMeta,
+					envoyFilter.Spec,
+					envoyFilter.Status,
+				)})
 			if err != nil {
 				log.Printf("Error publishing envoy filter named %s", envoyFilter.Name)
 			} else {

@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/layer5io/meshsync/internal/model"
+	broker "github.com/layer5io/meshsync/pkg/broker"
 	v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -18,12 +19,13 @@ func (i *Istio) SidecarInformer() cache.SharedIndexInformer {
 			AddFunc: func(obj interface{}) {
 				Sidecar := obj.(*v1beta1.Sidecar)
 				log.Printf("Sidecar Named: %s - added", Sidecar.Name)
-				err := i.broker.Publish(Subject, model.ConvModelObject(
-					Sidecar.TypeMeta,
-					Sidecar.ObjectMeta,
-					Sidecar.Spec,
-					Sidecar.Status,
-				))
+				err := i.broker.Publish(Subject, &broker.Message{
+					Object: model.ConvObject(
+						Sidecar.TypeMeta,
+						Sidecar.ObjectMeta,
+						Sidecar.Spec,
+						Sidecar.Status,
+					)})
 				if err != nil {
 					log.Println("NATS: Error publishing Sidecar")
 				}
@@ -31,12 +33,13 @@ func (i *Istio) SidecarInformer() cache.SharedIndexInformer {
 			UpdateFunc: func(new interface{}, old interface{}) {
 				Sidecar := new.(*v1beta1.Sidecar)
 				log.Printf("Sidecar Named: %s - updated", Sidecar.Name)
-				err := i.broker.Publish(Subject, model.ConvModelObject(
-					Sidecar.TypeMeta,
-					Sidecar.ObjectMeta,
-					Sidecar.Spec,
-					Sidecar.Status,
-				))
+				err := i.broker.Publish(Subject, &broker.Message{
+					Object: model.ConvObject(
+						Sidecar.TypeMeta,
+						Sidecar.ObjectMeta,
+						Sidecar.Spec,
+						Sidecar.Status,
+					)})
 				if err != nil {
 					log.Println("NATS: Error publishing Sidecar")
 				}
@@ -44,12 +47,13 @@ func (i *Istio) SidecarInformer() cache.SharedIndexInformer {
 			DeleteFunc: func(obj interface{}) {
 				Sidecar := obj.(*v1beta1.Sidecar)
 				log.Printf("Sidecar Named: %s - deleted", Sidecar.Name)
-				err := i.broker.Publish(Subject, model.ConvModelObject(
-					Sidecar.TypeMeta,
-					Sidecar.ObjectMeta,
-					Sidecar.Spec,
-					Sidecar.Status,
-				))
+				err := i.broker.Publish(Subject, &broker.Message{
+					Object: model.ConvObject(
+						Sidecar.TypeMeta,
+						Sidecar.ObjectMeta,
+						Sidecar.Spec,
+						Sidecar.Status,
+					)})
 				if err != nil {
 					log.Println("NATS: Error publishing Sidecar")
 				}

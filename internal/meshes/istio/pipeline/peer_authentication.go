@@ -41,12 +41,13 @@ func (pa *PeerAuthentication) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, peerAuthentication := range peerAuthentications {
 			// publishing discovered peerAuthentication
-			err := pa.broker.Publish(Subject, model.ConvModelObject(
-				peerAuthentication.TypeMeta,
-				peerAuthentication.ObjectMeta,
-				peerAuthentication.Spec,
-				peerAuthentication.Status,
-			))
+			err := pa.broker.Publish(Subject, &broker.Message{
+				Object: model.ConvObject(
+					peerAuthentication.TypeMeta,
+					peerAuthentication.ObjectMeta,
+					peerAuthentication.Spec,
+					peerAuthentication.Status,
+				)})
 			if err != nil {
 				log.Printf("Error publishing peer authentication named %s", peerAuthentication.Name)
 			} else {

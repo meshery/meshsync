@@ -9,8 +9,6 @@ import (
 	"github.com/myntra/pipeline"
 )
 
-// var NamespaceName []string
-
 // Namespace will implement step interface for Namespaces
 type Namespace struct {
 	pipeline.StepContext
@@ -42,12 +40,13 @@ func (n *Namespace) Exec(request *pipeline.Request) *pipeline.Result {
 	// processing
 	for _, namespace := range namespaces {
 		// publishing discovered namespace
-		err := n.broker.Publish(Subject, model.ConvModelObject(
-			namespace.TypeMeta,
-			namespace.ObjectMeta,
-			namespace.Spec,
-			namespace.Status,
-		))
+		err := n.broker.Publish(Subject, &broker.Message{
+			Object: model.ConvObject(
+				namespace.TypeMeta,
+				namespace.ObjectMeta,
+				namespace.Spec,
+				namespace.Status,
+			)})
 		if err != nil {
 			log.Printf("Error publishing namespace named %s", namespace.Name)
 		} else {

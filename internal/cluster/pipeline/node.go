@@ -40,12 +40,13 @@ func (n *Node) Exec(request *pipeline.Request) *pipeline.Result {
 	// processing
 	for _, node := range nodes {
 		// publishing discovered node
-		err := n.broker.Publish(Subject, model.ConvModelObject(
-			node.TypeMeta,
-			node.ObjectMeta,
-			node.Spec,
-			node.Status,
-		))
+		err := n.broker.Publish(Subject, &broker.Message{
+			Object: model.ConvObject(
+				node.TypeMeta,
+				node.ObjectMeta,
+				node.Spec,
+				node.Status,
+			)})
 		if err != nil {
 			log.Printf("Error publishing node named %s", node.Name)
 		} else {

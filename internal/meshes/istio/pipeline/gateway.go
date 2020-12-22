@@ -41,12 +41,13 @@ func (g *Gateway) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, gateway := range gateways {
 			// publishing discovered gateway
-			err := g.broker.Publish(Subject, model.ConvModelObject(
-				gateway.TypeMeta,
-				gateway.ObjectMeta,
-				gateway.Spec,
-				gateway.Status,
-			))
+			err := g.broker.Publish(Subject, &broker.Message{
+				Object: model.ConvObject(
+					gateway.TypeMeta,
+					gateway.ObjectMeta,
+					gateway.Spec,
+					gateway.Status,
+				)})
 			if err != nil {
 				log.Printf("Error publishing gateway named %s", gateway.Name)
 			} else {

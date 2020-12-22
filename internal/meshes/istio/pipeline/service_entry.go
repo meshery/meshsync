@@ -41,12 +41,13 @@ func (se *ServiceEntry) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, serviceEntry := range serviceEntries {
 			// publishing discovered serviceEntry
-			err := se.broker.Publish(Subject, model.ConvModelObject(
-				serviceEntry.TypeMeta,
-				serviceEntry.ObjectMeta,
-				serviceEntry.Spec,
-				serviceEntry.Status,
-			))
+			err := se.broker.Publish(Subject, &broker.Message{
+				Object: model.ConvObject(
+					serviceEntry.TypeMeta,
+					serviceEntry.ObjectMeta,
+					serviceEntry.Spec,
+					serviceEntry.Status,
+				)})
 			if err != nil {
 				log.Printf("Error publishing service entry named %s", serviceEntry.Name)
 			} else {

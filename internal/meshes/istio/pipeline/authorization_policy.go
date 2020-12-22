@@ -40,12 +40,13 @@ func (ap *AuthorizationPolicy) Exec(request *pipeline.Request) *pipeline.Result 
 		// processing
 		for _, authorizationPolicy := range authorizationPolicies {
 			// publishing discovered authorizationPolicy
-			err := ap.broker.Publish(Subject, model.ConvModelObject(
-				authorizationPolicy.TypeMeta,
-				authorizationPolicy.ObjectMeta,
-				authorizationPolicy.Spec,
-				authorizationPolicy.Status,
-			))
+			err := ap.broker.Publish(Subject, &broker.Message{
+				Object: model.ConvObject(
+					authorizationPolicy.TypeMeta,
+					authorizationPolicy.ObjectMeta,
+					authorizationPolicy.Spec,
+					authorizationPolicy.Status,
+				)})
 			if err != nil {
 				log.Printf("Error publishing authorizationPolicy named %s", authorizationPolicy.Name)
 			} else {
