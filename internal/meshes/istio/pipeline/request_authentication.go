@@ -41,12 +41,13 @@ func (ra *RequestAuthenticaton) Exec(request *pipeline.Request) *pipeline.Result
 		// processing
 		for _, requestAuthentication := range requestAuthentications {
 			// publishing discovered requestAuthentication
-			err := ra.broker.Publish(Subject, model.ConvModelObject(
-				requestAuthentication.TypeMeta,
-				requestAuthentication.ObjectMeta,
-				requestAuthentication.Spec,
-				requestAuthentication.Status,
-			))
+			err := ra.broker.Publish(Subject, &broker.Message{
+				Object: model.ConvObject(
+					requestAuthentication.TypeMeta,
+					requestAuthentication.ObjectMeta,
+					requestAuthentication.Spec,
+					requestAuthentication.Status,
+				)})
 			if err != nil {
 				log.Printf("Error publishing request authentication named %s", requestAuthentication.Name)
 			} else {

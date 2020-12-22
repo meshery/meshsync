@@ -41,12 +41,13 @@ func (s *Sidecar) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, sidecar := range sidecars {
 			// publishing discovered sidecar
-			err := s.broker.Publish(Subject, model.ConvModelObject(
-				sidecar.TypeMeta,
-				sidecar.ObjectMeta,
-				sidecar.Spec,
-				sidecar.Status,
-			))
+			err := s.broker.Publish(Subject, &broker.Message{
+				Object: model.ConvObject(
+					sidecar.TypeMeta,
+					sidecar.ObjectMeta,
+					sidecar.Spec,
+					sidecar.Status,
+				)})
 			if err != nil {
 				log.Printf("Error publishing sidecar named %s", sidecar.Name)
 			} else {

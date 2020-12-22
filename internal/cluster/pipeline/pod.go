@@ -45,12 +45,13 @@ func (p *Pod) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, pod := range pods {
 			// publishing discovered pod
-			err := p.broker.Publish(Subject, model.ConvModelObject(
-				pod.TypeMeta,
-				pod.ObjectMeta,
-				pod.Spec,
-				pod.Status,
-			))
+			err := p.broker.Publish(Subject, &broker.Message{
+				Object: model.ConvObject(
+					pod.TypeMeta,
+					pod.ObjectMeta,
+					pod.Spec,
+					pod.Status,
+				)})
 			if err != nil {
 				log.Printf("Error publishing pod named %s", pod.Name)
 			} else {

@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/layer5io/meshsync/internal/model"
+	broker "github.com/layer5io/meshsync/pkg/broker"
 	v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -18,12 +19,13 @@ func (i *Istio) DestinationRuleInformer() cache.SharedIndexInformer {
 			AddFunc: func(obj interface{}) {
 				DestinationRule := obj.(*v1beta1.DestinationRule)
 				log.Printf("DestinationRule Named: %s - added", DestinationRule.Name)
-				err := i.broker.Publish(Subject, model.ConvModelObject(
-					DestinationRule.TypeMeta,
-					DestinationRule.ObjectMeta,
-					DestinationRule.Spec,
-					DestinationRule.Status,
-				))
+				err := i.broker.Publish(Subject, &broker.Message{
+					Object: model.ConvObject(
+						DestinationRule.TypeMeta,
+						DestinationRule.ObjectMeta,
+						DestinationRule.Spec,
+						DestinationRule.Status,
+					)})
 				if err != nil {
 					log.Println("NATS: Error publishing DestinationRule")
 				}
@@ -31,12 +33,13 @@ func (i *Istio) DestinationRuleInformer() cache.SharedIndexInformer {
 			UpdateFunc: func(new interface{}, old interface{}) {
 				DestinationRule := new.(*v1beta1.DestinationRule)
 				log.Printf("DestinationRule Named: %s - updated", DestinationRule.Name)
-				err := i.broker.Publish(Subject, model.ConvModelObject(
-					DestinationRule.TypeMeta,
-					DestinationRule.ObjectMeta,
-					DestinationRule.Spec,
-					DestinationRule.Status,
-				))
+				err := i.broker.Publish(Subject, &broker.Message{
+					Object: model.ConvObject(
+						DestinationRule.TypeMeta,
+						DestinationRule.ObjectMeta,
+						DestinationRule.Spec,
+						DestinationRule.Status,
+					)})
 				if err != nil {
 					log.Println("NATS: Error publishing DestinationRule")
 				}
@@ -44,12 +47,13 @@ func (i *Istio) DestinationRuleInformer() cache.SharedIndexInformer {
 			DeleteFunc: func(obj interface{}) {
 				DestinationRule := obj.(*v1beta1.DestinationRule)
 				log.Printf("DestinationRule Named: %s - deleted", DestinationRule.Name)
-				err := i.broker.Publish(Subject, model.ConvModelObject(
-					DestinationRule.TypeMeta,
-					DestinationRule.ObjectMeta,
-					DestinationRule.Spec,
-					DestinationRule.Status,
-				))
+				err := i.broker.Publish(Subject, &broker.Message{
+					Object: model.ConvObject(
+						DestinationRule.TypeMeta,
+						DestinationRule.ObjectMeta,
+						DestinationRule.Spec,
+						DestinationRule.Status,
+					)})
 				if err != nil {
 					log.Println("NATS: Error publishing DestinationRule")
 				}

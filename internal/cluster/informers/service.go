@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/layer5io/meshsync/internal/model"
+	broker "github.com/layer5io/meshsync/pkg/broker"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -18,32 +19,35 @@ func (c *Cluster) ServiceInformer() cache.SharedIndexInformer {
 			AddFunc: func(obj interface{}) {
 				service := obj.(*v1.Service)
 				log.Printf("Service Named: %s - added", service.Name)
-				c.broker.Publish(Subject, model.ConvModelObject(
-					service.TypeMeta,
-					service.ObjectMeta,
-					service.Spec,
-					service.Status,
-				))
+				c.broker.Publish(Subject, &broker.Message{
+					Object: model.ConvObject(
+						service.TypeMeta,
+						service.ObjectMeta,
+						service.Spec,
+						service.Status,
+					)})
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
 				service := new.(*v1.Service)
 				log.Printf("Service Named: %s - updated", service.Name)
-				c.broker.Publish(Subject, model.ConvModelObject(
-					service.TypeMeta,
-					service.ObjectMeta,
-					service.Spec,
-					service.Status,
-				))
+				c.broker.Publish(Subject, &broker.Message{
+					Object: model.ConvObject(
+						service.TypeMeta,
+						service.ObjectMeta,
+						service.Spec,
+						service.Status,
+					)})
 			},
 			DeleteFunc: func(obj interface{}) {
 				service := obj.(*v1.Service)
 				log.Printf("Service Named: %s - deleted", service.Name)
-				c.broker.Publish(Subject, model.ConvModelObject(
-					service.TypeMeta,
-					service.ObjectMeta,
-					service.Spec,
-					service.Status,
-				))
+				c.broker.Publish(Subject, &broker.Message{
+					Object: model.ConvObject(
+						service.TypeMeta,
+						service.ObjectMeta,
+						service.Spec,
+						service.Status,
+					)})
 			},
 		},
 	)

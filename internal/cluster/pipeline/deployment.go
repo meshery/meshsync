@@ -45,12 +45,13 @@ func (d *Deployment) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, deployment := range deployments {
 			// publishing discovered deployment
-			err := d.broker.Publish(Subject, model.ConvModelObject(
-				deployment.TypeMeta,
-				deployment.ObjectMeta,
-				deployment.Spec,
-				deployment.Status,
-			))
+			err := d.broker.Publish(Subject, &broker.Message{
+				Object: model.ConvObject(
+					deployment.TypeMeta,
+					deployment.ObjectMeta,
+					deployment.Spec,
+					deployment.Status,
+				)})
 			if err != nil {
 				log.Printf("Error publishing deployment named %s", deployment.Name)
 			} else {

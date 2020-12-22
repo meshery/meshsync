@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func ConvModelObject(typeMeta metav1.TypeMeta, objectMeta metav1.ObjectMeta, spec interface{}, status interface{}) Object {
+func ConvObject(typeMeta metav1.TypeMeta, objectMeta metav1.ObjectMeta, spec interface{}, status interface{}) Object {
 	kubernetesResource := getKubernetesResource()
 	kubernetesResourceTypeMeta := getKubernetesResourceTypeMeta(typeMeta, kubernetesResource.ResourceTypeMetaID)
 	kubernetesResourceObjectMeta := getKubernetesResourceObjectMeta(objectMeta, kubernetesResource.ResourceObjectMetaID)

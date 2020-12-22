@@ -41,12 +41,13 @@ func (we *WorkloadEntry) Exec(request *pipeline.Request) *pipeline.Result {
 		// processing
 		for _, workloadEntry := range workloadEntries {
 			// publishing discovered workloadEntry
-			err := we.broker.Publish(Subject, model.ConvModelObject(
-				workloadEntry.TypeMeta,
-				workloadEntry.ObjectMeta,
-				workloadEntry.Spec,
-				workloadEntry.Status,
-			))
+			err := we.broker.Publish(Subject, &broker.Message{
+				Object: model.ConvObject(
+					workloadEntry.TypeMeta,
+					workloadEntry.ObjectMeta,
+					workloadEntry.Spec,
+					workloadEntry.Status,
+				)})
 			if err != nil {
 				log.Printf("Error publishing workload entry named %s", workloadEntry.Name)
 			} else {
