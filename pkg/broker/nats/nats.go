@@ -59,7 +59,7 @@ func (n *Nats) Subscribe(subject, queue string, message *broker.Message) error {
 	msg := <-msgch
 	*message = *msg
 
-	sub.Unsubscribe()
+	_ = sub.Unsubscribe()
 	return nil
 }
 
@@ -76,7 +76,7 @@ func (n *Nats) SubscribeWithCallback(subject, queue string, message *broker.Mess
 	msg := <-msgch
 	*message = *msg
 
-	sub.Unsubscribe()
+	_ = sub.Unsubscribe()
 	return nil
 }
 

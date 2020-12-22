@@ -53,7 +53,7 @@ func getKubernetesResourceObjectMeta(resource metav1.ObjectMeta, id string) Kube
 func getKubernetesResourceSpec(spec interface{}, id string) KubernetesResourceSpec {
 	specJSON, _ := json.Marshal(spec)
 	var specTemp map[string]interface{}
-	json.Unmarshal(specJSON, &specTemp)
+	_ = json.Unmarshal(specJSON, &specTemp)
 
 	return KubernetesResourceSpec{
 		ResourceSpecID: id,
@@ -64,7 +64,7 @@ func getKubernetesResourceSpec(spec interface{}, id string) KubernetesResourceSp
 func getKubernetesResourceStatus(status interface{}, id string) KubernetesResourceStatus {
 	statusJSON, _ := json.Marshal(status)
 	var statusTemp map[string]interface{}
-	json.Unmarshal(statusJSON, &statusTemp)
+	_ = json.Unmarshal(statusJSON, &statusTemp)
 
 	return KubernetesResourceStatus{
 		ResourceStatusID: id,
