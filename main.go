@@ -42,6 +42,10 @@ func main() {
 	}
 
 	meshsyncHandler, err := meshsync.New(cfg, log, br)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
 	err = meshsyncHandler.StartDiscovery()
 	if err != nil {
 		log.Error(err)

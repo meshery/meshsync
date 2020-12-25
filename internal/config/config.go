@@ -8,12 +8,10 @@ import (
 
 // New creates a new config instance
 func New(provider string) (config.Handler, error) {
-
 	var (
 		handler config.Handler
 		err     error
 	)
-
 	opts := configprovider.Options{
 		ProviderConfig: map[string]string{
 			configprovider.FilePath: utils.GetHome(),

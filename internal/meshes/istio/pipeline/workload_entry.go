@@ -3,9 +3,9 @@ package pipeline
 import (
 	"log"
 
-	"github.com/layer5io/meshsync/pkg/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
+	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
 )
 

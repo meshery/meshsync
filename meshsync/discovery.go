@@ -6,7 +6,6 @@ import (
 )
 
 func (h *Handler) StartDiscovery() error {
-
 	err := cluster.Setup(h.DiscoveryClient, h.Broker, h.InformerClient)
 	if err != nil {
 		return ErrSetupCluster(err)
