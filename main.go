@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	configprovider "github.com/layer5io/meshery-adapter-library/config/provider"
 	"github.com/layer5io/meshkit/logger"
@@ -50,11 +49,12 @@ func main() {
 
 	// Initialize service by running pre-defined tasks
 	sHandler := &service.Service{
-		Name:      serviceName,
-		Port:      "11000",
-		Version:   "v0.0.1-alpha3",
-		StartedAt: time.Now(),
-		Handler:   meshsyncHandler,
+		Handler: meshsyncHandler,
+	}
+	err = cfg.GetObject(config.ServerConfig, &sHandler)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
 	}
 
 	// Start GRPC server
