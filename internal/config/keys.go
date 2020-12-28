@@ -1,5 +1,6 @@
 package config
 
 const (
-	BrokerURL = "broker-url"
+	ServerConfig = "server-config"
+	BrokerURL    = "broker-url"
 )
