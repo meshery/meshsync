@@ -29,7 +29,6 @@ type Handler struct {
 }
 
 func New(config config.Handler, log logger.Handler, broker broker.Handler) (*Handler, error) {
-
 	// Initialize Kubeconfig
 	rconfig, err := mesherykube.DetectKubeConfig()
 	if err != nil {

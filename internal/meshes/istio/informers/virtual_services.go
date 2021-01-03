@@ -3,8 +3,8 @@ package informers
 import (
 	"log"
 
-	"github.com/layer5io/meshsync/pkg/model"
 	broker "github.com/layer5io/meshsync/pkg/broker"
+	"github.com/layer5io/meshsync/pkg/model"
 	v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
 	"k8s.io/client-go/tools/cache"
 )
