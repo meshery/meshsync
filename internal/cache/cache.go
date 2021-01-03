@@ -14,11 +14,21 @@ var (
 
 func init() {
 	// Initialize Kubeconfig
-	rconfig, _ := mesherykube.DetectKubeConfig()
-	// Configure discovery client
-	dclient, _ := discovery.NewClient(rconfig)
+	rconfig, err1 := mesherykube.DetectKubeConfig()
+	if err1 != nil {
+		return
+	}
 
-	namespaces, _ := dclient.ListNamespaces()
+	// Configure discovery client
+	dclient, err2 := discovery.NewClient(rconfig)
+	if err2 != nil {
+		return
+	}
+
+	namespaces, err3 := dclient.ListNamespaces()
+	if err3 != nil {
+		return
+	}
 	var namespacesName []string
 
 	// processing
