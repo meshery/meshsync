@@ -21,6 +21,10 @@ go-mod-tidy:
 go-test:
 	./scripts/go-test.sh
 
+.PHONY: check
+check:
+	golangci-lint run
+
 .PHONY: docker-check
 docker: check
 	docker build -t layer5/meshery-meshsync .

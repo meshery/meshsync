@@ -1,74 +1,104 @@
 package model
 
 import (
-	"encoding/json"
-
 	"github.com/google/uuid"
+	"github.com/layer5io/meshkit/database"
 	"github.com/layer5io/meshkit/utils"
 	"github.com/layer5io/meshsync/internal/cache"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func ConvObject(typeMeta metav1.TypeMeta, objectMeta metav1.ObjectMeta, spec interface{}, status interface{}) Object {
-	kubernetesResource := getKubernetesResource()
-	kubernetesResourceTypeMeta := getKubernetesResourceTypeMeta(typeMeta, kubernetesResource.ResourceTypeMetaID)
-	kubernetesResourceObjectMeta := getKubernetesResourceObjectMeta(objectMeta, kubernetesResource.ResourceObjectMetaID)
-	kubernetesResourceSpec := getKubernetesResourceSpec(spec, kubernetesResource.ResourceSpecID)
-	kubernetesResourceStatus := getKubernetesResourceStatus(status, kubernetesResource.ResourceStatusID)
+	index := generateIndex()
+	resourceTypeMeta := makeTypeMeta(typeMeta, index.TypeMetaID)
+	resourceObjectMeta := makeObjectMeta(objectMeta, index.ObjectMetaID)
+	resourceSpec := makeSpec(spec, index.SpecID)
+	resourceStatus := makeStatus(status, index.StatusID)
 
 	return Object{
-		Resource:   kubernetesResource,
-		TypeMeta:   kubernetesResourceTypeMeta,
-		ObjectMeta: kubernetesResourceObjectMeta,
-		Spec:       kubernetesResourceSpec,
-		Status:     kubernetesResourceStatus,
+		Index:      index,
+		TypeMeta:   resourceTypeMeta,
+		ObjectMeta: resourceObjectMeta,
+		Spec:       resourceSpec,
+		Status:     resourceStatus,
 	}
 }
 
-func getKubernetesResource() KubernetesResource {
-	return KubernetesResource{
-		MesheryResourceID:    uuid.New().String(),
-		ResourceID:           uuid.New().String(),
-		ResourceTypeMetaID:   uuid.New().String(),
-		ResourceObjectMetaID: uuid.New().String(),
-		ResourceSpecID:       uuid.New().String(),
-		ResourceStatusID:     uuid.New().String(),
+func generateIndex() Index {
+	return Index{
+		ResourceID:   uuid.New().String(),
+		TypeMetaID:   uuid.New().String(),
+		ObjectMetaID: uuid.New().String(),
+		SpecID:       uuid.New().String(),
+		StatusID:     uuid.New().String(),
 	}
 }
 
-func getKubernetesResourceTypeMeta(resource metav1.TypeMeta, id string) KubernetesResourceTypeMeta {
-	return KubernetesResourceTypeMeta{
-		TypeMeta:           resource,
-		ResourceTypeMetaID: id,
+func makeTypeMeta(resource metav1.TypeMeta, id string) ResourceTypeMeta {
+	return ResourceTypeMeta{
+		Model: database.Model{
+			ID: id,
+		},
+		Kind:       resource.Kind,
+		APIVersion: resource.APIVersion,
 	}
 }
 
-func getKubernetesResourceObjectMeta(resource metav1.ObjectMeta, id string) KubernetesResourceObjectMeta {
-	return KubernetesResourceObjectMeta{
-		ObjectMeta:           resource,
-		ResourceObjectMetaID: id,
-		ClusterID:            cache.ClusterID,
+func makeObjectMeta(resource metav1.ObjectMeta, id string) ResourceObjectMeta {
+	labels, _ := utils.Marshal(resource.Labels)
+	annotations, _ := utils.Marshal(resource.Annotations)
+
+	var creationTime string
+	var deletionTime string
+	if resource.CreationTimestamp.IsZero() {
+		creationTime = resource.CreationTimestamp.String()
+	}
+	if resource.DeletionTimestamp.IsZero() {
+		deletionTime = resource.DeletionTimestamp.String()
+	}
+
+	return ResourceObjectMeta{
+		Model: database.Model{
+			ID: id,
+		},
+		Name:                       resource.Name,
+		GenerateName:               resource.GenerateName,
+		Namespace:                  resource.Namespace,
+		SelfLink:                   resource.SelfLink,
+		UID:                        string(resource.UID),
+		ResourceVersion:            resource.ResourceVersion,
+		Generation:                 resource.Generation,
+		CreationTimestamp:          creationTime,
+		DeletionTimestamp:          deletionTime,
+		DeletionGracePeriodSeconds: resource.DeletionGracePeriodSeconds,
+		Labels:                     labels,
+		Annotations:                annotations,
+		// OwnerReferences:            resource.OwnerReferences,
+		// Finalizers:  resource.Finalizers,
+		ClusterName: resource.ClusterName,
+		// ManagedFields:              resource.ManagedFields,
+		ClusterID: cache.ClusterID,
 	}
 }
 
-func getKubernetesResourceSpec(spec interface{}, id string) KubernetesResourceSpec {
-	specJSON, _ := json.Marshal(spec)
-	var specTemp map[string]interface{}
-	_ = utils.Unmarshal(string(specJSON), &specTemp)
+func makeSpec(spec interface{}, id string) ResourceSpec {
+	specJSON, _ := utils.Marshal(spec)
 
-	return KubernetesResourceSpec{
-		ResourceSpecID: id,
-		Attribute:      specTemp,
+	return ResourceSpec{
+		Model: database.Model{
+			ID: id,
+		},
+		Attribute: string(specJSON),
 	}
 }
 
-func getKubernetesResourceStatus(status interface{}, id string) KubernetesResourceStatus {
-	statusJSON, _ := json.Marshal(status)
-	var statusTemp map[string]interface{}
-	_ = utils.Unmarshal(string(statusJSON), &statusTemp)
+func makeStatus(status interface{}, id string) ResourceStatus {
+	statusJSON, _ := utils.Marshal(status)
 
-	return KubernetesResourceStatus{
-		ResourceStatusID: id,
-		Attribute:        statusTemp,
+	return ResourceStatus{
+		Model: database.Model{
+			ID: id,
+		},
+		Attribute: string(statusJSON),
 	}
 }

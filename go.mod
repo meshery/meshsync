@@ -15,11 +15,13 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/layer5io/meshery-adapter-library v0.1.9
 	github.com/layer5io/meshery-operator v0.2.0
-	github.com/layer5io/meshkit v0.1.30
+	github.com/layer5io/meshkit v0.1.32
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/nats-io/nats.go v1.10.0
 	google.golang.org/grpc v1.34.0
 	google.golang.org/protobuf v1.25.0
+	gorm.io/driver/sqlite v1.1.4 // indirect
+	gorm.io/gorm v1.20.10
 	istio.io/client-go v1.8.1
 	k8s.io/api v0.18.12
 	k8s.io/apimachinery v0.18.12

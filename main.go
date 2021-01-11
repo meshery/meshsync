@@ -48,7 +48,6 @@ func main() {
 	err = meshsyncHandler.StartDiscovery()
 	if err != nil {
 		log.Error(err)
-		os.Exit(1)
 	}
 
 	// Initialize service by running pre-defined tasks

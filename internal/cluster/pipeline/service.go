@@ -30,10 +30,7 @@ func (d *Service) Exec(request *pipeline.Request) *pipeline.Result {
 	// it will contain a pipeline to run
 	log.Println("Service Discovery Started")
 
-	// get all namespaces
-	namespaces := cache.Storage["NamespaceNames"]
-
-	for _, namespace := range namespaces {
+	for _, namespace := range cache.Namespaces {
 		// get Services
 		services, err := d.client.ListServices(namespace)
 		if err != nil {

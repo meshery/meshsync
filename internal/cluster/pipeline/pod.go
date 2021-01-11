@@ -30,10 +30,7 @@ func (p *Pod) Exec(request *pipeline.Request) *pipeline.Result {
 	// it will contain a pipeline to run
 	log.Println("Pod Discovery Started")
 
-	// get all namespaces
-	namespaces := cache.Storage["NamespaceNames"]
-
-	for _, namespace := range namespaces {
+	for _, namespace := range cache.Namespaces {
 		// get Pods
 		pods, err := p.client.ListPods(namespace)
 		if err != nil {

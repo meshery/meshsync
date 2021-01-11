@@ -19,7 +19,7 @@ type Service struct {
 	Name      string    `json:"name"`
 	Port      string    `json:"port"`
 	Version   string    `json:"version"`
-	StartedAt time.Time `json:"string,startedat"`
+	StartedAt time.Time `json:"startedat"`
 
 	Handler *meshsync.Handler
 	Channel chan interface{}
