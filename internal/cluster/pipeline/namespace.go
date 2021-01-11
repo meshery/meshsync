@@ -3,6 +3,7 @@ package pipeline
 import (
 	"log"
 
+	"github.com/layer5io/meshsync/internal/cache"
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
@@ -36,6 +37,7 @@ func (n *Namespace) Exec(request *pipeline.Request) *pipeline.Result {
 			Error: err,
 		}
 	}
+	cache.SetNamespaces(namespaces)
 
 	// processing
 	for _, namespace := range namespaces {

@@ -19,7 +19,7 @@ var (
 		Concurrent: false,
 		Steps:      []pipeline.Step{},
 	}
-	Subject = "cluster"
+	Subject = "meshsync"
 )
 
 func Initialize(client *discovery.Client, broker broker.Handler) *pipeline.Pipeline {

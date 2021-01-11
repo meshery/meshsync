@@ -1,45 +1,59 @@
 package model
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/layer5io/meshkit/database"
 )
 
 type Object struct {
-	Resource   KubernetesResource
-	TypeMeta   KubernetesResourceTypeMeta
-	ObjectMeta KubernetesResourceObjectMeta
-	Spec       KubernetesResourceSpec
-	Status     KubernetesResourceStatus
+	Index      Index              `json:"index,omitempty"`
+	TypeMeta   ResourceTypeMeta   `json:"typemeta,omitempty" gorm:"foreignKey:ResourceTypeMetaID;references:ID"`
+	ObjectMeta ResourceObjectMeta `json:"metadata,omitempty" gorm:"foreignKey:ResourceObjectMetaID;references:ID"`
+	Spec       ResourceSpec       `json:"spec,omitempty" gorm:"foreignKey:ResourceSpecID;references:ID"`
+	Status     ResourceStatus     `json:"status,omitempty" gorm:"foreignKey:ResourceStatusID;references:ID"`
 }
 
-type KubernetesResource struct {
-	MesheryResourceID    string `json:"meshery-resource-id,omitempty"`
-	ResourceID           string `json:"resource-id,omitempty"`
-	ResourceTypeMetaID   string `json:"resource-type-meta-id,omitempty"`
-	ResourceObjectMetaID string `json:"resource-object-meta-id,omitempty"`
-	ResourceSpecID       string `json:"resource-spec-id,omitempty"`
-	ResourceStatusID     string `json:"resource-status-id,omitempty"`
+type Index struct {
+	database.Model
+	ResourceID   string `json:"resource-id,omitempty"`
+	TypeMetaID   string `json:"type-meta-id,omitempty"`
+	ObjectMetaID string `json:"object-meta-id,omitempty"`
+	SpecID       string `json:"spec-id,omitempty"`
+	StatusID     string `json:"status-id,omitempty"`
 }
 
-type KubernetesResourceTypeMeta struct {
-	metav1.TypeMeta `json:",inline"`
-
-	ResourceTypeMetaID string `json:"resource-type-meta-id,omitempty"`
+type ResourceTypeMeta struct {
+	database.Model
+	Kind       string `json:"kind,omitempty"`
+	APIVersion string `json:"apiVersion,omitempty"`
 }
 
-type KubernetesResourceObjectMeta struct {
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	ResourceObjectMetaID string `json:"resource-object-meta-id,omitempty"`
-	ClusterID            string `json:"cluster-id,omitempty"`
+type ResourceObjectMeta struct {
+	database.Model
+	Name                       string `json:"name,omitempty"`
+	GenerateName               string `json:"generateName,omitempty"`
+	Namespace                  string `json:"namespace,omitempty"`
+	SelfLink                   string `json:"selfLink,omitempty"`
+	UID                        string `json:"uid,omitempty"`
+	ResourceVersion            string `json:"resourceVersion,omitempty"`
+	Generation                 int64  `json:"generation,omitempty"`
+	CreationTimestamp          string `json:"creationTimestamp,omitempty"`
+	DeletionTimestamp          string `json:"deletionTimestamp,omitempty"`
+	DeletionGracePeriodSeconds *int64 `json:"deletionGracePeriodSeconds,omitempty"`
+	Labels                     string `json:"labels,omitempty" gorm:"type:json"`
+	Annotations                string `json:"annotations,omitempty" gorm:"type:json"`
+	// OwnerReferences            string `json:"ownerReferences,omitempty" gorm:"type:json"`
+	// Finalizers                 string `json:"finalizers,omitempty" gorm:"type:json"`
+	ClusterName string `json:"clusterName,omitempty"`
+	// ManagedFields string `json:"managedFields,omitempty" gorm:"type:json"`
+	ClusterID string `json:"cluster-id,omitempty"`
 }
 
-type KubernetesResourceSpec struct {
-	ResourceSpecID string                 `json:"resource-spec-id,omitempty"`
-	Attribute      map[string]interface{} `json:"attribute,omitempty"`
+type ResourceSpec struct {
+	database.Model
+	Attribute string `json:"attribute,omitempty" gorm:"type:json"`
 }
 
-type KubernetesResourceStatus struct {
-	ResourceStatusID string                 `json:"resource-status-id,omitempty"`
-	Attribute        map[string]interface{} `json:"attribute,omitempty"`
+type ResourceStatus struct {
+	database.Model
+	Attribute string `json:"attribute,omitempty" gorm:"type:json"`
 }
