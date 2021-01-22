@@ -27,7 +27,7 @@ func (i *Istio) VirtualServiceInformer() cache.SharedIndexInformer {
 						VirtualService.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing VirtualService")
+					log.Println("BROKER: Error publishing VirtualService")
 				}
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
@@ -41,7 +41,7 @@ func (i *Istio) VirtualServiceInformer() cache.SharedIndexInformer {
 						VirtualService.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing VirtualService")
+					log.Println("BROKER: Error publishing VirtualService")
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
@@ -55,7 +55,7 @@ func (i *Istio) VirtualServiceInformer() cache.SharedIndexInformer {
 						VirtualService.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing VirtualService")
+					log.Println("BROKER: Error publishing VirtualService")
 				}
 			},
 		},

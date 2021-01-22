@@ -27,7 +27,7 @@ func (i *Istio) PeerAuthenticationInformer() cache.SharedIndexInformer {
 						PeerAuthentication.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing PeerAuthentication")
+					log.Println("BROKER: Error publishing PeerAuthentication")
 				}
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
@@ -41,7 +41,7 @@ func (i *Istio) PeerAuthenticationInformer() cache.SharedIndexInformer {
 						PeerAuthentication.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing PeerAuthentication")
+					log.Println("BROKER: Error publishing PeerAuthentication")
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
@@ -55,7 +55,7 @@ func (i *Istio) PeerAuthenticationInformer() cache.SharedIndexInformer {
 						PeerAuthentication.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing PeerAuthentication")
+					log.Println("BROKER: Error publishing PeerAuthentication")
 				}
 			},
 		},

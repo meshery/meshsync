@@ -27,7 +27,7 @@ func (i *Istio) WorkloadEntryInformer() cache.SharedIndexInformer {
 						WorkloadEntry.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing WorkloadEntry")
+					log.Println("BROKER: Error publishing WorkloadEntry")
 				}
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
@@ -41,7 +41,7 @@ func (i *Istio) WorkloadEntryInformer() cache.SharedIndexInformer {
 						WorkloadEntry.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing WorkloadEntry")
+					log.Println("BROKER: Error publishing WorkloadEntry")
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
@@ -55,7 +55,7 @@ func (i *Istio) WorkloadEntryInformer() cache.SharedIndexInformer {
 						WorkloadEntry.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing WorkloadEntry")
+					log.Println("BROKER: Error publishing WorkloadEntry")
 				}
 			},
 		},

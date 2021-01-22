@@ -27,7 +27,7 @@ func (i *Istio) DestinationRuleInformer() cache.SharedIndexInformer {
 						DestinationRule.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing DestinationRule")
+					log.Println("BROKER: Error publishing DestinationRule")
 				}
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
@@ -41,7 +41,7 @@ func (i *Istio) DestinationRuleInformer() cache.SharedIndexInformer {
 						DestinationRule.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing DestinationRule")
+					log.Println("BROKER: Error publishing DestinationRule")
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
@@ -55,7 +55,7 @@ func (i *Istio) DestinationRuleInformer() cache.SharedIndexInformer {
 						DestinationRule.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing DestinationRule")
+					log.Println("BROKER: Error publishing DestinationRule")
 				}
 			},
 		},

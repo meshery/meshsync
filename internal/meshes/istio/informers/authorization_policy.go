@@ -27,7 +27,7 @@ func (i *Istio) AuthorizationPolicyInformer() cache.SharedIndexInformer {
 						AuthorizationPolicy.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing AuthorizationPolicy")
+					log.Println("BROKER: Error publishing AuthorizationPolicy")
 				}
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
@@ -41,7 +41,7 @@ func (i *Istio) AuthorizationPolicyInformer() cache.SharedIndexInformer {
 						AuthorizationPolicy.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing AuthorizationPolicy")
+					log.Println("BROKER: Error publishing AuthorizationPolicy")
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
@@ -55,7 +55,7 @@ func (i *Istio) AuthorizationPolicyInformer() cache.SharedIndexInformer {
 						AuthorizationPolicy.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing AuthorizationPolicy")
+					log.Println("BROKER: Error publishing AuthorizationPolicy")
 				}
 			},
 		},

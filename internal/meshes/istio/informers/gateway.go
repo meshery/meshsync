@@ -27,7 +27,7 @@ func (i *Istio) GatewayInformer() cache.SharedIndexInformer {
 						Gateway.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing Gateway")
+					log.Println("BROKER: Error publishing Gateway")
 				}
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
@@ -41,7 +41,7 @@ func (i *Istio) GatewayInformer() cache.SharedIndexInformer {
 						Gateway.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing Gateway")
+					log.Println("BROKER: Error publishing Gateway")
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
@@ -55,7 +55,7 @@ func (i *Istio) GatewayInformer() cache.SharedIndexInformer {
 						Gateway.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing Gateway")
+					log.Println("BROKER: Error publishing Gateway")
 				}
 			},
 		},

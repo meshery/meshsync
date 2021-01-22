@@ -27,7 +27,7 @@ func (i *Istio) EnvoyFilterInformer() cache.SharedIndexInformer {
 						EnvoyFilter.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing EnvoyFilter")
+					log.Println("BROKER: Error publishing EnvoyFilter")
 				}
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
@@ -41,7 +41,7 @@ func (i *Istio) EnvoyFilterInformer() cache.SharedIndexInformer {
 						EnvoyFilter.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing EnvoyFilter")
+					log.Println("BROKER: Error publishing EnvoyFilter")
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
@@ -55,7 +55,7 @@ func (i *Istio) EnvoyFilterInformer() cache.SharedIndexInformer {
 						EnvoyFilter.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing EnvoyFilter")
+					log.Println("BROKER: Error publishing EnvoyFilter")
 				}
 			},
 		},

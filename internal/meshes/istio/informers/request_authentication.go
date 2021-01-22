@@ -27,7 +27,7 @@ func (i *Istio) RequestAuthenticationInformer() cache.SharedIndexInformer {
 						RequestAuthentication.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing RequestAuthentication")
+					log.Println("BROKER: Error publishing RequestAuthentication")
 				}
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
@@ -41,7 +41,7 @@ func (i *Istio) RequestAuthenticationInformer() cache.SharedIndexInformer {
 						RequestAuthentication.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing RequestAuthentication")
+					log.Println("BROKER: Error publishing RequestAuthentication")
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
@@ -55,7 +55,7 @@ func (i *Istio) RequestAuthenticationInformer() cache.SharedIndexInformer {
 						RequestAuthentication.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing RequestAuthentication")
+					log.Println("BROKER: Error publishing RequestAuthentication")
 				}
 			},
 		},

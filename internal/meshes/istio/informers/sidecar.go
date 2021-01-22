@@ -27,7 +27,7 @@ func (i *Istio) SidecarInformer() cache.SharedIndexInformer {
 						Sidecar.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing Sidecar")
+					log.Println("BROKER: Error publishing Sidecar")
 				}
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
@@ -41,7 +41,7 @@ func (i *Istio) SidecarInformer() cache.SharedIndexInformer {
 						Sidecar.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing Sidecar")
+					log.Println("BROKER: Error publishing Sidecar")
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
@@ -55,7 +55,7 @@ func (i *Istio) SidecarInformer() cache.SharedIndexInformer {
 						Sidecar.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing Sidecar")
+					log.Println("BROKER: Error publishing Sidecar")
 				}
 			},
 		},
