@@ -61,7 +61,7 @@ func main() {
 	}
 
 	// Start GRPC server
-	log.Info("Adaptor Listening at port: ", sHandler.Port)
+	log.Info("Controller Listening at port: ", sHandler.Port)
 	err = service.Start(sHandler)
 	if err != nil {
 		log.Error(err)

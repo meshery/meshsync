@@ -5,7 +5,7 @@ import (
 )
 
 type Object struct {
-	Index      Index              `json:"index,omitempty"`
+	Index      Index              `json:"index,omitempty" gorm:"foreignKey:Index;references:ID"`
 	TypeMeta   ResourceTypeMeta   `json:"typemeta,omitempty" gorm:"foreignKey:ResourceTypeMetaID;references:ID"`
 	ObjectMeta ResourceObjectMeta `json:"metadata,omitempty" gorm:"foreignKey:ResourceObjectMetaID;references:ID"`
 	Spec       ResourceSpec       `json:"spec,omitempty" gorm:"foreignKey:ResourceSpecID;references:ID"`
