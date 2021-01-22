@@ -27,7 +27,7 @@ func (i *Istio) ServiceEntryInformer() cache.SharedIndexInformer {
 						ServiceEntry.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing ServiceEntry")
+					log.Println("BROKER: Error publishing ServiceEntry")
 				}
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
@@ -41,7 +41,7 @@ func (i *Istio) ServiceEntryInformer() cache.SharedIndexInformer {
 						ServiceEntry.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing ServiceEntry")
+					log.Println("BROKER: Error publishing ServiceEntry")
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
@@ -55,7 +55,7 @@ func (i *Istio) ServiceEntryInformer() cache.SharedIndexInformer {
 						ServiceEntry.Status,
 					)})
 				if err != nil {
-					log.Println("NATS: Error publishing ServiceEntry")
+					log.Println("BROKER: Error publishing ServiceEntry")
 				}
 			},
 		},

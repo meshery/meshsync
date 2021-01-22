@@ -50,10 +50,10 @@ func makeObjectMeta(resource metav1.ObjectMeta, id string) ResourceObjectMeta {
 
 	var creationTime string
 	var deletionTime string
-	if resource.CreationTimestamp.IsZero() {
+	if !resource.CreationTimestamp.IsZero() {
 		creationTime = resource.CreationTimestamp.String()
 	}
-	if resource.DeletionTimestamp.IsZero() {
+	if !resource.DeletionTimestamp.IsZero() {
 		deletionTime = resource.DeletionTimestamp.String()
 	}
 

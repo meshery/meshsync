@@ -55,7 +55,7 @@ func New(provider string) (config.Handler, error) {
 }
 
 func initConfig(cfg config.Handler) error {
-	cfg.SetKey(BrokerURL, os.Getenv("NATS_ENDPOINT"))
+	cfg.SetKey(BrokerURL, os.Getenv("BROKER_URL"))
 	err := cfg.SetObject(ServerConfig, server)
 	if err != nil {
 		return err
