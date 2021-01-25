@@ -7,6 +7,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Node will implement step interface for Nodes
@@ -42,7 +43,10 @@ func (n *Node) Exec(request *pipeline.Request) *pipeline.Result {
 		// publishing discovered node
 		err := n.broker.Publish(Subject, &broker.Message{
 			Object: model.ConvObject(
-				node.TypeMeta,
+				metav1.TypeMeta{
+					Kind:       "Node",
+					APIVersion: "v1",
+				},
 				node.ObjectMeta,
 				node.Spec,
 				node.Status,

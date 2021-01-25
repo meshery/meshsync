@@ -7,6 +7,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -47,7 +48,10 @@ func (vs *VirtualService) Exec(request *pipeline.Request) *pipeline.Result {
 			// publishing discovered virtualService
 			err := vs.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					virtualService.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "VirtualService",
+						APIVersion: "v1beta1",
+					},
 					virtualService.ObjectMeta,
 					virtualService.Spec,
 					virtualService.Status,

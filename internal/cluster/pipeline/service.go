@@ -8,6 +8,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Service will implement step interface for Services
@@ -44,7 +45,10 @@ func (d *Service) Exec(request *pipeline.Request) *pipeline.Result {
 			// publishing discovered Service
 			err := d.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					service.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "Service",
+						APIVersion: "v1",
+					},
 					service.ObjectMeta,
 					service.Spec,
 					service.Status,

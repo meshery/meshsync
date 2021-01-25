@@ -6,6 +6,7 @@ import (
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	"github.com/layer5io/meshsync/pkg/model"
 	v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -21,7 +22,10 @@ func (i *Istio) GatewayInformer() cache.SharedIndexInformer {
 				log.Printf("Gateway Named: %s - added", Gateway.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						Gateway.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "Gateway",
+							APIVersion: "v1beta1",
+						},
 						Gateway.ObjectMeta,
 						Gateway.Spec,
 						Gateway.Status,
@@ -35,7 +39,10 @@ func (i *Istio) GatewayInformer() cache.SharedIndexInformer {
 				log.Printf("Gateway Named: %s - updated", Gateway.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						Gateway.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "Gateway",
+							APIVersion: "v1beta1",
+						},
 						Gateway.ObjectMeta,
 						Gateway.Spec,
 						Gateway.Status,
@@ -49,7 +56,10 @@ func (i *Istio) GatewayInformer() cache.SharedIndexInformer {
 				log.Printf("Gateway Named: %s - deleted", Gateway.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						Gateway.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "Gateway",
+							APIVersion: "v1beta1",
+						},
 						Gateway.ObjectMeta,
 						Gateway.Spec,
 						Gateway.Status,

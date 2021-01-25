@@ -7,6 +7,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // AuthorizationPolicy will implement step interface for AuthorizationPolicies
@@ -42,7 +43,10 @@ func (ap *AuthorizationPolicy) Exec(request *pipeline.Request) *pipeline.Result 
 			// publishing discovered authorizationPolicy
 			err := ap.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					authorizationPolicy.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "AutherizationPolicy",
+						APIVersion: "v1beta1",
+					},
 					authorizationPolicy.ObjectMeta,
 					authorizationPolicy.Spec,
 					authorizationPolicy.Status,

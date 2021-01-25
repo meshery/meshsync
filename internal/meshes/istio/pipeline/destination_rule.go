@@ -7,6 +7,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // DestinationRule will implement step interface for DestinationRules
@@ -42,7 +43,10 @@ func (dr *DestinationRule) Exec(request *pipeline.Request) *pipeline.Result {
 			// publishing discovered destinationRule
 			err := dr.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					destinationRule.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "DestinationRule",
+						APIVersion: "v1beta1",
+					},
 					destinationRule.ObjectMeta,
 					destinationRule.Spec,
 					destinationRule.Status,

@@ -7,6 +7,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // WorkloadGroup will implement step interface for WorkloadGroups
@@ -43,7 +44,10 @@ func (wg *WorkloadGroup) Exec(request *pipeline.Request) *pipeline.Result {
 			// publishing discovered workloadGroup
 			err := wg.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					workloadGroup.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "WorkloadGroup",
+						APIVersion: "v1beta1",
+					},
 					workloadGroup.ObjectMeta,
 					workloadGroup.Spec,
 					workloadGroup.Status,

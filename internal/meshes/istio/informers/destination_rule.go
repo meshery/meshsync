@@ -6,6 +6,7 @@ import (
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	"github.com/layer5io/meshsync/pkg/model"
 	v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -21,7 +22,10 @@ func (i *Istio) DestinationRuleInformer() cache.SharedIndexInformer {
 				log.Printf("DestinationRule Named: %s - added", DestinationRule.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						DestinationRule.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "DestinationRule",
+							APIVersion: "v1beta1",
+						},
 						DestinationRule.ObjectMeta,
 						DestinationRule.Spec,
 						DestinationRule.Status,
@@ -35,7 +39,10 @@ func (i *Istio) DestinationRuleInformer() cache.SharedIndexInformer {
 				log.Printf("DestinationRule Named: %s - updated", DestinationRule.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						DestinationRule.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "DestinationRule",
+							APIVersion: "v1beta1",
+						},
 						DestinationRule.ObjectMeta,
 						DestinationRule.Spec,
 						DestinationRule.Status,
@@ -49,7 +56,10 @@ func (i *Istio) DestinationRuleInformer() cache.SharedIndexInformer {
 				log.Printf("DestinationRule Named: %s - deleted", DestinationRule.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						DestinationRule.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "DestinationRule",
+							APIVersion: "v1beta1",
+						},
 						DestinationRule.ObjectMeta,
 						DestinationRule.Spec,
 						DestinationRule.Status,

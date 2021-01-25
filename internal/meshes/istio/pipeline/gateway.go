@@ -7,6 +7,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Gateway will implement step interface for Gateway
@@ -43,7 +44,10 @@ func (g *Gateway) Exec(request *pipeline.Request) *pipeline.Result {
 			// publishing discovered gateway
 			err := g.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					gateway.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "Gateway",
+						APIVersion: "v1beta1",
+					},
 					gateway.ObjectMeta,
 					gateway.Spec,
 					gateway.Status,

@@ -7,6 +7,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EnvoyFilter will implement step interface for EnvoyFilters
@@ -43,7 +44,10 @@ func (ef *EnvoyFilter) Exec(request *pipeline.Request) *pipeline.Result {
 			// publishing discovered envoyFilter
 			err := ef.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					envoyFilter.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "EnvoyFilter",
+						APIVersion: "v1beta1",
+					},
 					envoyFilter.ObjectMeta,
 					envoyFilter.Spec,
 					envoyFilter.Status,

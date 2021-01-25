@@ -5,7 +5,8 @@ import (
 
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	"github.com/layer5io/meshsync/pkg/model"
-	v1 "k8s.io/api/apps/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -17,11 +18,14 @@ func (c *Cluster) DeploymentInformer() cache.SharedIndexInformer {
 	deploymentInformer.AddEventHandler(
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
-				deployment := obj.(*v1.Deployment)
+				deployment := obj.(*appsv1.Deployment)
 				log.Printf("Deployment Named: %s - added", deployment.Name)
 				err := c.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						deployment.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "Deployment",
+							APIVersion: "v1",
+						},
 						deployment.ObjectMeta,
 						deployment.Spec,
 						deployment.Status,
@@ -31,11 +35,14 @@ func (c *Cluster) DeploymentInformer() cache.SharedIndexInformer {
 				}
 			},
 			UpdateFunc: func(new interface{}, old interface{}) {
-				deployment := new.(*v1.Deployment)
+				deployment := new.(*appsv1.Deployment)
 				log.Printf("Deployment Named: %s - updated", deployment.Name)
 				err := c.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						deployment.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "Deployment",
+							APIVersion: "v1",
+						},
 						deployment.ObjectMeta,
 						deployment.Spec,
 						deployment.Status,
@@ -45,11 +52,14 @@ func (c *Cluster) DeploymentInformer() cache.SharedIndexInformer {
 				}
 			},
 			DeleteFunc: func(obj interface{}) {
-				deployment := obj.(*v1.Deployment)
+				deployment := obj.(*appsv1.Deployment)
 				log.Printf("Deployment Named: %s - deleted", deployment.Name)
 				err := c.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						deployment.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "Deployment",
+							APIVersion: "v1",
+						},
 						deployment.ObjectMeta,
 						deployment.Spec,
 						deployment.Status,

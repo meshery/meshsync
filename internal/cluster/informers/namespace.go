@@ -6,6 +6,7 @@ import (
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	"github.com/layer5io/meshsync/pkg/model"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -21,7 +22,10 @@ func (c *Cluster) NamespaceInformer() cache.SharedIndexInformer {
 				log.Printf("Namespace Named: %s - added", Namespace.Name)
 				err := c.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						Namespace.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
 						Namespace.ObjectMeta,
 						Namespace.Spec,
 						Namespace.Status,
@@ -35,7 +39,10 @@ func (c *Cluster) NamespaceInformer() cache.SharedIndexInformer {
 				log.Printf("Namespace Named: %s - updated", Namespace.Name)
 				err := c.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						Namespace.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
 						Namespace.ObjectMeta,
 						Namespace.Spec,
 						Namespace.Status,
@@ -49,7 +56,10 @@ func (c *Cluster) NamespaceInformer() cache.SharedIndexInformer {
 				log.Printf("Namespace Named: %s - deleted", Namespace.Name)
 				err := c.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						Namespace.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "Namespace",
+							APIVersion: "v1",
+						},
 						Namespace.ObjectMeta,
 						Namespace.Spec,
 						Namespace.Status,

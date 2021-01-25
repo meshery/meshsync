@@ -6,6 +6,7 @@ import (
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	"github.com/layer5io/meshsync/pkg/model"
 	v1alpha3 "istio.io/client-go/pkg/apis/networking/v1alpha3"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -21,7 +22,10 @@ func (i *Istio) WorkloadGroupInformer() cache.SharedIndexInformer {
 				log.Printf("WorkloadGroup Named: %s - added", WorkloadGroup.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						WorkloadGroup.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "WorkloadGroup",
+							APIVersion: "v1beta1",
+						},
 						WorkloadGroup.ObjectMeta,
 						WorkloadGroup.Spec,
 						WorkloadGroup.Status,
@@ -35,7 +39,10 @@ func (i *Istio) WorkloadGroupInformer() cache.SharedIndexInformer {
 				log.Printf("WorkloadGroup Named: %s - updated", WorkloadGroup.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						WorkloadGroup.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "WorkloadGroup",
+							APIVersion: "v1beta1",
+						},
 						WorkloadGroup.ObjectMeta,
 						WorkloadGroup.Spec,
 						WorkloadGroup.Status,
@@ -49,7 +56,10 @@ func (i *Istio) WorkloadGroupInformer() cache.SharedIndexInformer {
 				log.Printf("WorkloadGroup Named: %s - deleted", WorkloadGroup.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						WorkloadGroup.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "WorkloadGroup",
+							APIVersion: "v1beta1",
+						},
 						WorkloadGroup.ObjectMeta,
 						WorkloadGroup.Spec,
 						WorkloadGroup.Status,

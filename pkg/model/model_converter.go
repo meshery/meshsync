@@ -1,15 +1,18 @@
 package model
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/google/uuid"
-	"github.com/layer5io/meshkit/database"
 	"github.com/layer5io/meshkit/utils"
 	"github.com/layer5io/meshsync/internal/cache"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func ConvObject(typeMeta metav1.TypeMeta, objectMeta metav1.ObjectMeta, spec interface{}, status interface{}) Object {
-	index := generateIndex()
+	resourceIdentifier := fmt.Sprintf("%s-%s-%s-%s", typeMeta.Kind, typeMeta.APIVersion, objectMeta.Namespace, objectMeta.Name)
+	index := generateIndex(resourceIdentifier)
 	resourceTypeMeta := makeTypeMeta(typeMeta, index.TypeMetaID)
 	resourceObjectMeta := makeObjectMeta(objectMeta, index.ObjectMetaID)
 	resourceSpec := makeSpec(spec, index.SpecID)
@@ -24,8 +27,10 @@ func ConvObject(typeMeta metav1.TypeMeta, objectMeta metav1.ObjectMeta, spec int
 	}
 }
 
-func generateIndex() Index {
+func generateIndex(id string) Index {
 	return Index{
+		ID:           id,
+		CreatedAt:    time.Now().String(),
 		ResourceID:   uuid.New().String(),
 		TypeMetaID:   uuid.New().String(),
 		ObjectMetaID: uuid.New().String(),
@@ -36,9 +41,7 @@ func generateIndex() Index {
 
 func makeTypeMeta(resource metav1.TypeMeta, id string) ResourceTypeMeta {
 	return ResourceTypeMeta{
-		Model: database.Model{
-			ID: id,
-		},
+		ID:         id,
 		Kind:       resource.Kind,
 		APIVersion: resource.APIVersion,
 	}
@@ -58,9 +61,7 @@ func makeObjectMeta(resource metav1.ObjectMeta, id string) ResourceObjectMeta {
 	}
 
 	return ResourceObjectMeta{
-		Model: database.Model{
-			ID: id,
-		},
+		ID:                         id,
 		Name:                       resource.Name,
 		GenerateName:               resource.GenerateName,
 		Namespace:                  resource.Namespace,
@@ -85,9 +86,7 @@ func makeSpec(spec interface{}, id string) ResourceSpec {
 	specJSON, _ := utils.Marshal(spec)
 
 	return ResourceSpec{
-		Model: database.Model{
-			ID: id,
-		},
+		ID:        id,
 		Attribute: string(specJSON),
 	}
 }
@@ -96,9 +95,7 @@ func makeStatus(status interface{}, id string) ResourceStatus {
 	statusJSON, _ := utils.Marshal(status)
 
 	return ResourceStatus{
-		Model: database.Model{
-			ID: id,
-		},
+		ID:        id,
 		Attribute: string(statusJSON),
 	}
 }

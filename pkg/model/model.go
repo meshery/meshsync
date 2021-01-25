@@ -1,19 +1,19 @@
 package model
 
-import (
-	"github.com/layer5io/meshkit/database"
-)
-
 type Object struct {
-	Index      Index              `json:"index,omitempty" gorm:"foreignKey:Index;references:ID"`
-	TypeMeta   ResourceTypeMeta   `json:"typemeta,omitempty" gorm:"foreignKey:ResourceTypeMetaID;references:ID"`
-	ObjectMeta ResourceObjectMeta `json:"metadata,omitempty" gorm:"foreignKey:ResourceObjectMetaID;references:ID"`
-	Spec       ResourceSpec       `json:"spec,omitempty" gorm:"foreignKey:ResourceSpecID;references:ID"`
-	Status     ResourceStatus     `json:"status,omitempty" gorm:"foreignKey:ResourceStatusID;references:ID"`
+	Index      Index              `json:"index,omitempty"`
+	TypeMeta   ResourceTypeMeta   `json:"typemeta,omitempty"`
+	ObjectMeta ResourceObjectMeta `json:"metadata,omitempty"`
+	Spec       ResourceSpec       `json:"spec,omitempty"`
+	Status     ResourceStatus     `json:"status,omitempty"`
 }
 
 type Index struct {
-	database.Model
+	ID        string `json:"id,omitempty" gorm:"primarykey"`
+	CreatedAt string `json:"created_at,omitempty" gorm:"index"`
+	UpdatedAt string `json:"updated_at,omitempty" gorm:"index"`
+	DeletedAt string `json:"deleted_at,omitempty" gorm:"index"`
+
 	ResourceID   string `json:"resource-id,omitempty"`
 	TypeMetaID   string `json:"type-meta-id,omitempty"`
 	ObjectMetaID string `json:"object-meta-id,omitempty"`
@@ -22,13 +22,13 @@ type Index struct {
 }
 
 type ResourceTypeMeta struct {
-	database.Model
+	ID         string `json:"id,omitempty" gorm:"primarykey"`
 	Kind       string `json:"kind,omitempty"`
 	APIVersion string `json:"apiVersion,omitempty"`
 }
 
 type ResourceObjectMeta struct {
-	database.Model
+	ID                         string `json:"id,omitempty" gorm:"primarykey"`
 	Name                       string `json:"name,omitempty"`
 	GenerateName               string `json:"generateName,omitempty"`
 	Namespace                  string `json:"namespace,omitempty"`
@@ -49,11 +49,11 @@ type ResourceObjectMeta struct {
 }
 
 type ResourceSpec struct {
-	database.Model
+	ID        string `json:"id,omitempty" gorm:"primarykey"`
 	Attribute string `json:"attribute,omitempty" gorm:"type:json"`
 }
 
 type ResourceStatus struct {
-	database.Model
+	ID        string `json:"id,omitempty" gorm:"primarykey"`
 	Attribute string `json:"attribute,omitempty" gorm:"type:json"`
 }

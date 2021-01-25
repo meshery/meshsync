@@ -7,6 +7,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // RequestAuthenticaton will implement step interface for RequestAuthenticatons
@@ -43,7 +44,10 @@ func (ra *RequestAuthenticaton) Exec(request *pipeline.Request) *pipeline.Result
 			// publishing discovered requestAuthentication
 			err := ra.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					requestAuthentication.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "RequestAuthentication",
+						APIVersion: "v1beta1",
+					},
 					requestAuthentication.ObjectMeta,
 					requestAuthentication.Spec,
 					requestAuthentication.Status,

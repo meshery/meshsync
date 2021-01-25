@@ -7,6 +7,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // WorkloadEntry will implement step interface for WorkloadEntry
@@ -43,7 +44,10 @@ func (we *WorkloadEntry) Exec(request *pipeline.Request) *pipeline.Result {
 			// publishing discovered workloadEntry
 			err := we.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					workloadEntry.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "WorkloadEntry",
+						APIVersion: "v1beta1",
+					},
 					workloadEntry.ObjectMeta,
 					workloadEntry.Spec,
 					workloadEntry.Status,

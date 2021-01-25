@@ -6,6 +6,7 @@ import (
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	"github.com/layer5io/meshsync/pkg/model"
 	v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -21,7 +22,10 @@ func (i *Istio) VirtualServiceInformer() cache.SharedIndexInformer {
 				log.Printf("VirtualService Named: %s - added", VirtualService.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						VirtualService.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "VirtualService",
+							APIVersion: "v1beta1",
+						},
 						VirtualService.ObjectMeta,
 						VirtualService.Spec,
 						VirtualService.Status,
@@ -35,7 +39,10 @@ func (i *Istio) VirtualServiceInformer() cache.SharedIndexInformer {
 				log.Printf("VirtualService Named: %s - updated", VirtualService.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						VirtualService.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "VirtualService",
+							APIVersion: "v1beta1",
+						},
 						VirtualService.ObjectMeta,
 						VirtualService.Spec,
 						VirtualService.Status,
@@ -49,7 +56,10 @@ func (i *Istio) VirtualServiceInformer() cache.SharedIndexInformer {
 				log.Printf("VirtualService Named: %s - deleted", VirtualService.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						VirtualService.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "VirtualService",
+							APIVersion: "v1beta1",
+						},
 						VirtualService.ObjectMeta,
 						VirtualService.Spec,
 						VirtualService.Status,
