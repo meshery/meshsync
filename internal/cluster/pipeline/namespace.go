@@ -8,6 +8,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Namespace will implement step interface for Namespaces
@@ -44,7 +45,10 @@ func (n *Namespace) Exec(request *pipeline.Request) *pipeline.Result {
 		// publishing discovered namespace
 		err := n.broker.Publish(Subject, &broker.Message{
 			Object: model.ConvObject(
-				namespace.TypeMeta,
+				metav1.TypeMeta{
+					Kind:       "Namespace",
+					APIVersion: "v1",
+				},
 				namespace.ObjectMeta,
 				namespace.Spec,
 				namespace.Status,

@@ -7,6 +7,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ServiceEntry will implement step interface for ServiceEntries
@@ -43,7 +44,10 @@ func (se *ServiceEntry) Exec(request *pipeline.Request) *pipeline.Result {
 			// publishing discovered serviceEntry
 			err := se.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					serviceEntry.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "ServiceEntry",
+						APIVersion: "v1beta1",
+					},
 					serviceEntry.ObjectMeta,
 					serviceEntry.Spec,
 					serviceEntry.Status,

@@ -7,6 +7,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Sidecar will implement step interface for Sidecar
@@ -43,7 +44,10 @@ func (s *Sidecar) Exec(request *pipeline.Request) *pipeline.Result {
 			// publishing discovered sidecar
 			err := s.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					sidecar.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "Sidecar",
+						APIVersion: "v1beta1",
+					},
 					sidecar.ObjectMeta,
 					sidecar.Spec,
 					sidecar.Status,

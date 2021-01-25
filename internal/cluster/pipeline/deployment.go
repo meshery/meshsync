@@ -8,6 +8,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Deployment will implement step interface for Deployments
@@ -44,7 +45,10 @@ func (d *Deployment) Exec(request *pipeline.Request) *pipeline.Result {
 			// publishing discovered deployment
 			err := d.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					deployment.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "Deployment",
+						APIVersion: "v1",
+					},
 					deployment.ObjectMeta,
 					deployment.Spec,
 					deployment.Status,

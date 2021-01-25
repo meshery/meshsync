@@ -6,6 +6,7 @@ import (
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	"github.com/layer5io/meshsync/pkg/model"
 	v1beta1 "istio.io/client-go/pkg/apis/networking/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -21,7 +22,10 @@ func (i *Istio) ServiceEntryInformer() cache.SharedIndexInformer {
 				log.Printf("ServiceEntry Named: %s - added", ServiceEntry.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						ServiceEntry.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "ServiceEntry",
+							APIVersion: "v1beta1",
+						},
 						ServiceEntry.ObjectMeta,
 						ServiceEntry.Spec,
 						ServiceEntry.Status,
@@ -35,7 +39,10 @@ func (i *Istio) ServiceEntryInformer() cache.SharedIndexInformer {
 				log.Printf("ServiceEntry Named: %s - updated", ServiceEntry.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						ServiceEntry.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "ServiceEntry",
+							APIVersion: "v1beta1",
+						},
 						ServiceEntry.ObjectMeta,
 						ServiceEntry.Spec,
 						ServiceEntry.Status,
@@ -49,7 +56,10 @@ func (i *Istio) ServiceEntryInformer() cache.SharedIndexInformer {
 				log.Printf("ServiceEntry Named: %s - deleted", ServiceEntry.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						ServiceEntry.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "ServiceEntry",
+							APIVersion: "v1beta1",
+						},
 						ServiceEntry.ObjectMeta,
 						ServiceEntry.Spec,
 						ServiceEntry.Status,

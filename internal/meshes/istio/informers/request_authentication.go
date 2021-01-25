@@ -6,6 +6,7 @@ import (
 	broker "github.com/layer5io/meshsync/pkg/broker"
 	"github.com/layer5io/meshsync/pkg/model"
 	v1beta1 "istio.io/client-go/pkg/apis/security/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -21,7 +22,10 @@ func (i *Istio) RequestAuthenticationInformer() cache.SharedIndexInformer {
 				log.Printf("RequestAuthentication Named: %s - added", RequestAuthentication.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						RequestAuthentication.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "RequestAuthentication",
+							APIVersion: "v1beta1",
+						},
 						RequestAuthentication.ObjectMeta,
 						RequestAuthentication.Spec,
 						RequestAuthentication.Status,
@@ -35,7 +39,10 @@ func (i *Istio) RequestAuthenticationInformer() cache.SharedIndexInformer {
 				log.Printf("RequestAuthentication Named: %s - updated", RequestAuthentication.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						RequestAuthentication.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "RequestAuthentication",
+							APIVersion: "v1beta1",
+						},
 						RequestAuthentication.ObjectMeta,
 						RequestAuthentication.Spec,
 						RequestAuthentication.Status,
@@ -49,7 +56,10 @@ func (i *Istio) RequestAuthenticationInformer() cache.SharedIndexInformer {
 				log.Printf("RequestAuthentication Named: %s - deleted", RequestAuthentication.Name)
 				err := i.broker.Publish(Subject, &broker.Message{
 					Object: model.ConvObject(
-						RequestAuthentication.TypeMeta,
+						metav1.TypeMeta{
+							Kind:       "RequestAuthentication",
+							APIVersion: "v1beta1",
+						},
 						RequestAuthentication.ObjectMeta,
 						RequestAuthentication.Spec,
 						RequestAuthentication.Status,

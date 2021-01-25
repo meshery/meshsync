@@ -8,6 +8,7 @@ import (
 	discovery "github.com/layer5io/meshsync/pkg/discovery"
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // Pod will implement step interface for Pods
@@ -44,7 +45,10 @@ func (p *Pod) Exec(request *pipeline.Request) *pipeline.Result {
 			// publishing discovered pod
 			err := p.broker.Publish(Subject, &broker.Message{
 				Object: model.ConvObject(
-					pod.TypeMeta,
+					metav1.TypeMeta{
+						Kind:       "Pod",
+						APIVersion: "v1",
+					},
 					pod.ObjectMeta,
 					pod.Spec,
 					pod.Status,
