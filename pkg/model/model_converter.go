@@ -2,9 +2,7 @@ package model
 
 import (
 	"fmt"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/layer5io/meshkit/utils"
 	"github.com/layer5io/meshsync/internal/cache"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,14 +10,13 @@ import (
 
 func ConvObject(typeMeta metav1.TypeMeta, objectMeta metav1.ObjectMeta, spec interface{}, status interface{}) Object {
 	resourceIdentifier := fmt.Sprintf("%s-%s-%s-%s", typeMeta.Kind, typeMeta.APIVersion, objectMeta.Namespace, objectMeta.Name)
-	index := generateIndex(resourceIdentifier)
-	resourceTypeMeta := makeTypeMeta(typeMeta, index.TypeMetaID)
-	resourceObjectMeta := makeObjectMeta(objectMeta, index.ObjectMetaID)
-	resourceSpec := makeSpec(spec, index.SpecID)
-	resourceStatus := makeStatus(status, index.StatusID)
+	resourceTypeMeta := makeTypeMeta(typeMeta)
+	resourceObjectMeta := makeObjectMeta(objectMeta)
+	resourceSpec := makeSpec(spec)
+	resourceStatus := makeStatus(status)
 
 	return Object{
-		Index:      index,
+		ResourceID: resourceIdentifier,
 		TypeMeta:   resourceTypeMeta,
 		ObjectMeta: resourceObjectMeta,
 		Spec:       resourceSpec,
@@ -27,30 +24,14 @@ func ConvObject(typeMeta metav1.TypeMeta, objectMeta metav1.ObjectMeta, spec int
 	}
 }
 
-func generateIndex(id string) Index {
-	return Index{
-		ID:           id,
-		CreatedAt:    time.Now().String(),
-		ResourceID:   uuid.New().String(),
-		TypeMetaID:   uuid.New().String(),
-		ObjectMetaID: uuid.New().String(),
-		SpecID:       uuid.New().String(),
-		StatusID:     uuid.New().String(),
-	}
-}
-
-func makeTypeMeta(resource metav1.TypeMeta, id string) ResourceTypeMeta {
-	return ResourceTypeMeta{
-		ID:         id,
+func makeTypeMeta(resource metav1.TypeMeta) *ResourceTypeMeta {
+	return &ResourceTypeMeta{
 		Kind:       resource.Kind,
 		APIVersion: resource.APIVersion,
 	}
 }
 
-func makeObjectMeta(resource metav1.ObjectMeta, id string) ResourceObjectMeta {
-	labels, _ := utils.Marshal(resource.Labels)
-	annotations, _ := utils.Marshal(resource.Annotations)
-
+func makeObjectMeta(resource metav1.ObjectMeta) *ResourceObjectMeta {
 	var creationTime string
 	var deletionTime string
 	if !resource.CreationTimestamp.IsZero() {
@@ -60,20 +41,19 @@ func makeObjectMeta(resource metav1.ObjectMeta, id string) ResourceObjectMeta {
 		deletionTime = resource.DeletionTimestamp.String()
 	}
 
-	return ResourceObjectMeta{
-		ID:                         id,
+	return &ResourceObjectMeta{
 		Name:                       resource.Name,
 		GenerateName:               resource.GenerateName,
 		Namespace:                  resource.Namespace,
 		SelfLink:                   resource.SelfLink,
 		UID:                        string(resource.UID),
 		ResourceVersion:            resource.ResourceVersion,
-		Generation:                 resource.Generation,
 		CreationTimestamp:          creationTime,
 		DeletionTimestamp:          deletionTime,
+		Labels:                     makeLabelsOrAnnotations(resource.Labels),
+		Annotations:                makeLabelsOrAnnotations(resource.Annotations),
+		Generation:                 resource.Generation,
 		DeletionGracePeriodSeconds: resource.DeletionGracePeriodSeconds,
-		Labels:                     labels,
-		Annotations:                annotations,
 		// OwnerReferences:            resource.OwnerReferences,
 		// Finalizers:  resource.Finalizers,
 		ClusterName: resource.ClusterName,
@@ -82,20 +62,29 @@ func makeObjectMeta(resource metav1.ObjectMeta, id string) ResourceObjectMeta {
 	}
 }
 
-func makeSpec(spec interface{}, id string) ResourceSpec {
+func makeSpec(spec interface{}) *ResourceSpec {
 	specJSON, _ := utils.Marshal(spec)
 
-	return ResourceSpec{
-		ID:        id,
+	return &ResourceSpec{
 		Attribute: string(specJSON),
 	}
 }
 
-func makeStatus(status interface{}, id string) ResourceStatus {
+func makeStatus(status interface{}) *ResourceStatus {
 	statusJSON, _ := utils.Marshal(status)
 
-	return ResourceStatus{
-		ID:        id,
+	return &ResourceStatus{
 		Attribute: string(statusJSON),
 	}
+}
+
+func makeLabelsOrAnnotations(items map[string]string) []*KeyValue {
+	result := make([]*KeyValue, 0)
+	for key, val := range items {
+		result = append(result, &KeyValue{
+			Key:   key,
+			Value: val,
+		})
+	}
+	return result
 }
