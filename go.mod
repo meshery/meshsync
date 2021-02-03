@@ -37,6 +37,7 @@ require (
 	google.golang.org/grpc v1.34.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
+	gorm.io/gorm v1.20.10
 	istio.io/client-go v1.8.1
 	k8s.io/api v0.18.12
 	k8s.io/apimachinery v0.18.12
