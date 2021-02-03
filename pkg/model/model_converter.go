@@ -32,7 +32,6 @@ func makeTypeMeta(resource metav1.TypeMeta) *ResourceTypeMeta {
 }
 
 func makeObjectMeta(resource metav1.ObjectMeta) *ResourceObjectMeta {
-
 	var creationTime string
 	var deletionTime string
 	if !resource.CreationTimestamp.IsZero() {
