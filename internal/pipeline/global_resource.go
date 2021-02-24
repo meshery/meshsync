@@ -45,7 +45,7 @@ func (c *GlobalResource) Exec(request *pipeline.Request) *pipeline.Result {
 		err = c.brokerClient.Publish(c.config.PublishSubject, &broker.Message{
 			ObjectType: broker.Single,
 			EventType:  broker.Add,
-			Object:     model.ParseList(&item),
+			Object:     model.ParseList(item),
 		})
 		if err != nil {
 			return &pipeline.Result{

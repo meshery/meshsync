@@ -12,7 +12,7 @@ var (
 
 	Pipelines = map[string]PipelineConfigs{
 		GlobalResourceKey: []PipelineConfig{
-			PipelineConfig{
+			{
 				Group:          "",
 				Version:        "v1",
 				Resource:       "namespaces",
@@ -21,7 +21,7 @@ var (
 			},
 		},
 		LocalResourceKey: []PipelineConfig{
-			PipelineConfig{
+			{
 				Group:          "",
 				Version:        "v1",
 				Resource:       "pods",

@@ -36,15 +36,12 @@ func (h *Handler) StartInformers() error {
 		return err
 	}
 
-	interrupt := make(chan bool, 0)
-	for {
-		select {
-		case signal := <-interrupt:
-			if signal {
-				return nil
-			}
+	interrupt := make(chan bool)
+	for range interrupt {
+		signal := <-interrupt
+		if signal {
+			return nil
 		}
 	}
-
 	return nil
 }

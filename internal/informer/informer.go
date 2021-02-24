@@ -16,7 +16,6 @@ import (
 )
 
 func Run(client dynamic.Interface, broker broker.Handler, plConfigs map[string]internalconfig.PipelineConfigs) error {
-
 	// Global resource informers
 	configs := plConfigs[internalconfig.GlobalResourceKey]
 	for _, config := range configs {
@@ -67,32 +66,30 @@ func createLocalWatcher(client dynamic.Interface, broker broker.Handler, config 
 
 func handleEvents(watcher watch.Interface, br broker.Handler, sub string) {
 	ch := watcher.ResultChan()
-	for {
-		select {
-		case ev := <-ch:
-			eventType := broker.EventType(string(ev.Type))
-			str, err := utils.Marshal(ev.Object)
-			if err != nil {
-				// Publish to error subject
-				return
-			}
+	for range ch {
+		ev := <-ch
+		eventType := broker.EventType(string(ev.Type))
+		str, err := utils.Marshal(ev.Object)
+		if err != nil {
+			// Publish to error subject
+			return
+		}
 
-			obj := &unstructured.Unstructured{}
-			err = utils.Unmarshal(str, &obj)
-			if err != nil {
-				// Publish to error subject
-				return
-			}
+		obj := unstructured.Unstructured{}
+		err = utils.Unmarshal(str, &obj)
+		if err != nil {
+			// Publish to error subject
+			return
+		}
 
-			err = br.Publish(sub, &broker.Message{
-				ObjectType: broker.Single,
-				EventType:  eventType,
-				Object:     model.ParseList(obj),
-			})
-			if err != nil {
-				// Publish to error subject
-				return
-			}
+		err = br.Publish(sub, &broker.Message{
+			ObjectType: broker.Single,
+			EventType:  eventType,
+			Object:     model.ParseList(obj),
+		})
+		if err != nil {
+			// Publish to error subject
+			return
 		}
 	}
 }

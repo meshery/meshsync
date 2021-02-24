@@ -23,7 +23,6 @@ var (
 )
 
 func New(client dynamic.Interface, broker broker.Handler, plConfigs map[string]internalconfig.PipelineConfigs) *pipeline.Pipeline {
-
 	// Global discovery
 	gdstage := GlobalDiscoveryStage
 	configs := plConfigs[gdstage.Name]

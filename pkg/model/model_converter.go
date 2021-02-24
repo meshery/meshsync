@@ -8,24 +8,23 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func ParseList(object *unstructured.Unstructured) Object {
-
+func ParseList(object unstructured.Unstructured) Object {
 	data, _ := object.MarshalJSON()
 
 	// ObjectMeta internal models
 	labels := make([]*KeyValue, 0)
 	annotations := make([]*KeyValue, 0)
-	finalizers, _, _, _ := jsonparser.Get(data, "metadata", "finalizers")
-	managedFields, _, _, _ := jsonparser.Get(data, "metadata", "managedFields")
-	ownerReferences, _, _, _ := jsonparser.Get(data, "metadata", "ownerReferences")
-	jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+	finalizers, _ := jsonparser.GetString(data, "metadata", "finalizers")
+	managedFields, _ := jsonparser.GetString(data, "metadata", "managedFields")
+	ownerReferences, _ := jsonparser.GetString(data, "metadata", "ownerReferences")
+	_ = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		labels = append(labels, &KeyValue{
 			Key:   string(key),
 			Value: string(value),
 		})
 		return nil
 	}, "metadata", "labels")
-	jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+	_ = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		annotations = append(annotations, &KeyValue{
 			Key:   string(key),
 			Value: string(value),
@@ -38,15 +37,15 @@ func ParseList(object *unstructured.Unstructured) Object {
 
 	result.ObjectMeta.Labels = labels
 	result.ObjectMeta.Annotations = annotations
-	result.ObjectMeta.Finalizers = string(finalizers)
-	result.ObjectMeta.ManagedFields = string(managedFields)
-	result.ObjectMeta.OwnerReferences = string(ownerReferences)
+	result.ObjectMeta.Finalizers = finalizers
+	result.ObjectMeta.ManagedFields = managedFields
+	result.ObjectMeta.OwnerReferences = ownerReferences
 
-	spec, _, _, _ := jsonparser.Get(data, "spec")
-	result.Spec.Attribute = string(spec)
+	spec, _ := jsonparser.GetString(data, "spec")
+	result.Spec.Attribute = spec
 
-	status, _, _, _ := jsonparser.Get(data, "status")
-	result.Status.Attribute = string(status)
+	status, _ := jsonparser.GetString(data, "status")
+	result.Status.Attribute = status
 
 	result.ResourceID = fmt.Sprintf("%s-%s-%s-%s", result.Kind, result.APIVersion, result.ObjectMeta.Namespace, result.ObjectMeta.Name)
 
