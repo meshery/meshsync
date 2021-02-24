@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
-	configprovider "github.com/layer5io/meshery-adapter-library/config/provider"
+	"github.com/layer5io/meshkit/broker/nats"
+	configprovider "github.com/layer5io/meshkit/config/provider"
 	"github.com/layer5io/meshkit/logger"
-	service "github.com/layer5io/meshsync/api/grpc"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/meshsync"
-	"github.com/layer5io/meshsync/pkg/broker/nats"
 )
 
 var (
@@ -27,14 +27,36 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Config init and seed
 	cfg, err := config.New(provider)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 
+	cfg.SetKey(config.BrokerURL, os.Getenv("BROKER_URL"))
+	err = cfg.SetObject(config.ServerKey, config.Server)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+
+	err = cfg.SetObject(config.ResourcesKey, config.Pipelines)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+	// Seeding done
+
 	// Initialize Broker instance
-	br, err := nats.New(cfg.GetKey(config.BrokerURL))
+	br, err := nats.New(nats.Options{
+		URLS:           []string{cfg.GetKey(config.BrokerURL)},
+		ConnectionName: "meshsync",
+		Username:       "",
+		Password:       "",
+		ReconnectWait:  2 * time.Second,
+		MaxReconnect:   5,
+	})
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
@@ -45,26 +67,16 @@ func main() {
 		log.Error(err)
 		os.Exit(1)
 	}
+
 	err = meshsyncHandler.StartDiscovery()
 	if err != nil {
-		log.Error(err)
-	}
-
-	// Initialize service by running pre-defined tasks
-	sHandler := &service.Service{
-		Handler: meshsyncHandler,
-	}
-	err = cfg.GetObject(config.ServerConfig, &sHandler)
-	if err != nil {
-		log.Error(err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	// Start GRPC server
-	log.Info("Controller Listening at port: ", sHandler.Port)
-	err = service.Start(sHandler)
+	err = meshsyncHandler.StartInformers()
 	if err != nil {
-		log.Error(err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
 }

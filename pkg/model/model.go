@@ -9,16 +9,11 @@ type Object struct {
 	gorm.Model
 
 	ResourceID string              `json:"resource_id" gorm:"index"`
-	TypeMeta   *ResourceTypeMeta   `json:"typemeta,omitempty" gorm:"foreignkey:ID;references:id"`
+	APIVersion string              `json:"apiVersion" gorm:"index"`
+	Kind       string              `json:"kind" gorm:"index"`
 	ObjectMeta *ResourceObjectMeta `json:"metadata,omitempty" gorm:"foreignkey:ID;references:id"`
 	Spec       *ResourceSpec       `json:"spec,omitempty" gorm:"foreignkey:ID;references:id"`
 	Status     *ResourceStatus     `json:"status,omitempty" gorm:"foreignkey:ID;references:id"`
-}
-
-type ResourceTypeMeta struct {
-	ID         uint   `json:"id" gorm:"primarykey"`
-	Kind       string `json:"kind,omitempty" gorm:"index"`
-	APIVersion string `json:"apiVersion,omitempty" gorm:"index"`
 }
 
 type KeyValue struct {
@@ -42,11 +37,11 @@ type ResourceObjectMeta struct {
 	DeletionGracePeriodSeconds *int64      `json:"deletionGracePeriodSeconds,omitempty"`
 	Labels                     []*KeyValue `json:"labels,omitempty" gorm:"foreignkey:ID;references:id"`
 	Annotations                []*KeyValue `json:"annotations,omitempty" gorm:"foreignkey:ID;references:id"`
-	// OwnerReferences            string `json:"ownerReferences,omitempty" gorm:"type:json"`
-	// Finalizers                 string `json:"finalizers,omitempty" gorm:"type:json"`
-	ClusterName string `json:"clusterName,omitempty"`
-	// ManagedFields string `json:"managedFields,omitempty" gorm:"type:json"`
-	ClusterID string `json:"cluster_id"`
+	OwnerReferences            string      `json:"ownerReferences,omitempty" gorm:"type:json"`
+	Finalizers                 string      `json:"finalizers,omitempty" gorm:"type:json"`
+	ClusterName                string      `json:"clusterName,omitempty"`
+	ManagedFields              string      `json:"managedFields,omitempty" gorm:"type:json"`
+	ClusterID                  string      `json:"cluster_id"`
 }
 
 type ResourceSpec struct {
