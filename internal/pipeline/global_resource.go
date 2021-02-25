@@ -37,7 +37,7 @@ func (c *GlobalResource) Exec(request *pipeline.Request) *pipeline.Result {
 	}).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		return &pipeline.Result{
-			Error: err,
+			Error: ErrList(c.config.Resource, err),
 		}
 	}
 
@@ -49,7 +49,7 @@ func (c *GlobalResource) Exec(request *pipeline.Request) *pipeline.Result {
 		})
 		if err != nil {
 			return &pipeline.Result{
-				Error: err,
+				Error: ErrPublish(c.config.Resource, err),
 			}
 		}
 	}

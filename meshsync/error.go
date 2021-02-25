@@ -19,37 +19,24 @@ import (
 )
 
 const (
-	ErrSetupClusterCode     = "test_code"
-	ErrSetupIstioCode       = "test_code"
-	ErrKubeConfigCode       = "test_code"
-	ErrNewDiscoveryCode     = "test_code"
-	ErrNewInformerCode      = "test_code"
-	ErrNewKubeClientCode    = "test_code"
-	ErrNewDynClientCode     = "test_code"
-	ErrNewMesheryClientCode = "test_code"
+	ErrGetObjectCode   = "test_code"
+	ErrNewPipelineCode = "test_code"
+	ErrNewInformerCode = "test_code"
+	ErrKubeConfigCode  = "test_code"
 )
 
-func ErrSetupCluster(err error) error {
-	return errors.NewDefault(ErrSetupClusterCode, "Error seting up cluster", err.Error())
+func ErrGetObject(err error) error {
+	return errors.NewDefault(ErrGetObjectCode, "Error getting config object", err.Error())
 }
-func ErrSetupIstio(err error) error {
-	return errors.NewDefault(ErrSetupIstioCode, "Error setting up istio", err.Error())
+
+func ErrNewPipeline(err error) error {
+	return errors.NewDefault(ErrNewPipelineCode, "Error creating pipeline", err.Error())
 }
-func ErrKubeConfig(err error) error {
-	return errors.NewDefault(ErrKubeConfigCode, "Error initializing kubeconfig", err.Error())
-}
-func ErrNewDiscovery(err error) error {
-	return errors.NewDefault(ErrNewDiscoveryCode, "Error initializing discovery client", err.Error())
-}
+
 func ErrNewInformer(err error) error {
-	return errors.NewDefault(ErrNewInformerCode, "Error initializing informer client", err.Error())
+	return errors.NewDefault(ErrNewInformerCode, "Error initializing informer", err.Error())
 }
-func ErrNewKubeClient(err error) error {
-	return errors.NewDefault(ErrNewKubeClientCode, "Error initializing kube client", err.Error())
-}
-func ErrNewDynClient(err error) error {
-	return errors.NewDefault(ErrNewDynClientCode, "Error initializing dynamic kube client", err.Error())
-}
-func ErrNewMesheryClient(err error) error {
-	return errors.NewDefault(ErrNewMesheryClientCode, "Error initializing meshery kube client", err.Error())
+
+func ErrKubeConfig(err error) error {
+	return errors.NewDefault(ErrKubeConfigCode, "Error creating kubernetes client", err.Error())
 }

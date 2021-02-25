@@ -21,7 +21,7 @@ func Run(client dynamic.Interface, broker broker.Handler, plConfigs map[string]i
 	for _, config := range configs {
 		err := createGlobalWatcher(client, broker, config)
 		if err != nil {
-			return err
+			return ErrCreateGWatcher(config.Resource, err)
 		}
 	}
 
@@ -30,7 +30,7 @@ func Run(client dynamic.Interface, broker broker.Handler, plConfigs map[string]i
 	for _, config := range configs {
 		err := createLocalWatcher(client, broker, config)
 		if err != nil {
-			return err
+			return ErrCreateLWatcher(config.Resource, err)
 		}
 	}
 	return nil
