@@ -19,7 +19,7 @@ require (
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/jmoiron/sqlx v1.2.1-0.20190826204134-d7d95172beb5 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
-	github.com/layer5io/meshkit v0.2.1
+	github.com/layer5io/meshkit v0.2.2
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/nats-io/nats.go v1.10.0 // indirect
 	github.com/onsi/ginkgo v1.14.2 // indirect
