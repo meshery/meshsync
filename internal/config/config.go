@@ -1,8 +1,6 @@
 package config
 
 import (
-	"path/filepath"
-
 	"github.com/layer5io/meshkit/config"
 	configprovider "github.com/layer5io/meshkit/config/provider"
 	"github.com/layer5io/meshkit/utils"
@@ -15,7 +13,7 @@ func New(provider string) (config.Handler, error) {
 		err     error
 	)
 	opts := configprovider.Options{
-		FilePath: filepath.Join(utils.GetHome(), ".meshery"),
+		FilePath: utils.GetHome(),
 		FileType: "yaml",
 		FileName: "meshsync_config",
 	}
