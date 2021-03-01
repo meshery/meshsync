@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	broker "github.com/layer5io/meshkit/broker"
+	"github.com/layer5io/meshkit/logger"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/myntra/pipeline"
 	"k8s.io/client-go/dynamic"
@@ -22,19 +23,19 @@ var (
 	}
 )
 
-func New(client dynamic.Interface, broker broker.Handler, plConfigs map[string]internalconfig.PipelineConfigs) *pipeline.Pipeline {
+func New(log logger.Handler, client dynamic.Interface, broker broker.Handler, plConfigs map[string]internalconfig.PipelineConfigs) *pipeline.Pipeline {
 	// Global discovery
 	gdstage := GlobalDiscoveryStage
 	configs := plConfigs[gdstage.Name]
 	for _, config := range configs {
-		gdstage.AddStep(NewGlobalResource(client, broker, config))
+		gdstage.AddStep(NewGlobalResource(log, client, broker, config))
 	}
 
 	// Local discovery
 	ldstage := LocalDiscoveryStage
 	configs = plConfigs[ldstage.Name]
 	for _, config := range configs {
-		ldstage.AddStep(NewLocalResource(client, broker, config))
+		ldstage.AddStep(NewLocalResource(log, client, broker, config))
 	}
 
 	// Create Pipeline

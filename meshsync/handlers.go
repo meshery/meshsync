@@ -14,7 +14,7 @@ func (h *Handler) StartDiscovery() error {
 	}
 
 	h.Log.Info("Pipeline started")
-	pl := pipeline.New(h.KubeClient.DynamicKubeClient, h.Broker, pipelineConfigs)
+	pl := pipeline.New(h.Log, h.KubeClient.DynamicKubeClient, h.Broker, pipelineConfigs)
 	result := pl.Run()
 	if result.Error != nil {
 		return ErrNewPipeline(result.Error)
@@ -31,7 +31,7 @@ func (h *Handler) StartInformers() error {
 	}
 
 	h.Log.Info("Informers started")
-	err = informer.Run(h.KubeClient.DynamicKubeClient, h.Broker, informerConfigs)
+	err = informer.Run(h.Log, h.KubeClient.DynamicKubeClient, h.Broker, informerConfigs)
 	if err != nil {
 		return ErrNewInformer(err)
 	}
