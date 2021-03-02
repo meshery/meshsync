@@ -7,6 +7,7 @@ import (
 const (
 	ErrCreateGWatcherCode = "test_code"
 	ErrCreateLWatcherCode = "test_code"
+	ErrWatchClientCode    = "test_code"
 )
 
 func ErrCreateGWatcher(name string, err error) error {
@@ -15,4 +16,8 @@ func ErrCreateGWatcher(name string, err error) error {
 
 func ErrCreateLWatcher(name string, err error) error {
 	return errors.NewDefault(ErrCreateLWatcherCode, "Error while creating local watcher for: "+name, err.Error())
+}
+
+func ErrWatchClient(name string, err error) error {
+	return errors.NewDefault(ErrWatchClientCode, "Error while creating watcher client for: "+name, err.Error())
 }

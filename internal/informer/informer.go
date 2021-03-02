@@ -9,6 +9,7 @@ import (
 	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
 
+	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -44,8 +45,11 @@ func createGlobalWatcher(log logger.Handler, client dynamic.Interface, broker br
 		Resource: config.Resource,
 	}).Watch(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		log.Error(err)
-		return err
+		log.Error(ErrWatchClient(config.Resource, err))
+		if !kubeerror.IsNotFound(err) {
+			return ErrWatchClient(config.Resource, err)
+		}
+		return nil
 	}
 
 	go handleEvents(log, watcher, broker, config.PublishSubject)
@@ -59,8 +63,11 @@ func createLocalWatcher(log logger.Handler, client dynamic.Interface, broker bro
 		Resource: config.Resource,
 	}).Namespace(config.Namespace).Watch(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		log.Error(err)
-		return err
+		log.Error(ErrWatchClient(config.Resource, err))
+		if !kubeerror.IsNotFound(err) {
+			return ErrWatchClient(config.Resource, err)
+		}
+		return nil
 	}
 
 	go handleEvents(log, watcher, broker, config.PublishSubject)

@@ -41,11 +41,33 @@ func ParseList(object unstructured.Unstructured) Object {
 	result.ObjectMeta.ManagedFields = managedFields
 	result.ObjectMeta.OwnerReferences = ownerReferences
 
-	spec, _ := jsonparser.GetString(data, "spec")
-	result.Spec.Attribute = spec
+	if spec, err := jsonparser.GetString(data, "spec"); err == nil {
+		result.Spec.Attribute = spec
+	}
 
-	status, _ := jsonparser.GetString(data, "status")
-	result.Status.Attribute = status
+	if status, err := jsonparser.GetString(data, "status"); err == nil {
+		result.Status.Attribute = status
+	}
+
+	if immutable, err := jsonparser.GetString(data, "immutable"); err == nil {
+		result.Immutable = immutable
+	}
+
+	if data, err := jsonparser.GetString(data, "data"); err == nil {
+		result.Data = data
+	}
+
+	if binaryData, err := jsonparser.GetString(data, "binaryData"); err == nil {
+		result.BinaryData = binaryData
+	}
+
+	if stringData, err := jsonparser.GetString(data, "stringData"); err == nil {
+		result.StringData = stringData
+	}
+
+	if objType, err := jsonparser.GetString(data, "type"); err == nil {
+		result.Type = objType
+	}
 
 	result.ResourceID = fmt.Sprintf("%s-%s-%s-%s", result.Kind, result.APIVersion, result.ObjectMeta.Namespace, result.ObjectMeta.Name)
 
