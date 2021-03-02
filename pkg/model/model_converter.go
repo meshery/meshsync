@@ -1,8 +1,6 @@
 package model
 
 import (
-	"fmt"
-
 	"github.com/buger/jsonparser"
 	"github.com/layer5io/meshkit/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -69,7 +67,7 @@ func ParseList(object unstructured.Unstructured) Object {
 		result.Type = objType
 	}
 
-	result.ResourceID = fmt.Sprintf("%s-%s-%s-%s", result.Kind, result.APIVersion, result.ObjectMeta.Namespace, result.ObjectMeta.Name)
+	// result.ResourceID = fmt.Sprintf("%s-%s-%s-%s", result.Kind, result.APIVersion, result.ObjectMeta.Namespace, result.ObjectMeta.Name)
 
 	return result
 }
