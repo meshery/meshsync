@@ -9,6 +9,7 @@ import (
 	"github.com/layer5io/meshsync/pkg/model"
 	"github.com/myntra/pipeline"
 
+	kubeerror "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -39,9 +40,14 @@ func (c *GlobalResource) Exec(request *pipeline.Request) *pipeline.Result {
 		Resource: c.config.Resource,
 	}).List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
-		c.log.Error(err)
+		c.log.Error(ErrDynamicClient(c.config.Resource, err))
+		if !kubeerror.IsNotFound(err) {
+			return &pipeline.Result{
+				Error: ErrList(c.config.Resource, err),
+			}
+		}
 		return &pipeline.Result{
-			Error: ErrList(c.config.Resource, err),
+			Error: nil,
 		}
 	}
 	c.log.Info("discovering: ", c.config.Resource)

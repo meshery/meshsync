@@ -14,6 +14,13 @@ type Object struct {
 	ObjectMeta *ResourceObjectMeta `json:"metadata,omitempty" gorm:"foreignkey:ID;references:id"`
 	Spec       *ResourceSpec       `json:"spec,omitempty" gorm:"foreignkey:ID;references:id"`
 	Status     *ResourceStatus     `json:"status,omitempty" gorm:"foreignkey:ID;references:id"`
+
+	// Secondary fields for configsmaps and secrets
+	Immutable  string `json:"immutable,omitempty"`
+	Data       string `json:"data,omitempty"`
+	BinaryData string `json:"binaryData,omitempty"`
+	StringData string `json:"stringData,omitempty"`
+	Type       string `json:"type,omitempty"`
 }
 
 type KeyValue struct {
