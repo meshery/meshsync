@@ -1,6 +1,9 @@
 package model
 
 import (
+	"encoding/base64"
+	"fmt"
+
 	"github.com/buger/jsonparser"
 	"github.com/layer5io/meshkit/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -67,8 +70,6 @@ func ParseList(object unstructured.Unstructured) Object {
 		result.Type = objType
 	}
 
-	// result.ResourceID = fmt.Sprintf("%s-%s-%s-%s", result.Kind, result.APIVersion, result.ObjectMeta.Namespace, result.ObjectMeta.Name)
-
 	return result
 }
 
@@ -77,4 +78,34 @@ func IsObject(obj Object) bool {
 		return true
 	}
 	return false
+}
+
+func SetID(obj *Object) {
+	if obj != nil {
+		id := base64.StdEncoding.EncodeToString([]byte(
+			fmt.Sprintf("%s.%s.%s.%s", obj.Kind, obj.APIVersion, obj.ObjectMeta.Namespace, obj.ObjectMeta.Name),
+		))
+		obj.ID = id
+		obj.ObjectMeta.ID = id
+
+		if len(obj.ObjectMeta.Labels) > 0 {
+			for _, label := range obj.ObjectMeta.Labels {
+				label.ID = id
+			}
+		}
+
+		if len(obj.ObjectMeta.Annotations) > 0 {
+			for _, annotation := range obj.ObjectMeta.Annotations {
+				annotation.ID = id
+			}
+		}
+
+		if obj.Spec != nil {
+			obj.Spec.ID = id
+		}
+
+		if obj.Status != nil {
+			obj.Status.ID = id
+		}
+	}
 }

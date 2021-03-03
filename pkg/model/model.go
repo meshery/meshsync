@@ -1,23 +1,17 @@
 package model
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type Object struct {
-	ID        uuid.UUID `json:"id" gorm:"primarykey;type:uuid"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	DeletedAt time.Time `json:"deleted_at" gorm:"index"`
-	// ResourceID string              `json:"resource_id" gorm:"index"`
+	ID         string              `json:"id" gorm:"primarykey"`
 	APIVersion string              `json:"apiVersion" gorm:"index"`
 	Kind       string              `json:"kind" gorm:"index"`
-	ObjectMeta *ResourceObjectMeta `json:"metadata,omitempty" gorm:"foreignkey:ID;references:id"`
-	Spec       *ResourceSpec       `json:"spec,omitempty" gorm:"foreignkey:ID;references:id"`
-	Status     *ResourceStatus     `json:"status,omitempty" gorm:"foreignkey:ID;references:id"`
+	ObjectMeta *ResourceObjectMeta `json:"metadata" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Spec       *ResourceSpec       `json:"spec,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Status     *ResourceStatus     `json:"status,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 
 	// Secondary fields for configsmaps and secrets
 	Immutable  string `json:"immutable,omitempty"`
@@ -28,14 +22,14 @@ type Object struct {
 }
 
 type KeyValue struct {
-	ID       uuid.UUID `json:"id" gorm:"index;type:uuid"`
+	ID       string    `json:"id" gorm:"index"`
 	UniqueID uuid.UUID `json:"unique_id" gorm:"primarykey;type:uuid"`
 	Key      string    `json:"key,omitempty" gorm:"index"`
 	Value    string    `json:"value,omitempty" gorm:"index"`
 }
 
 type ResourceObjectMeta struct {
-	ID                         uuid.UUID   `json:"id" gorm:"primarykey;type:uuid"`
+	ID                         string      `json:"id" gorm:"primarykey"`
 	Name                       string      `json:"name,omitempty" gorm:"index"`
 	GenerateName               string      `json:"generateName,omitempty"`
 	Namespace                  string      `json:"namespace,omitempty"`
@@ -46,8 +40,8 @@ type ResourceObjectMeta struct {
 	CreationTimestamp          string      `json:"creationTimestamp,omitempty"`
 	DeletionTimestamp          string      `json:"deletionTimestamp,omitempty"`
 	DeletionGracePeriodSeconds *int64      `json:"deletionGracePeriodSeconds,omitempty"`
-	Labels                     []*KeyValue `json:"labels,omitempty" gorm:"foreignkey:ID;references:id"`
-	Annotations                []*KeyValue `json:"annotations,omitempty" gorm:"foreignkey:ID;references:id"`
+	Labels                     []*KeyValue `json:"labels,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Annotations                []*KeyValue `json:"annotations,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	OwnerReferences            string      `json:"ownerReferences,omitempty" gorm:"type:json"`
 	Finalizers                 string      `json:"finalizers,omitempty" gorm:"type:json"`
 	ClusterName                string      `json:"clusterName,omitempty"`
@@ -56,13 +50,13 @@ type ResourceObjectMeta struct {
 }
 
 type ResourceSpec struct {
-	ID        uuid.UUID `json:"id" gorm:"primarykey;type:uuid"`
-	Attribute string    `json:"attribute,omitempty" gorm:"type:json"`
+	ID        string `json:"id" gorm:"primarykey"`
+	Attribute string `json:"attribute,omitempty" gorm:"type:json"`
 }
 
 type ResourceStatus struct {
-	ID        uuid.UUID `json:"id" gorm:"primarykey;type:uuid"`
-	Attribute string    `json:"attribute,omitempty" gorm:"type:json"`
+	ID        string `json:"id" gorm:"primarykey"`
+	Attribute string `json:"attribute,omitempty" gorm:"type:json"`
 }
 
 func (k *KeyValue) BeforeCreate(tx *gorm.DB) (err error) {
@@ -70,22 +64,17 @@ func (k *KeyValue) BeforeCreate(tx *gorm.DB) (err error) {
 	return nil
 }
 
-func (k *Object) BeforeCreate(tx *gorm.DB) (err error) {
-	k.ID = uuid.New()
+func (obj *Object) BeforeCreate(tx *gorm.DB) (err error) {
+	SetID(obj)
 	return nil
 }
 
-func (k *Object) AfterCreate(tx *gorm.DB) (err error) {
-	k.CreatedAt = time.Now()
+func (obj *Object) BeforeSave(tx *gorm.DB) (err error) {
+	SetID(obj)
 	return nil
 }
 
-func (k *Object) AfterSave(tx *gorm.DB) (err error) {
-	k.UpdatedAt = time.Now()
-	return nil
-}
-
-func (k *Object) AfterDelete(tx *gorm.DB) (err error) {
-	k.DeletedAt = time.Now()
+func (obj *Object) BeforeDelete(tx *gorm.DB) (err error) {
+	SetID(obj)
 	return nil
 }
