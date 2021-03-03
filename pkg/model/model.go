@@ -10,8 +10,8 @@ type Object struct {
 	APIVersion string              `json:"apiVersion" gorm:"index"`
 	Kind       string              `json:"kind" gorm:"index"`
 	ObjectMeta *ResourceObjectMeta `json:"metadata" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	Spec       *ResourceSpec       `json:"spec,omitempty" gorm:"foreignkey:ID;references:id";constraint:OnUpdate:CASCADE,OnDelete:SET NULL;`
-	Status     *ResourceStatus     `json:"status,omitempty" gorm:"foreignkey:ID;references:id";constraint:OnUpdate:CASCADE,OnDelete:SET NULL;`
+	Spec       *ResourceSpec       `json:"spec,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Status     *ResourceStatus     `json:"status,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 
 	// Secondary fields for configsmaps and secrets
 	Immutable  string `json:"immutable,omitempty"`
