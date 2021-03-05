@@ -80,10 +80,7 @@ func ParseList(object unstructured.Unstructured) Object {
 }
 
 func IsObject(obj Object) bool {
-	if obj.ObjectMeta != nil {
-		return true
-	}
-	return false
+	return obj.ObjectMeta != nil
 }
 
 func SetID(obj *Object) {
