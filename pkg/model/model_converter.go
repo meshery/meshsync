@@ -11,13 +11,12 @@ import (
 
 func ParseList(object unstructured.Unstructured) Object {
 	data, _ := object.MarshalJSON()
+	result := Object{}
+
+	_ = utils.Unmarshal(string(data), &result)
 
 	// ObjectMeta internal models
 	labels := make([]*KeyValue, 0)
-	annotations := make([]*KeyValue, 0)
-	finalizers, _ := jsonparser.GetString(data, "metadata", "finalizers")
-	managedFields, _ := jsonparser.GetString(data, "metadata", "managedFields")
-	ownerReferences, _ := jsonparser.GetString(data, "metadata", "ownerReferences")
 	_ = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		labels = append(labels, &KeyValue{
 			Key:   string(key),
@@ -25,6 +24,9 @@ func ParseList(object unstructured.Unstructured) Object {
 		})
 		return nil
 	}, "metadata", "labels")
+	result.ObjectMeta.Labels = labels
+
+	annotations := make([]*KeyValue, 0)
 	_ = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		annotations = append(annotations, &KeyValue{
 			Key:   string(key),
@@ -32,52 +34,53 @@ func ParseList(object unstructured.Unstructured) Object {
 		})
 		return nil
 	}, "metadata", "labels")
-
-	result := Object{}
-	_ = utils.Unmarshal(string(data), &result)
-
-	result.ObjectMeta.Labels = labels
 	result.ObjectMeta.Annotations = annotations
-	result.ObjectMeta.Finalizers = finalizers
-	result.ObjectMeta.ManagedFields = managedFields
-	result.ObjectMeta.OwnerReferences = ownerReferences
 
-	if spec, err := jsonparser.GetString(data, "spec"); err == nil {
-		result.Spec.Attribute = spec
+	if finalizers, _, _, err := jsonparser.Get(data, "metadata", "finalizers"); err == nil {
+		result.ObjectMeta.Finalizers = string(finalizers)
 	}
 
-	if status, err := jsonparser.GetString(data, "status"); err == nil {
-		result.Status.Attribute = status
+	if managedFields, _, _, err := jsonparser.Get(data, "metadata", "managedFields"); err == nil {
+		result.ObjectMeta.ManagedFields = string(managedFields)
 	}
 
-	if immutable, err := jsonparser.GetString(data, "immutable"); err == nil {
-		result.Immutable = immutable
+	if ownerReferences, _, _, err := jsonparser.Get(data, "metadata", "ownerReferences"); err == nil {
+		result.ObjectMeta.OwnerReferences = string(ownerReferences)
 	}
 
-	if data, err := jsonparser.GetString(data, "data"); err == nil {
-		result.Data = data
+	if spec, _, _, err := jsonparser.Get(data, "spec"); err == nil {
+		result.Spec.Attribute = string(spec)
 	}
 
-	if binaryData, err := jsonparser.GetString(data, "binaryData"); err == nil {
-		result.BinaryData = binaryData
+	if status, _, _, err := jsonparser.Get(data, "status"); err == nil {
+		result.Status.Attribute = string(status)
 	}
 
-	if stringData, err := jsonparser.GetString(data, "stringData"); err == nil {
-		result.StringData = stringData
+	if immutable, _, _, err := jsonparser.Get(data, "immutable"); err == nil {
+		result.Immutable = string(immutable)
 	}
 
-	if objType, err := jsonparser.GetString(data, "type"); err == nil {
-		result.Type = objType
+	if objData, _, _, err := jsonparser.Get(data, "data"); err == nil {
+		result.Data = string(objData)
+	}
+
+	if binaryData, _, _, err := jsonparser.Get(data, "binaryData"); err == nil {
+		result.BinaryData = string(binaryData)
+	}
+
+	if stringData, _, _, err := jsonparser.Get(data, "stringData"); err == nil {
+		result.StringData = string(stringData)
+	}
+
+	if objType, _, _, err := jsonparser.Get(data, "type"); err == nil {
+		result.Type = string(objType)
 	}
 
 	return result
 }
 
 func IsObject(obj Object) bool {
-	if obj.ObjectMeta != nil && obj.Spec != nil && obj.Status != nil {
-		return true
-	}
-	return false
+	return obj.ObjectMeta != nil
 }
 
 func SetID(obj *Object) {
