@@ -1,47 +1,34 @@
 package meshsync
 
 import (
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/layer5io/meshsync/internal/config"
-	"github.com/layer5io/meshsync/internal/informer"
 	"github.com/layer5io/meshsync/internal/pipeline"
 )
 
-func (h *Handler) StartDiscovery() error {
+func (h *Handler) Run() error {
 	pipelineConfigs := make(map[string]config.PipelineConfigs, 10)
 	err := h.Config.GetObject(config.ResourcesKey, &pipelineConfigs)
 	if err != nil {
 		return ErrGetObject(err)
 	}
 
+	stopCh := make(chan struct{})
+
 	h.Log.Info("Pipeline started")
-	pl := pipeline.New(h.Log, h.KubeClient.DynamicKubeClient, h.Broker, pipelineConfigs)
+	pl := pipeline.New(h.Log, h.informer, h.Broker, pipelineConfigs, stopCh)
 	result := pl.Run()
 	if result.Error != nil {
 		return ErrNewPipeline(result.Error)
 	}
 
-	return nil
-}
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGTERM, os.Interrupt)
+	<-sigCh
+	close(stopCh)
 
-func (h *Handler) StartInformers() error {
-	informerConfigs := make(map[string]config.PipelineConfigs, 10)
-	err := h.Config.GetObject(config.ResourcesKey, &informerConfigs)
-	if err != nil {
-		return ErrGetObject(err)
-	}
-
-	h.Log.Info("Informers started")
-	err = informer.Run(h.Log, h.KubeClient.DynamicKubeClient, h.Broker, informerConfigs)
-	if err != nil {
-		return ErrNewInformer(err)
-	}
-
-	interrupt := make(chan bool)
-	for range interrupt {
-		signal := <-interrupt
-		if signal {
-			return nil
-		}
-	}
 	return nil
 }

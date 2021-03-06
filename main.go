@@ -68,13 +68,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = meshsyncHandler.StartDiscovery()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	err = meshsyncHandler.StartInformers()
+	err = meshsyncHandler.Run()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

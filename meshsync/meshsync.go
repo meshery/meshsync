@@ -5,6 +5,9 @@ import (
 	"github.com/layer5io/meshkit/config"
 	"github.com/layer5io/meshkit/logger"
 	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic/dynamicinformer"
 )
 
 // Handler contains all handlers, channels, clients, and other parameters for an adapter.
@@ -14,7 +17,7 @@ type Handler struct {
 	Log    logger.Handler
 	Broker broker.Handler
 
-	KubeClient *mesherykube.Client
+	informer dynamicinformer.DynamicSharedInformerFactory
 }
 
 func New(config config.Handler, log logger.Handler, broker broker.Handler) (*Handler, error) {
@@ -24,11 +27,12 @@ func New(config config.Handler, log logger.Handler, broker broker.Handler) (*Han
 		return nil, ErrKubeConfig(err)
 	}
 
-	return &Handler{
-		Config: config,
-		Log:    log,
-		Broker: broker,
+	informer := dynamicinformer.NewFilteredDynamicSharedInformerFactory(kubeClient.DynamicKubeClient, 0, v1.NamespaceAll, nil)
 
-		KubeClient: kubeClient,
+	return &Handler{
+		Config:   config,
+		Log:      log,
+		Broker:   broker,
+		informer: informer,
 	}, nil
 }
