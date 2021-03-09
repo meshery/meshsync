@@ -29,7 +29,7 @@ func (c *ResourceWatcher) startWatching(s cache.SharedIndexInformer) {
 
 func (c *ResourceWatcher) publishItem(obj *unstructured.Unstructured, evtype broker.EventType) {
 	err := c.brokerClient.Publish(c.config.PublishTo, &broker.Message{
-		ObjectType: broker.Single,
+		ObjectType: broker.MeshSync,
 		EventType:  evtype,
 		Object:     model.ParseList(*obj),
 	})
