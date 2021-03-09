@@ -1,7 +1,6 @@
 package model
 
 import (
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -22,10 +21,10 @@ type Object struct {
 }
 
 type KeyValue struct {
-	ID       string    `json:"id" gorm:"index"`
-	UniqueID uuid.UUID `json:"unique_id" gorm:"primarykey;type:uuid"`
-	Key      string    `json:"key,omitempty" gorm:"index"`
-	Value    string    `json:"value,omitempty" gorm:"index"`
+	ID       string `json:"id" gorm:"index"`
+	UniqueID string `json:"unique_id" gorm:"primarykey"`
+	Key      string `json:"key,omitempty" gorm:"index"`
+	Value    string `json:"value,omitempty" gorm:"index"`
 }
 
 type ResourceObjectMeta struct {
@@ -57,11 +56,6 @@ type ResourceSpec struct {
 type ResourceStatus struct {
 	ID        string `json:"id" gorm:"primarykey"`
 	Attribute string `json:"attribute,omitempty" gorm:"type:json"`
-}
-
-func (k *KeyValue) BeforeCreate(tx *gorm.DB) (err error) {
-	k.UniqueID = uuid.New()
-	return nil
 }
 
 func (obj *Object) BeforeCreate(tx *gorm.DB) (err error) {

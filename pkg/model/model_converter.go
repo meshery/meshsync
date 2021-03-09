@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/buger/jsonparser"
+	"github.com/google/uuid"
 	"github.com/layer5io/meshkit/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -94,12 +95,14 @@ func SetID(obj *Object) {
 		if len(obj.ObjectMeta.Labels) > 0 {
 			for _, label := range obj.ObjectMeta.Labels {
 				label.ID = id
+				label.UniqueID = uuid.New().String()
 			}
 		}
 
 		if len(obj.ObjectMeta.Annotations) > 0 {
 			for _, annotation := range obj.ObjectMeta.Annotations {
 				annotation.ID = id
+				annotation.UniqueID = uuid.New().String()
 			}
 		}
 
