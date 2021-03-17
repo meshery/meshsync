@@ -20,6 +20,7 @@ func ParseList(object unstructured.Unstructured) Object {
 	labels := make([]*KeyValue, 0)
 	_ = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		labels = append(labels, &KeyValue{
+			Kind:  KindLabel,
 			Key:   string(key),
 			Value: string(value),
 		})
@@ -30,11 +31,12 @@ func ParseList(object unstructured.Unstructured) Object {
 	annotations := make([]*KeyValue, 0)
 	_ = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
 		annotations = append(annotations, &KeyValue{
+			Kind:  KindAnnotation,
 			Key:   string(key),
 			Value: string(value),
 		})
 		return nil
-	}, "metadata", "labels")
+	}, "metadata", "annotations")
 	result.ObjectMeta.Annotations = annotations
 
 	if finalizers, _, _, err := jsonparser.Get(data, "metadata", "finalizers"); err == nil {
