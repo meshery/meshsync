@@ -4,6 +4,11 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	KindLabel      string = "label"
+	KindAnnotation string = "annotation"
+)
+
 type Object struct {
 	ID         string              `json:"id" gorm:"primarykey"`
 	APIVersion string              `json:"apiVersion" gorm:"index"`
@@ -23,6 +28,7 @@ type Object struct {
 type KeyValue struct {
 	ID       string `json:"id" gorm:"index"`
 	UniqueID string `json:"unique_id" gorm:"primarykey"`
+	Kind     string `json:"kind" gorm:"index"`
 	Key      string `json:"key,omitempty" gorm:"index"`
 	Value    string `json:"value,omitempty" gorm:"index"`
 }
