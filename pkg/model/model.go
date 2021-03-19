@@ -73,3 +73,8 @@ func (obj *Object) BeforeSave(tx *gorm.DB) (err error) {
 	SetID(obj)
 	return nil
 }
+
+func (obj *Object) BeforeDelete(tx *gorm.DB) (err error) {
+	SetID(obj)
+	return nil
+}
