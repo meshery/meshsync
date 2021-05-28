@@ -12,6 +12,7 @@ var (
 
 	Pipelines = map[string]PipelineConfigs{
 		GlobalResourceKey: []PipelineConfig{
+			// Core Resources
 			{
 				Name:      "namespaces.v1.",
 				PublishTo: "meshery.meshsync.core",
@@ -30,6 +31,7 @@ var (
 			},
 		},
 		LocalResourceKey: []PipelineConfig{
+			// Core Resources
 			{
 				Name:      "pods.v1.",
 				PublishTo: "meshery.meshsync.core",
@@ -50,6 +52,19 @@ var (
 				Name:      "daemonsets.v1.apps",
 				PublishTo: "meshery.meshsync.core",
 			},
+		},
+	}
+
+	Listeners = map[string]ListenerConfig{
+		LogStream: ListenerConfig{
+			Name:           LogStream,
+			ConnectionName: "meshsync-logstream",
+			PublishTo:      "meshery.meshsync.logs",
+		},
+		RequestStream: ListenerConfig{
+			Name:           RequestStream,
+			ConnectionName: "meshsync-request-stream",
+			SubscribeTo:    "meshery.meshsync.request",
 		},
 	}
 )

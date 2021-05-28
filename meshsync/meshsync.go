@@ -8,6 +8,7 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/kubernetes"
 )
 
 // Handler contains all handlers, channels, clients, and other parameters for an adapter.
@@ -17,10 +18,12 @@ type Handler struct {
 	Log    logger.Handler
 	Broker broker.Handler
 
-	informer dynamicinformer.DynamicSharedInformerFactory
+	informer     dynamicinformer.DynamicSharedInformerFactory
+	staticClient *kubernetes.Clientset
+	channelPool  map[string]chan struct{}
 }
 
-func New(config config.Handler, log logger.Handler, broker broker.Handler) (*Handler, error) {
+func New(config config.Handler, log logger.Handler, br broker.Handler) (*Handler, error) {
 	// Initialize Kubeconfig
 	kubeClient, err := mesherykube.New(nil)
 	if err != nil {
@@ -30,9 +33,11 @@ func New(config config.Handler, log logger.Handler, broker broker.Handler) (*Han
 	informer := dynamicinformer.NewFilteredDynamicSharedInformerFactory(kubeClient.DynamicKubeClient, 0, v1.NamespaceAll, nil)
 
 	return &Handler{
-		Config:   config,
-		Log:      log,
-		Broker:   broker,
-		informer: informer,
+		Config:       config,
+		Log:          log,
+		Broker:       br,
+		informer:     informer,
+		staticClient: kubeClient.KubeClient,
+		channelPool:  make(map[string]chan struct{}),
 	}, nil
 }
