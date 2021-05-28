@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/layer5io/meshkit/broker/nats"
@@ -46,6 +48,12 @@ func main() {
 		log.Error(err)
 		os.Exit(1)
 	}
+
+	err = cfg.SetObject(config.ListenersKey, config.Listeners)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
 	// Seeding done
 
 	// Initialize Broker instance
@@ -68,9 +76,30 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = meshsyncHandler.Run()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	stopCh := make(chan struct{})
+	go func() {
+		err := meshsyncHandler.Run(stopCh)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+
+		err = meshsyncHandler.ListenToRequests(stopCh)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+	}()
+
+	// Handle graceful shutdown
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGTERM, os.Interrupt)
+	select {
+	case <-sigCh:
+		close(stopCh)
+		log.Info("Shutting down")
+	case <-stopCh:
+		close(stopCh)
+		log.Info("Shutting down")
 	}
 }
