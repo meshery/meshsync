@@ -3,21 +3,22 @@ package meshsync
 import (
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshsync/internal/config"
+	"github.com/layer5io/meshsync/internal/pipeline"
 )
 
 func (h *Handler) Run(stopCh chan struct{}) error {
-	//pipelineConfigs := make(map[string]config.PipelineConfigs, 10)
-	//err := h.Config.GetObject(config.ResourcesKey, &pipelineConfigs)
-	//if err != nil {
-	//	return ErrGetObject(err)
-	//}
+	pipelineConfigs := make(map[string]config.PipelineConfigs, 10)
+	err := h.Config.GetObject(config.ResourcesKey, &pipelineConfigs)
+	if err != nil {
+		return ErrGetObject(err)
+	}
 
-	//h.Log.Info("Pipeline started")
-	//pl := pipeline.New(h.Log, h.informer, h.Broker, pipelineConfigs, stopCh)
-	//result := pl.Run()
-	//if result.Error != nil {
-	//	return ErrNewPipeline(result.Error)
-	//}
+	h.Log.Info("Pipeline started")
+	pl := pipeline.New(h.Log, h.informer, h.Broker, pipelineConfigs, stopCh)
+	result := pl.Run()
+	if result.Error != nil {
+		return ErrNewPipeline(result.Error)
+	}
 
 	return nil
 }
