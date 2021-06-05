@@ -6,35 +6,33 @@ import (
 	"github.com/layer5io/meshsync/internal/pipeline"
 )
 
-func (h *Handler) Run(stopCh chan struct{}) error {
+func (h *Handler) Run(stopCh chan struct{}) {
 	pipelineConfigs := make(map[string]config.PipelineConfigs, 10)
 	err := h.Config.GetObject(config.ResourcesKey, &pipelineConfigs)
 	if err != nil {
-		return ErrGetObject(err)
+		h.Log.Error(ErrGetObject(err))
 	}
 
 	h.Log.Info("Pipeline started")
 	pl := pipeline.New(h.Log, h.informer, h.Broker, pipelineConfigs, stopCh)
 	result := pl.Run()
 	if result.Error != nil {
-		return ErrNewPipeline(result.Error)
+		h.Log.Error(ErrNewPipeline(result.Error))
 	}
-
-	return nil
 }
 
-func (h *Handler) ListenToRequests(stopCh chan struct{}) error {
+func (h *Handler) ListenToRequests(stopCh chan struct{}) {
 	listenerConfigs := make(map[string]config.ListenerConfig, 10)
 	err := h.Config.GetObject(config.ListenersKey, &listenerConfigs)
 	if err != nil {
-		return ErrGetObject(err)
+		h.Log.Error(ErrGetObject(err))
 	}
 
 	h.Log.Info("Listening for requests")
 	reqChan := make(chan *broker.Message)
 	err = h.Broker.SubscribeWithChannel(listenerConfigs[config.RequestStream].SubscribeTo, listenerConfigs[config.RequestStream].ConnectionName, reqChan)
 	if err != nil {
-		return ErrSubscribeRequest(err)
+		h.Log.Error(ErrSubscribeRequest(err))
 	}
 
 	for request := range reqChan {
@@ -53,5 +51,4 @@ func (h *Handler) ListenToRequests(stopCh chan struct{}) error {
 			}
 		}
 	}
-	return nil
 }

@@ -12,7 +12,7 @@ go 1.13
 require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/google/uuid v1.1.1
-	github.com/layer5io/meshkit v0.2.11
+	github.com/layer5io/meshkit v0.2.12
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	gorm.io/gorm v1.20.10
 	k8s.io/api v0.18.12

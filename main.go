@@ -77,22 +77,13 @@ func main() {
 	}
 
 	stopCh := make(chan struct{})
-	go func() {
-		err := meshsyncHandler.Run(stopCh)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-
-		err = meshsyncHandler.ListenToRequests(stopCh)
-		if err != nil {
-			log.Error(err)
-			return
-		}
-	}()
-
-	// Handle graceful shutdown
 	sigCh := make(chan os.Signal, 1)
+
+	go meshsyncHandler.Run(stopCh)
+	go meshsyncHandler.ListenToRequests(stopCh)
+
+	log.Info("Server started")
+	// Handle graceful shutdown
 	signal.Notify(sigCh, syscall.SIGTERM, os.Interrupt)
 	select {
 	case <-sigCh:
