@@ -1,0 +1,25 @@
+{
+  "min_code": 1000,
+  "max_code": 1012,
+  "duplicate_codes": {},
+  "duplicate_names": [],
+  "call_expr_codes": [
+    "ErrInvalidRequest"
+  ],
+  "int_codes": [
+    1008,
+    1009,
+    1011,
+    1000,
+    1001,
+    1002,
+    1004,
+    1005,
+    1003,
+    1006,
+    1007,
+    1010,
+    1012
+  ],
+  "deprecated_new_default": null
+}

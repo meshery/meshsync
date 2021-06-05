@@ -1,0 +1,404 @@
+{
+  "entries": [
+    {
+      "name": "ErrInitConfigCode",
+      "old_code": "1000",
+      "code": "1000",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "internal/config/error.go"
+    },
+    {
+      "name": "ErrListCode",
+      "old_code": "1001",
+      "code": "1001",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "internal/pipeline/error.go"
+    },
+    {
+      "name": "ErrPublishCode",
+      "old_code": "1002",
+      "code": "1002",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "internal/pipeline/error.go"
+    },
+    {
+      "name": "ErrDynamicClientCode",
+      "old_code": "1003",
+      "code": "1003",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "internal/pipeline/error.go"
+    },
+    {
+      "name": "ErrGetObjectCode",
+      "old_code": "1004",
+      "code": "1004",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "meshsync/error.go"
+    },
+    {
+      "name": "ErrNewPipelineCode",
+      "old_code": "1005",
+      "code": "1005",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "meshsync/error.go"
+    },
+    {
+      "name": "ErrNewInformerCode",
+      "old_code": "1006",
+      "code": "1006",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "meshsync/error.go"
+    },
+    {
+      "name": "ErrKubeConfigCode",
+      "old_code": "1007",
+      "code": "1007",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "meshsync/error.go"
+    },
+    {
+      "name": "ErrInitRequestCode",
+      "old_code": "1008",
+      "code": "1008",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "meshsync/error.go"
+    },
+    {
+      "name": "ErrSubscribeRequestCode",
+      "old_code": "1009",
+      "code": "1009",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "meshsync/error.go"
+    },
+    {
+      "name": "ErrLogStreamCode",
+      "old_code": "1010",
+      "code": "1010",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "meshsync/error.go"
+    },
+    {
+      "name": "ErrCopyBufferCode",
+      "old_code": "1011",
+      "code": "1011",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "meshsync/error.go"
+    },
+    {
+      "name": "ErrInvalidRequestCode",
+      "old_code": "1012",
+      "code": "1012",
+      "code_is_literal": true,
+      "code_is_int": true,
+      "path": "meshsync/error.go"
+    },
+    {
+      "name": "ErrInvalidRequest",
+      "old_code": "",
+      "code": "",
+      "code_is_literal": false,
+      "code_is_int": false,
+      "path": "meshsync/error.go"
+    }
+  ],
+  "literal_codes": {
+    "1000": [
+      {
+        "name": "ErrInitConfigCode",
+        "old_code": "1000",
+        "code": "1000",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "internal/config/error.go"
+      }
+    ],
+    "1001": [
+      {
+        "name": "ErrListCode",
+        "old_code": "1001",
+        "code": "1001",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "internal/pipeline/error.go"
+      }
+    ],
+    "1002": [
+      {
+        "name": "ErrPublishCode",
+        "old_code": "1002",
+        "code": "1002",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "internal/pipeline/error.go"
+      }
+    ],
+    "1003": [
+      {
+        "name": "ErrDynamicClientCode",
+        "old_code": "1003",
+        "code": "1003",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "internal/pipeline/error.go"
+      }
+    ],
+    "1004": [
+      {
+        "name": "ErrGetObjectCode",
+        "old_code": "1004",
+        "code": "1004",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "meshsync/error.go"
+      }
+    ],
+    "1005": [
+      {
+        "name": "ErrNewPipelineCode",
+        "old_code": "1005",
+        "code": "1005",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "meshsync/error.go"
+      }
+    ],
+    "1006": [
+      {
+        "name": "ErrNewInformerCode",
+        "old_code": "1006",
+        "code": "1006",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "meshsync/error.go"
+      }
+    ],
+    "1007": [
+      {
+        "name": "ErrKubeConfigCode",
+        "old_code": "1007",
+        "code": "1007",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "meshsync/error.go"
+      }
+    ],
+    "1008": [
+      {
+        "name": "ErrInitRequestCode",
+        "old_code": "1008",
+        "code": "1008",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "meshsync/error.go"
+      }
+    ],
+    "1009": [
+      {
+        "name": "ErrSubscribeRequestCode",
+        "old_code": "1009",
+        "code": "1009",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "meshsync/error.go"
+      }
+    ],
+    "1010": [
+      {
+        "name": "ErrLogStreamCode",
+        "old_code": "1010",
+        "code": "1010",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "meshsync/error.go"
+      }
+    ],
+    "1011": [
+      {
+        "name": "ErrCopyBufferCode",
+        "old_code": "1011",
+        "code": "1011",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "meshsync/error.go"
+      }
+    ],
+    "1012": [
+      {
+        "name": "ErrInvalidRequestCode",
+        "old_code": "1012",
+        "code": "1012",
+        "code_is_literal": true,
+        "code_is_int": true,
+        "path": "meshsync/error.go"
+      }
+    ]
+  },
+  "call_expr_codes": [
+    {
+      "name": "ErrInvalidRequest",
+      "old_code": "",
+      "code": "",
+      "code_is_literal": false,
+      "code_is_int": false,
+      "path": "meshsync/error.go"
+    }
+  ],
+  "deprecated_new_default": null,
+  "errors_raw": {
+    "ErrCopyBufferCode": [
+      {
+        "name": "ErrCopyBufferCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "Error while copying log buffer",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrDynamicClientCode": [
+      {
+        "name": "ErrDynamicClientCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrGetObjectCode": [
+      {
+        "name": "ErrGetObjectCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "Error getting config object",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrInitConfigCode": [
+      {
+        "name": "ErrInitConfigCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "Error while config init",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrInitRequestCode": [
+      {
+        "name": "ErrInitRequestCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "Error while initializing requests channel",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrInvalidRequestCode": [
+      {
+        "name": "ErrInvalidRequestCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "Request is invalid",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrKubeConfigCode": [
+      {
+        "name": "ErrKubeConfigCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "Error creating kubernetes client",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrListCode": [
+      {
+        "name": "ErrListCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrLogStreamCode": [
+      {
+        "name": "ErrLogStreamCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "Error while open log stream connection",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrNewInformerCode": [
+      {
+        "name": "ErrNewInformerCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "Error initializing informer",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrNewPipelineCode": [
+      {
+        "name": "ErrNewPipelineCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "Error creating pipeline",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrPublishCode": [
+      {
+        "name": "ErrPublishCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrSubscribeRequestCode": [
+      {
+        "name": "ErrSubscribeRequestCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "Error while subscribing to requests",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ]
+  }
+}

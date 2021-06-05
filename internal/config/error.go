@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	ErrInitConfigCode = "test_code"
+	ErrInitConfigCode = "1000"
 )
 
 func ErrInitConfig(err error) error {
-	return errors.NewDefault(ErrInitConfigCode, "Error while config init", err.Error())
+	return errors.New(ErrInitConfigCode, errors.Alert, []string{"Error while config init", err.Error()}, []string{}, []string{}, []string{})
 }
