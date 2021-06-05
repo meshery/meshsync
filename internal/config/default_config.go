@@ -56,12 +56,12 @@ var (
 	}
 
 	Listeners = map[string]ListenerConfig{
-		LogStream: ListenerConfig{
+		LogStream: {
 			Name:           LogStream,
 			ConnectionName: "meshsync-logstream",
 			PublishTo:      "meshery.meshsync.logs",
 		},
-		RequestStream: ListenerConfig{
+		RequestStream: {
 			Name:           RequestStream,
 			ConnectionName: "meshsync-request-stream",
 			SubscribeTo:    "meshery.meshsync.request",

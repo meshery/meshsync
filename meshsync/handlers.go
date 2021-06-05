@@ -37,23 +37,21 @@ func (h *Handler) ListenToRequests(stopCh chan struct{}) error {
 		return ErrSubscribeRequest(err)
 	}
 
-	for {
-		select {
-		case request := <-reqChan:
-			h.Log.Info("Incoming Request")
-			if request.Request == nil {
-				h.Log.Error(ErrInvalidRequest)
-				continue
-			}
+	for request := range reqChan {
+		h.Log.Info("Incoming Request")
+		if request.Request == nil {
+			h.Log.Error(ErrInvalidRequest)
+			continue
+		}
 
-			switch request.Request.Entity {
-			case broker.LogRequestEntity:
-				err := h.processLogRequest(request.Request.Payload, listenerConfigs[config.LogStream])
-				if err != nil {
-					h.Log.Error(err)
-					continue
-				}
+		switch request.Request.Entity {
+		case broker.LogRequestEntity:
+			err := h.processLogRequest(request.Request.Payload, listenerConfigs[config.LogStream])
+			if err != nil {
+				h.Log.Error(err)
+				continue
 			}
 		}
 	}
+	return nil
 }

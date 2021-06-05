@@ -20,6 +20,10 @@ func (h *Handler) processLogRequest(obj interface{}, cfg config.ListenerConfig) 
 	}
 
 	err = utils.Unmarshal(d, &reqs)
+	if err != nil {
+		return err
+	}
+
 	for _, req := range reqs {
 		id := fmt.Sprintf("%s:%s:%s", req.Namespace, req.Name, req.Container)
 		if _, ok := h.channelPool[id]; !ok {
@@ -85,10 +89,7 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 		}
 	}
 
-	select {
-	case <-h.channelPool[id]:
-		h.Log.Info("Closing", id)
-		delete(h.channelPool, id)
-		return
-	}
+	<-h.channelPool[id]
+	h.Log.Info("Closing", id)
+	delete(h.channelPool, id)
 }
