@@ -1,0 +1,123 @@
+{
+  "component_name": "meshsync",
+  "component_type": "controller",
+  "errors": {
+    "1000": {
+      "name": "ErrInitConfigCode",
+      "code": "1000",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "Error while config init",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    },
+    "1001": {
+      "name": "ErrListCode",
+      "code": "1001",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    },
+    "1002": {
+      "name": "ErrPublishCode",
+      "code": "1002",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    },
+    "1003": {
+      "name": "ErrDynamicClientCode",
+      "code": "1003",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    },
+    "1004": {
+      "name": "ErrGetObjectCode",
+      "code": "1004",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "Error getting config object",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    },
+    "1005": {
+      "name": "ErrNewPipelineCode",
+      "code": "1005",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "Error creating pipeline",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    },
+    "1006": {
+      "name": "ErrNewInformerCode",
+      "code": "1006",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "Error initializing informer",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    },
+    "1007": {
+      "name": "ErrKubeConfigCode",
+      "code": "1007",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "Error creating kubernetes client",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    },
+    "1008": {
+      "name": "ErrInitRequestCode",
+      "code": "1008",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "Error while initializing requests channel",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    },
+    "1009": {
+      "name": "ErrSubscribeRequestCode",
+      "code": "1009",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "Error while subscribing to requests",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    },
+    "1010": {
+      "name": "ErrLogStreamCode",
+      "code": "1010",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "Error while open log stream connection",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    },
+    "1011": {
+      "name": "ErrCopyBufferCode",
+      "code": "1011",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "Error while copying log buffer",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    },
+    "1012": {
+      "name": "ErrInvalidRequestCode",
+      "code": "1012",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "Request is invalid",
+      "probable_cause": "",
+      "suggested_remediation": ""
+    }
+  }
+}
