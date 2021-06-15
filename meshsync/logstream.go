@@ -25,7 +25,7 @@ func (h *Handler) processLogRequest(obj interface{}, cfg config.ListenerConfig) 
 	}
 
 	for _, req := range reqs {
-		id := fmt.Sprintf("%s:%s:%s", req.Namespace, req.Name, req.Container)
+		id := fmt.Sprintf("logs.%s.%s.%s", req.Namespace, req.Name, req.Container)
 		if _, ok := h.channelPool[id]; !ok {
 			// Subscribing the first time
 			if !bool(req.Stop) {
@@ -57,6 +57,7 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 	}).Stream(context.TODO())
 	if err != nil {
 		h.Log.Error(ErrLogStream(err))
+		delete(h.channelPool, id)
 		return
 	}
 
@@ -73,6 +74,7 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 		}
 		if err != nil {
 			h.Log.Error(ErrCopyBuffer(err))
+			delete(h.channelPool, id)
 		}
 
 		message := string(buf[:numBytes])

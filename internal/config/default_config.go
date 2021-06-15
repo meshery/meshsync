@@ -61,6 +61,11 @@ var (
 			ConnectionName: "meshsync-logstream",
 			PublishTo:      "meshery.meshsync.logs",
 		},
+		ExecShell: {
+			Name:           ExecShell,
+			ConnectionName: "meshsync-exec",
+			PublishTo:      "meshery.meshsync.exec",
+		},
 		RequestStream: {
 			Name:           RequestStream,
 			ConnectionName: "meshsync-request-stream",

@@ -36,7 +36,6 @@ func (h *Handler) ListenToRequests(stopCh chan struct{}) {
 	}
 
 	for request := range reqChan {
-		h.Log.Info("Incoming Request")
 		if request.Request == nil {
 			h.Log.Error(ErrInvalidRequest)
 			continue
@@ -45,6 +44,12 @@ func (h *Handler) ListenToRequests(stopCh chan struct{}) {
 		switch request.Request.Entity {
 		case broker.LogRequestEntity:
 			err := h.processLogRequest(request.Request.Payload, listenerConfigs[config.LogStream])
+			if err != nil {
+				h.Log.Error(err)
+				continue
+			}
+		case broker.ExecRequestEntity:
+			err := h.processExecRequest(request.Request.Payload, listenerConfigs[config.ExecShell])
 			if err != nil {
 				h.Log.Error(err)
 				continue

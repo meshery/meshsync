@@ -9,6 +9,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 // Handler contains all handlers, channels, clients, and other parameters for an adapter.
@@ -18,6 +19,7 @@ type Handler struct {
 	Log    logger.Handler
 	Broker broker.Handler
 
+	restConfig   rest.Config
 	informer     dynamicinformer.DynamicSharedInformerFactory
 	staticClient *kubernetes.Clientset
 	channelPool  map[string]chan struct{}
@@ -37,6 +39,7 @@ func New(config config.Handler, log logger.Handler, br broker.Handler) (*Handler
 		Log:          log,
 		Broker:       br,
 		informer:     informer,
+		restConfig:   kubeClient.RestConfig,
 		staticClient: kubeClient.KubeClient,
 		channelPool:  make(map[string]chan struct{}),
 	}, nil
