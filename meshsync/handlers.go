@@ -31,7 +31,6 @@ func (h *Handler) ListenToRequests() {
 	}
 
 	for request := range reqChan {
-		h.Log.Info("Incoming Request")
 		if request.Request == nil {
 			h.Log.Error(ErrInvalidRequest)
 			continue
@@ -47,6 +46,12 @@ func (h *Handler) ListenToRequests() {
 		case broker.ReSyncDiscoveryEntity:
 			h.Log.Info("Resyncing")
 			h.channelPool[channels.ReSync].(channels.ReSyncChannel) <- struct{}{}
+		case broker.ExecRequestEntity:
+			err := h.processExecRequest(request.Request.Payload, listenerConfigs[config.ExecShell])
+			if err != nil {
+				h.Log.Error(err)
+				continue
+			}
 		}
 	}
 }
