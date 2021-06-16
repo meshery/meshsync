@@ -10,6 +10,7 @@ import (
 	"github.com/layer5io/meshkit/broker/nats"
 	configprovider "github.com/layer5io/meshkit/config/provider"
 	"github.com/layer5io/meshkit/logger"
+	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/meshsync"
 )
@@ -70,27 +71,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	meshsyncHandler, err := meshsync.New(cfg, log, br)
+	chPool := channels.NewChannelPool()
+	meshsyncHandler, err := meshsync.New(cfg, log, br, chPool)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 
-	stopCh := make(chan struct{})
-	sigCh := make(chan os.Signal, 1)
-
-	go meshsyncHandler.Run(stopCh)
-	go meshsyncHandler.ListenToRequests(stopCh)
+	go meshsyncHandler.Run()
+	go meshsyncHandler.ListenToRequests()
 
 	log.Info("Server started")
 	// Handle graceful shutdown
-	signal.Notify(sigCh, syscall.SIGTERM, os.Interrupt)
+	signal.Notify(chPool[channels.OS].(channels.OSChannel), syscall.SIGTERM, os.Interrupt)
 	select {
-	case <-sigCh:
-		close(stopCh)
+	case <-chPool[channels.OS].(channels.OSChannel):
+		close(chPool[channels.Stop].(channels.StopChannel))
 		log.Info("Shutting down")
-	case <-stopCh:
-		close(stopCh)
+	case <-chPool[channels.Stop].(channels.StopChannel):
+		close(chPool[channels.Stop].(channels.StopChannel))
 		log.Info("Shutting down")
 	}
 }

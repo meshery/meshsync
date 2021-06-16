@@ -2,26 +2,21 @@ package meshsync
 
 import (
 	"github.com/layer5io/meshkit/broker"
+	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
-	"github.com/layer5io/meshsync/internal/pipeline"
 )
 
-func (h *Handler) Run(stopCh chan struct{}) {
-	pipelineConfigs := make(map[string]config.PipelineConfigs, 10)
-	err := h.Config.GetObject(config.ResourcesKey, &pipelineConfigs)
-	if err != nil {
-		h.Log.Error(ErrGetObject(err))
-	}
-
-	h.Log.Info("Pipeline started")
-	pl := pipeline.New(h.Log, h.informer, h.Broker, pipelineConfigs, stopCh)
-	result := pl.Run()
-	if result.Error != nil {
-		h.Log.Error(ErrNewPipeline(result.Error))
+func (h *Handler) Run() {
+	pipelineCh := make(chan struct{})
+	go h.startDiscovery(pipelineCh)
+	for range h.channelPool[channels.ReSync].(channels.ReSyncChannel) {
+		close(pipelineCh)
+		pipelineCh = make(chan struct{})
+		go h.startDiscovery(pipelineCh)
 	}
 }
 
-func (h *Handler) ListenToRequests(stopCh chan struct{}) {
+func (h *Handler) ListenToRequests() {
 	listenerConfigs := make(map[string]config.ListenerConfig, 10)
 	err := h.Config.GetObject(config.ListenersKey, &listenerConfigs)
 	if err != nil {
@@ -49,6 +44,9 @@ func (h *Handler) ListenToRequests(stopCh chan struct{}) {
 				h.Log.Error(err)
 				continue
 			}
+		case broker.ReSyncDiscoveryEntity:
+			h.Log.Info("Resyncing")
+			h.channelPool[channels.ReSync].(channels.ReSyncChannel) <- struct{}{}
 		}
 	}
 }
