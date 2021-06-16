@@ -22,7 +22,7 @@ go-test:
 	./scripts/go-test.sh
 
 .PHONY: check
-check:
+check: error
 	golangci-lint run
 
 .PHONY: docker-check
@@ -40,3 +40,7 @@ docker-run:
 .PHONY: run-check
 run: check
 	DEBUG=true go run meshsync.go
+
+.PHONY: error
+error:
+	go run github.com/layer5io/meshkit/cmd/errorutil -d . update

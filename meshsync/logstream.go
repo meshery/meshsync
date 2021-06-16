@@ -7,6 +7,7 @@ import (
 
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
+	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
 	v1 "k8s.io/api/core/v1"
@@ -29,13 +30,13 @@ func (h *Handler) processLogRequest(obj interface{}, cfg config.ListenerConfig) 
 		if _, ok := h.channelPool[id]; !ok {
 			// Subscribing the first time
 			if !bool(req.Stop) {
-				h.channelPool[id] = make(chan struct{})
+				h.channelPool[id] = channels.NewStructChannel()
 				go h.streamLogs(id, req, cfg)
 			}
 		} else {
 			// Already running subscription
 			if bool(req.Stop) {
-				h.channelPool[id] <- struct{}{}
+				h.channelPool[id].(channels.StructChannel) <- struct{}{}
 			}
 		}
 	}
@@ -89,7 +90,7 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 		}
 	}
 
-	<-h.channelPool[id]
+	<-h.channelPool[id].(channels.StructChannel)
 	h.Log.Info("Closing", id)
 	delete(h.channelPool, id)
 }

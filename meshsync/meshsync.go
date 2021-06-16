@@ -5,6 +5,7 @@ import (
 	"github.com/layer5io/meshkit/config"
 	"github.com/layer5io/meshkit/logger"
 	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
+	"github.com/layer5io/meshsync/internal/channels"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic/dynamicinformer"
@@ -18,12 +19,12 @@ type Handler struct {
 	Log    logger.Handler
 	Broker broker.Handler
 
+	channelPool  map[string]channels.GenericChannel
 	informer     dynamicinformer.DynamicSharedInformerFactory
 	staticClient *kubernetes.Clientset
-	channelPool  map[string]chan struct{}
 }
 
-func New(config config.Handler, log logger.Handler, br broker.Handler) (*Handler, error) {
+func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[string]channels.GenericChannel) (*Handler, error) {
 	// Initialize Kubeconfig
 	kubeClient, err := mesherykube.New(nil)
 	if err != nil {
@@ -38,6 +39,6 @@ func New(config config.Handler, log logger.Handler, br broker.Handler) (*Handler
 		Broker:       br,
 		informer:     informer,
 		staticClient: kubeClient.KubeClient,
-		channelPool:  make(map[string]chan struct{}),
+		channelPool:  pool,
 	}, nil
 }
