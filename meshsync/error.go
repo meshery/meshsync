@@ -28,7 +28,7 @@ var (
 	ErrLogStreamCode        = "1010"
 	ErrCopyBufferCode       = "1011"
 	ErrInvalidRequestCode   = "1012"
-	ErrExecTerminalCode     = ""
+	ErrExecTerminalCode     = "1013"
 
 	ErrInvalidRequest = errors.New(ErrInvalidRequestCode, errors.Alert, []string{"Request is invalid"}, []string{}, []string{}, []string{})
 )

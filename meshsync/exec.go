@@ -71,8 +71,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 		In:     stdin,
 		Raw:    true,
 	}
-	var sizeQueue remotecommand.TerminalSizeQueue
-	sizeQueue = t.MonitorSize(t.GetSize())
+	sizeQueue := t.MonitorSize(t.GetSize())
 
 	go func() {
 		fn := func() error {

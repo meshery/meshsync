@@ -105,6 +105,14 @@
       "path": "meshsync/error.go"
     },
     {
+      "name": "ErrExecTerminalCode",
+      "old_code": "",
+      "code": "1013",
+      "code_is_literal": true,
+      "code_is_int": false,
+      "path": "meshsync/error.go"
+    },
+    {
       "name": "ErrInvalidRequest",
       "old_code": "",
       "code": "",
@@ -243,6 +251,16 @@
         "code_is_int": true,
         "path": "meshsync/error.go"
       }
+    ],
+    "no_code": [
+      {
+        "name": "ErrExecTerminalCode",
+        "old_code": "",
+        "code": "1013",
+        "code_is_literal": true,
+        "code_is_int": false,
+        "path": "meshsync/error.go"
+      }
     ]
   },
   "call_expr_codes": [
@@ -275,6 +293,17 @@
         "severity": "Alert",
         "long_description": "",
         "short_description": "",
+        "probable_cause": "",
+        "suggested_remediation": ""
+      }
+    ],
+    "ErrExecTerminalCode": [
+      {
+        "name": "ErrExecTerminalCode",
+        "code": "",
+        "severity": "Alert",
+        "long_description": "",
+        "short_description": "Error while opening a terminal session",
         "probable_cause": "",
         "suggested_remediation": ""
       }
