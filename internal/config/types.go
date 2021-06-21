@@ -12,6 +12,7 @@ const (
 	BrokerURL     = "broker-url"
 	RequestStream = "request-stream"
 	LogStream     = "log-stream"
+	ExecShell     = "exec-shell"
 )
 
 type PipelineConfigs []PipelineConfig

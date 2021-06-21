@@ -118,6 +118,15 @@
       "short_description": "Request is invalid",
       "probable_cause": "",
       "suggested_remediation": ""
+    },
+    "no_code": {
+      "name": "ErrExecTerminalCode",
+      "code": "1013",
+      "severity": "Alert",
+      "long_description": "",
+      "short_description": "Error while opening a terminal session",
+      "probable_cause": "",
+      "suggested_remediation": ""
     }
   }
 }

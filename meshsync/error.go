@@ -28,6 +28,7 @@ var (
 	ErrLogStreamCode        = "1010"
 	ErrCopyBufferCode       = "1011"
 	ErrInvalidRequestCode   = "1012"
+	ErrExecTerminalCode     = "1013"
 
 	ErrInvalidRequest = errors.New(ErrInvalidRequestCode, errors.Alert, []string{"Request is invalid"}, []string{}, []string{}, []string{})
 )
@@ -58,6 +59,10 @@ func ErrSubscribeRequest(err error) error {
 
 func ErrLogStream(err error) error {
 	return errors.New(ErrLogStreamCode, errors.Alert, []string{"Error while open log stream connection", err.Error()}, []string{}, []string{}, []string{})
+}
+
+func ErrExecTerminal(err error) error {
+	return errors.New(ErrExecTerminalCode, errors.Alert, []string{"Error while opening a terminal session", err.Error()}, []string{}, []string{}, []string{})
 }
 
 func ErrCopyBuffer(err error) error {
