@@ -9,6 +9,7 @@ import (
 
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
+	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
 	corev1 "k8s.io/api/core/v1"
@@ -35,14 +36,14 @@ func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig)
 		if _, ok := h.channelPool[id]; !ok {
 			// Subscribing the first time
 			if !bool(req.Stop) {
-				h.channelPool[id] = make(chan struct{})
+				h.channelPool[id] = channels.NewStructChannel()
 				h.Log.Info("Starting session")
 				go h.streamSession(id, req, cfg)
 			}
 		} else {
 			// Already running subscription
 			if bool(req.Stop) {
-				h.channelPool[id] <- struct{}{}
+				h.channelPool[id].(channels.StructChannel) <- struct{}{}
 			}
 		}
 	}
@@ -52,7 +53,6 @@ func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig)
 
 func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.ListenerConfig) {
 	subCh := make(chan *broker.Message)
-	publishCh := make(chan *broker.Message)
 	//stdin := os.Stdin
 	stdin := &bytes.Buffer{}
 	tstdin, putStdin := io.Pipe()
@@ -130,9 +130,12 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 			message = message + string(run)
 			if run == '#' {
 				fmt.Println("stdout: ", message)
-				publishCh <- &broker.Message{
+				err = h.Broker.Publish(id, &broker.Message{
 					ObjectType: broker.ExecOutputObject,
 					Object:     message,
+				})
+				if err != nil {
+					h.Log.Error(ErrExecTerminal(err))
 				}
 			}
 		}
@@ -161,11 +164,6 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 
 	for {
 		select {
-		case msg := <-publishCh:
-			err = h.Broker.Publish(id, msg)
-			if err != nil {
-				h.Log.Error(ErrExecTerminal(err))
-			}
 		case msg := <-subCh:
 			if msg.ObjectType == broker.ExecInputObject {
 				fmt.Println("object: ", msg.Object)
@@ -174,7 +172,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 					h.Log.Error(ErrExecTerminal(err))
 				}
 			}
-		case <-h.channelPool[id]:
+		case <-h.channelPool[id].(channels.StructChannel):
 			h.Log.Info("Closing", id)
 			delete(h.channelPool, id)
 		}
