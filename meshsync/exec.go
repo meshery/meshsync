@@ -2,10 +2,11 @@ package meshsync
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
@@ -53,11 +54,8 @@ func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig)
 
 func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.ListenerConfig) {
 	subCh := make(chan *broker.Message)
-	//stdin := os.Stdin
-	stdin := &bytes.Buffer{}
 	tstdin, putStdin := io.Pipe()
-	//stdout := os.Stdout
-	//stdout := &bytes.Buffer{}
+	stdin := ioutil.NopCloser(tstdin)
 	getStdout, stdout := io.Pipe()
 	err := h.Broker.SubscribeWithChannel(id, id, subCh)
 	if err != nil {
@@ -72,7 +70,6 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 		Raw:    true,
 	}
 	sizeQueue := t.MonitorSize(t.GetSize())
-
 	go func() {
 		fn := func() error {
 			request := h.staticClient.CoreV1().RESTClient().Post().
@@ -116,9 +113,8 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 
 	go func() {
 		rdr := bufio.NewReader(getStdout)
-		message := ""
 		for {
-			run, _, err := rdr.ReadRune()
+			message, err := rdr.ReadString('#')
 			if err == io.EOF {
 				break
 			}
@@ -126,47 +122,21 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 				h.Log.Error(ErrCopyBuffer(err))
 			}
 
-			message = message + string(run)
-			if run == '#' {
-				fmt.Println("stdout: ", message)
-				err = h.Broker.Publish(id, &broker.Message{
-					ObjectType: broker.ExecOutputObject,
-					Object:     message,
-				})
-				if err != nil {
-					h.Log.Error(ErrExecTerminal(err))
-				}
-			}
-		}
-	}()
-
-	go func() {
-		rdr := bufio.NewReader(tstdin)
-		message := ""
-		for {
-			run, _, err := rdr.ReadRune()
-			fmt.Printf("rune: %c", run)
-			if err == io.EOF {
-				break
-			}
+			err = h.Broker.Publish(id, &broker.Message{
+				ObjectType: broker.ExecOutputObject,
+				Object:     message,
+			})
 			if err != nil {
-				h.Log.Error(ErrCopyBuffer(err))
-			}
-			if run == 0x0D {
-				message = message + string(run)
-				fmt.Println("Stdin: ", message)
+				h.Log.Error(ErrExecTerminal(err))
 			}
 		}
 	}()
-
-	h.Log.Info(id)
 
 	for {
 		select {
 		case msg := <-subCh:
 			if msg.ObjectType == broker.ExecInputObject {
-				fmt.Println("object: ", msg.Object)
-				_, err = putStdin.Write([]byte(msg.Object.(string)))
+				_, err = io.CopyBuffer(putStdin, strings.NewReader(msg.Object.(string)+"\n"), nil)
 				if err != nil {
 					h.Log.Error(ErrExecTerminal(err))
 				}
