@@ -133,6 +133,10 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 	}()
 
 	for {
+		if _, ok := h.channelPool[id]; !ok {
+			h.Log.Info("Session closed for: ", id)
+			return
+		}
 		select {
 		case msg := <-subCh:
 			if msg.ObjectType == broker.ExecInputObject {
