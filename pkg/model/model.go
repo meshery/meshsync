@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -10,12 +11,13 @@ const (
 )
 
 type Object struct {
-	ID         string              `json:"id" gorm:"primarykey"`
-	APIVersion string              `json:"apiVersion" gorm:"index"`
-	Kind       string              `json:"kind" gorm:"index"`
-	ObjectMeta *ResourceObjectMeta `json:"metadata" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	Spec       *ResourceSpec       `json:"spec,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	Status     *ResourceStatus     `json:"status,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	ID              string              `json:"id" gorm:"primarykey"`
+	APIVersion      string              `json:"apiVersion" gorm:"index"`
+	Kind            string              `json:"kind" gorm:"index"`
+	ObjectMeta      *ResourceObjectMeta `json:"metadata" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Spec            *ResourceSpec       `json:"spec,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Status          *ResourceStatus     `json:"status,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	PatternResource *uuid.UUID          `json:"pattern_resource"`
 
 	// Secondary fields for configsmaps and secrets
 	Immutable  string `json:"immutable,omitempty"`

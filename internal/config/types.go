@@ -1,13 +1,14 @@
 package config
 
 const (
-	ServerKey         = "server-config"
-	PipelineNameKey   = "meshsync-pipeline"
-	ResourcesKey      = "resources"
-	GlobalResourceKey = "global"
-	LocalResourceKey  = "local"
-	ListenersKey      = "listeners"
-	LogStreamsKey     = "log-streams"
+	ServerKey                 = "server-config"
+	PipelineNameKey           = "meshsync-pipeline"
+	ResourcesKey              = "resources"
+	GlobalResourceKey         = "global"
+	LocalResourceKey          = "local"
+	ListenersKey              = "listeners"
+	LogStreamsKey             = "log-streams"
+	PatternResourceIDLabelKey = "resource.pattern.meshery.io/id"
 
 	BrokerURL     = "broker-url"
 	RequestStream = "request-stream"

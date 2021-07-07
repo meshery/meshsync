@@ -7,6 +7,7 @@ import (
 	"github.com/buger/jsonparser"
 	"github.com/google/uuid"
 	"github.com/layer5io/meshkit/utils"
+	"github.com/layer5io/meshsync/internal/config"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -24,6 +25,12 @@ func ParseList(object unstructured.Unstructured) Object {
 			Key:   string(key),
 			Value: string(value),
 		})
+
+		if string(key) == config.PatternResourceIDLabelKey {
+			id, _ := uuid.FromBytes(value)
+			result.PatternResource = &id
+		}
+
 		return nil
 	}, "metadata", "labels")
 	result.ObjectMeta.Labels = labels
