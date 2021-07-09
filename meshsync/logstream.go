@@ -83,8 +83,10 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 			ObjectType: broker.LogStreamObject,
 			EventType:  broker.Add,
 			Object: &model.LogObject{
-				ID:   req.ID,
-				Data: message,
+				ID:        req.ID,
+				Data:      message,
+				Primary:   req.Name,
+				Secondary: req.Container,
 			},
 		})
 		if err != nil {
