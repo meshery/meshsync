@@ -3,10 +3,8 @@ package model
 type LogObject struct {
 	ID   string `json:"id,omitempty"`
 	Data string `json:"data,omitempty"`
-
 	// Name of Pod, Svc, Deply getting logs for
 	Primary string `json:"primary,omitempty"`
-
 	// Specific detail about the log like Container or Pod Name
 	Secondary string `json:"secondary,omitempty"`
 }

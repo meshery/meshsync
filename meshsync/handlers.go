@@ -1,7 +1,6 @@
 package meshsync
 
 import (
-	"context"
 	"time"
 
 	"github.com/layer5io/meshkit/broker"
@@ -13,25 +12,18 @@ func (h *Handler) Run() {
 	pipelineCh := make(chan struct{})
 	go h.startDiscovery(pipelineCh)
 	for range h.channelPool[channels.ReSync].(channels.ReSyncChannel) {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		go func(c context.Context, cc context.CancelFunc) {
+		go func(ch chan struct{}) {
 			for {
 				h.Log.Info("stopping previous instance")
-				select {
-				case <-c.Done():
-					return
-				default:
-					if _, ok := <-pipelineCh; ok {
-						pipelineCh <- struct{}{}
-					}
+				if _, ok := <-ch; ok {
+					ch <- struct{}{}
 				}
 			}
-		}(ctx, cancel)
-		h.Log.Info("waiting")
-		time.Sleep(5 * time.Second)
+		}(pipelineCh)
 		h.Log.Info("starting over")
-		pipelineCh := make(chan struct{})
+		pipelineCh = make(chan struct{})
 		go h.startDiscovery(pipelineCh)
+		time.Sleep(5 * time.Second)
 	}
 }
 
@@ -42,7 +34,7 @@ func (h *Handler) ListenToRequests() {
 		h.Log.Error(ErrGetObject(err))
 	}
 
-	h.Log.Info("Listening for requests")
+	h.Log.Info("Listening for requests in: ", listenerConfigs[config.RequestStream].SubscribeTo)
 	reqChan := make(chan *broker.Message)
 	err = h.Broker.SubscribeWithChannel(listenerConfigs[config.RequestStream].SubscribeTo, listenerConfigs[config.RequestStream].ConnectionName, reqChan)
 	if err != nil {

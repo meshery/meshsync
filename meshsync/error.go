@@ -30,41 +30,41 @@ var (
 	ErrInvalidRequestCode   = "1012"
 	ErrExecTerminalCode     = "1013"
 
-	ErrInvalidRequest = errors.New(ErrInvalidRequestCode, errors.Alert, []string{"Request is invalid"}, []string{}, []string{}, []string{})
+	ErrInvalidRequest = errors.New(ErrInvalidRequestCode, errors.Alert, []string{"Request is invalid"}, []string{}, []string{"Stale request on the broker"}, []string{"Make sure the request format is correctly configured"})
 )
 
 func ErrGetObject(err error) error {
-	return errors.New(ErrGetObjectCode, errors.Alert, []string{"Error getting config object", err.Error()}, []string{}, []string{}, []string{})
+	return errors.New(ErrGetObjectCode, errors.Alert, []string{"Error getting config object"}, []string{err.Error()}, []string{"Config doesnt exist"}, []string{"Check application config is configured correct or restart the server"})
 }
 
 func ErrNewPipeline(err error) error {
-	return errors.New(ErrNewPipelineCode, errors.Alert, []string{"Error creating pipeline", err.Error()}, []string{}, []string{}, []string{})
+	return errors.New(ErrNewPipelineCode, errors.Alert, []string{"Error creating pipeline"}, []string{err.Error()}, []string{"Pipeline step failed"}, []string{"Investigate on the respective pipeline step that has failed to figure the cause"})
 }
 
 func ErrNewInformer(err error) error {
-	return errors.New(ErrNewInformerCode, errors.Alert, []string{"Error initializing informer", err.Error()}, []string{}, []string{}, []string{})
+	return errors.New(ErrNewInformerCode, errors.Alert, []string{"Error initializing informer"}, []string{err.Error()}, []string{"Resource is invalid or doesnt exist"}, []string{"Make sure to input the existing valid resource"})
 }
 
 func ErrKubeConfig(err error) error {
-	return errors.New(ErrKubeConfigCode, errors.Alert, []string{"Error creating kubernetes client", err.Error()}, []string{}, []string{}, []string{})
+	return errors.New(ErrKubeConfigCode, errors.Alert, []string{"Error creating kubernetes client"}, []string{err.Error()}, []string{"Kubernetes config is invalid or APi server is not reachable"}, []string{"Make sure to upload a valid kubernetes config", "Make sure kubernetes API server is reachable"})
 }
 
 func ErrInitRequest(err error) error {
-	return errors.New(ErrInitRequestCode, errors.Alert, []string{"Error while initializing requests channel", err.Error()}, []string{}, []string{}, []string{})
+	return errors.New(ErrInitRequestCode, errors.Alert, []string{"Error while initializing requests channel"}, []string{err.Error()}, []string{"Application resource deficit"}, []string{"Make sure meshsync has enough resources to create channels"})
 }
 
 func ErrSubscribeRequest(err error) error {
-	return errors.New(ErrSubscribeRequestCode, errors.Alert, []string{"Error while subscribing to requests", err.Error()}, []string{}, []string{}, []string{})
+	return errors.New(ErrSubscribeRequestCode, errors.Alert, []string{"Error while subscribing to requests"}, []string{err.Error()}, []string{"Broker resource deficit"}, []string{"Make sure Broker has enough resources to create channels"})
 }
 
 func ErrLogStream(err error) error {
-	return errors.New(ErrLogStreamCode, errors.Alert, []string{"Error while open log stream connection", err.Error()}, []string{}, []string{}, []string{})
+	return errors.New(ErrLogStreamCode, errors.Alert, []string{"Error while open log stream connection"}, []string{err.Error()}, []string{"requested Resource could be invalid"}, []string{"Make sure the requested resource is valid and existing"})
 }
 
 func ErrExecTerminal(err error) error {
-	return errors.New(ErrExecTerminalCode, errors.Alert, []string{"Error while opening a terminal session", err.Error()}, []string{}, []string{}, []string{})
+	return errors.New(ErrExecTerminalCode, errors.Alert, []string{"Error while opening a terminal session"}, []string{err.Error()}, []string{"requested Resource could be invalid"}, []string{"Make sure the requested resource is valid and existing"})
 }
 
 func ErrCopyBuffer(err error) error {
-	return errors.New(ErrCopyBufferCode, errors.Alert, []string{"Error while copying log buffer", err.Error()}, []string{}, []string{}, []string{})
+	return errors.New(ErrCopyBufferCode, errors.Alert, []string{"Error while copying log buffer"}, []string{err.Error()}, []string{}, []string{})
 }
