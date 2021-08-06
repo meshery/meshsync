@@ -33,7 +33,7 @@ func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig)
 	}
 
 	for _, req := range reqs {
-		id := fmt.Sprintf("exec.%s.%s.%s", req.Namespace, req.Name, req.Container)
+		id := fmt.Sprintf("exec.%s.%s.%s.%s", req.Namespace, req.Name, req.Container, req.ID)
 		if _, ok := h.channelPool[id]; !ok {
 			// Subscribing the first time
 			if !bool(req.Stop) {
