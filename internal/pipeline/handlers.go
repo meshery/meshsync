@@ -29,7 +29,7 @@ func (c *ResourceWatcher) startWatching(s cache.SharedIndexInformer) {
 
 				c.publishItem(objCasted, broker.Update)
 			} else {
-				c.log.Info(fmt.Sprintf(
+				c.log.Debug(fmt.Sprintf(
 					"skipping update event for: %s => [No changes detected]: %d %d",
 					objCasted.GetName(),
 					oldRV,
