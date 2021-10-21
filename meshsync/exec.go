@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
 	"github.com/layer5io/meshsync/internal/channels"
@@ -19,6 +20,9 @@ import (
 	"k8s.io/kubectl/pkg/util/interrupt"
 	"k8s.io/kubectl/pkg/util/term"
 )
+
+// KB stands for KiloByte
+const KB = 1024
 
 func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig) error {
 	reqs := make(model.ExecRequests)
@@ -44,7 +48,7 @@ func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig)
 		} else {
 			// Already running subscription
 			if bool(req.Stop) {
-				h.channelPool[id].(channels.StructChannel) <- struct{}{}
+				execCleanup(h, id)
 			}
 		}
 	}
@@ -57,7 +61,8 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 	tstdin, putStdin := io.Pipe()
 	stdin := ioutil.NopCloser(tstdin)
 	getStdout, stdout := io.Pipe()
-	err := h.Broker.SubscribeWithChannel(id, id, subCh)
+
+	err := h.Broker.SubscribeWithChannel(fmt.Sprintf("input.%s", id), generateID(), subCh)
 	if err != nil {
 		h.Log.Error(ErrExecTerminal(err))
 	}
@@ -70,6 +75,8 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 		Raw:    true,
 	}
 	sizeQueue := t.MonitorSize(t.GetSize())
+
+	// TTY request GoRoutine
 	go func() {
 		fn := func() error {
 			request := h.staticClient.CoreV1().RESTClient().Post().
@@ -91,40 +98,50 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 				return err
 			}
 
-			err = exec.Stream(remotecommand.StreamOptions{
+			if err := exec.Stream(remotecommand.StreamOptions{
 				Stdin:             stdin,
 				Stdout:            stdout,
 				Stderr:            stdout,
 				Tty:               true,
 				TerminalSizeQueue: sizeQueue,
-			})
-			if err != nil {
+			}); err != nil {
 				return err
 			}
+
+			// Cleanup the resources when the streaming process terminates
+			execCleanup(h, id)
 			return nil
 		}
 
 		if err := t.Safe(fn); err != nil {
 			h.Log.Error(ErrExecTerminal(err))
-			delete(h.channelPool, id)
+			execCleanup(h, id)
+
+			// If the TTY fails then send the error message to the client
+			if err := h.Broker.Publish(id, &broker.Message{
+				ObjectType: broker.ErrorObject,
+				Object:     err.Error(),
+			}); err != nil {
+				h.Log.Error(ErrExecTerminal(err))
+			}
+
 			return
 		}
 	}()
 
+	// TTY stdout streaming Goroutine
 	go func() {
 		rdr := bufio.NewReader(getStdout)
 		for {
-			message, err := rdr.ReadString('#')
+			data := make([]byte, 1*KB)
+			_, err := rdr.Read(data)
 			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				h.Log.Error(ErrCopyBuffer(err))
+				break // No clean up here as this can generate a false positive
 			}
 
 			err = h.Broker.Publish(id, &broker.Message{
 				ObjectType: broker.ExecOutputObject,
-				Object:     message,
+				Object:     string(data),
 			})
 			if err != nil {
 				h.Log.Error(ErrExecTerminal(err))
@@ -137,6 +154,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 			h.Log.Info("Session closed for: ", id)
 			return
 		}
+
 		select {
 		case msg := <-subCh:
 			if msg.ObjectType == broker.ExecInputObject {
@@ -150,4 +168,22 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 			delete(h.channelPool, id)
 		}
 	}
+}
+
+func execCleanup(h *Handler, id string) {
+	ch, ok := h.channelPool[id]
+	if !ok {
+		return
+	}
+
+	structChan, ok := ch.(channels.StructChannel)
+	if !ok {
+		return
+	}
+
+	structChan <- struct{}{}
+}
+
+func generateID() string {
+	return uuid.New().String()
 }
