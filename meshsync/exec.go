@@ -2,13 +2,13 @@ package meshsync
 
 import (
 	"bufio"
-	"crypto/rand"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
 	"github.com/layer5io/meshsync/internal/channels"
@@ -185,11 +185,5 @@ func execCleanup(h *Handler, id string) {
 }
 
 func generateID() string {
-	b := make([]byte, 8)
-	_, err := rand.Read(b)
-	if err != nil {
-		return ""
-	}
-
-	return fmt.Sprintf("%x", b)
+	return uuid.New().String()
 }
