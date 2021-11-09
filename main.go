@@ -13,14 +13,20 @@ import (
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/meshsync"
+	"github.com/spf13/viper"
 )
 
 var (
 	serviceName = "meshsync"
 	provider    = configprovider.ViperKey
+	version     = "Not Set"
+	commitsha   = "Not Set"
 )
 
 func main() {
+	viper.SetDefault("BUILD", version)
+	viper.SetDefault("COMMITSHA", commitsha)
+
 	// Initialize Logger instance
 	log, err := logger.New(serviceName, logger.Options{
 		Format: logger.SyslogLogFormat,
