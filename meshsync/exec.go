@@ -39,15 +39,60 @@ func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig)
 			if !bool(req.Stop) {
 				h.channelPool[id] = channels.NewStructChannel()
 				h.Log.Info("Starting session")
+
+				err := h.Broker.Publish("active_sessions.exec", &broker.Message{
+					ObjectType: broker.ActiveExecObject,
+					Object:     h.getActiveChannels(),
+				})
+				if err != nil {
+					h.Log.Error(ErrGetObject(err))
+				}
 				go h.streamSession(id, req, cfg)
 			}
 		} else {
 			// Already running subscription
 			if bool(req.Stop) {
 				h.channelPool[id].(channels.StructChannel) <- struct{}{}
+
+				err := h.Broker.Publish("active_sessions.exec", &broker.Message{
+					ObjectType: broker.ActiveExecObject,
+					Object:     h.getActiveChannels(),
+				})
+				if err != nil {
+					h.Log.Error(ErrGetObject(err))
+				}
 			}
 		}
 	}
+
+	return nil
+}
+func (h *Handler) processActiveExecRequest() error {
+	go h.streamChannelPool()
+
+	return nil
+}
+func (h *Handler) getActiveChannels() []*string {
+	activeChannels := make([]*string, 0, len(h.channelPool))
+	for k := range h.channelPool {
+		activeChannels = append(activeChannels, &k)
+	}
+
+	return activeChannels
+}
+
+func (h *Handler) streamChannelPool() error {
+	go func() {
+		for {
+			err := h.Broker.Publish("active_sessions.exec", &broker.Message{
+				ObjectType: broker.ActiveExecObject,
+				Object:     h.getActiveChannels(),
+			})
+			if err != nil {
+				h.Log.Error(ErrGetObject(err))
+			}
+		}
+	}()
 
 	return nil
 }

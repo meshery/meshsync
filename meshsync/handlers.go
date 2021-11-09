@@ -65,6 +65,13 @@ func (h *Handler) ListenToRequests() {
 				h.Log.Error(err)
 				continue
 			}
+		case broker.ActiveExecEntity:
+			h.Log.Info("Connecting to channel pool")
+			err := h.processActiveExecRequest()
+			if err != nil {
+				h.Log.Error(err)
+				continue
+			}
 		}
 	}
 }
