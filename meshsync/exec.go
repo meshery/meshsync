@@ -56,8 +56,7 @@ func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig)
 		} else {
 			// Already running subscription
 			if bool(req.Stop) {
-				h.channelPool[id].(channels.StructChannel) <- struct{}{}
-
+				// TODO: once we have a unsubscribe functionality, need to publish message to active sessions subject
 				execCleanup(h, id)
 			}
 		}
