@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/layer5io/meshkit/broker"
@@ -88,6 +89,8 @@ func (h *Handler) streamChannelPool() error {
 			if err != nil {
 				h.Log.Error(ErrGetObject(err))
 			}
+
+			time.Sleep(10 * time.Second)
 		}
 	}()
 
