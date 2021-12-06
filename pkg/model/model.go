@@ -17,6 +17,7 @@ type Object struct {
 	ObjectMeta      *ResourceObjectMeta `json:"metadata" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Spec            *ResourceSpec       `json:"spec,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Status          *ResourceStatus     `json:"status,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	ClusterID       string              `json:"cluster_id"`
 	PatternResource *uuid.UUID          `json:"pattern_resource"`
 
 	// Secondary fields for configsmaps and secrets
