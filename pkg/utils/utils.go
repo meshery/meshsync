@@ -18,7 +18,7 @@ var clusterID *string = nil
 // 1. If MeshSync is running out of cluster then the function will return
 // an empty string
 // 2. Function caches the cluster ID whenever it is invoked for the first time
-// assuming that the cluster ID cannot and will not change thoughout MeshSync's
+// assuming that the cluster ID cannot and will not change throughout MeshSync's
 // lifecycle
 func GetClusterID() string {
 	if clusterID != nil {
