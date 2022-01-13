@@ -40,7 +40,7 @@ func (c *ResourceWatcher) startWatching(s cache.SharedIndexInformer) {
 		DeleteFunc: func(obj interface{}) {
 			// the obj can only be of two types, Unstructured or DeletedFinalStateUnknown.
 			// DeletedFinalStateUnknown means that the object that we receive may be `stale`
-			// becuase of the way informer behaves
+			// because of the way informer behaves
 
 			// refer 'https://pkg.go.dev/k8s.io/client-go/tools/cache#ResourceEventHandler.OnDelete'
 
