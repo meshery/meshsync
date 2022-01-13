@@ -38,13 +38,21 @@ func (c *ResourceWatcher) startWatching(s cache.SharedIndexInformer) {
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			// It is not guaranteed that this will always be unstructured
-			// to avoid panicking check if it is truly unstructured
-			objCasted, ok := obj.(*unstructured.Unstructured)
+			// the obj can only be of two types, Unstructured or DeletedFinalStateUnknown.
+			// DeletedFinalStateUnknown means that the object that we receive may be `stale`
+			// becuase of the way informer behaves
+
+			// refer 'https://pkg.go.dev/k8s.io/client-go/tools/cache#ResourceEventHandler.OnDelete'
+
+			var objCasted *unstructured.Unstructured
+			objCasted = obj.(*unstructured.Unstructured)
+
+			possiblyStaleObj, ok := obj.(cache.DeletedFinalStateUnknown)
 			if ok {
-				c.log.Info("received delete event for:", objCasted.GetName())
-				c.publishItem(objCasted, broker.Delete)
+				objCasted = possiblyStaleObj.Obj.(*unstructured.Unstructured)
 			}
+			c.log.Info("received delete event for:", objCasted.GetName())
+			c.publishItem(objCasted, broker.Delete)
 		},
 	}
 	s.AddEventHandler(handlers)
