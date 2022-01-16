@@ -21,7 +21,7 @@ type ResourceWatcher struct {
 	queue        workqueue.RateLimitingInterface
 }
 
-func addResource(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, bclient broker.Handler, config internalconfig.PipelineConfig, stopChan chan struct{}, queue workqueue.RateLimitingInterface) *ResourceWatcher {
+func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, bclient broker.Handler, config internalconfig.PipelineConfig, stopChan chan struct{}, queue workqueue.RateLimitingInterface) *ResourceWatcher {
 	return &ResourceWatcher{
 		log:          log,
 		informer:     informer,
@@ -36,8 +36,7 @@ func addResource(log logger.Handler, informer dynamicinformer.DynamicSharedInfor
 func (c *ResourceWatcher) Exec(request *pipeline.Request) *pipeline.Result {
 	gvr, _ := schema.ParseResourceArg(c.config.Name)
 	iclient := c.informer.ForResource(*gvr)
-
-	go c.startWatching(iclient.Informer())
+	c.registerHandlers(iclient.Informer())
 
 	return &pipeline.Result{
 		Error: nil,
@@ -80,5 +79,35 @@ func (pq *ProcessQueue) Exec(request *pipeline.Request) *pipeline.Result {
 // Cancel - step interface
 func (pq *ProcessQueue) Cancel() error {
 	pq.Status("cancel step")
+	return nil
+}
+
+// StartInformer Step
+
+type StartInformers struct {
+	pipeline.StepContext
+	stopChan chan struct{}
+	informer dynamicinformer.DynamicSharedInformerFactory
+	log      logger.Handler
+}
+
+func newStartInformersStep(stopChan chan struct{}, log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory) *StartInformers {
+	return &StartInformers{
+		log:      log,
+		informer: informer,
+		stopChan: stopChan,
+	}
+}
+
+func (si *StartInformers) Exec(request *pipeline.Request) *pipeline.Result {
+	si.informer.Start(si.stopChan)
+	return &pipeline.Result{
+		Error: nil,
+	}
+}
+
+// Cancel - step interface
+func (si *StartInformers) Cancel() error {
+	si.Status("cancel step")
 	return nil
 }

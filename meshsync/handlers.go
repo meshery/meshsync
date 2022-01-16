@@ -6,6 +6,7 @@ import (
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
+	// "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func (h *Handler) Run() {
@@ -55,6 +56,11 @@ func (h *Handler) ListenToRequests() {
 				h.Log.Error(err)
 				continue
 			}
+
+			// TODO: Have to add this to the broker types
+		case "informer-store":
+			h.Log.Info("Sending the current state of the informer store")
+
 		case broker.ReSyncDiscoveryEntity:
 			h.Log.Info("Resyncing")
 			h.channelPool[channels.ReSync].(channels.ReSyncChannel) <- struct{}{}

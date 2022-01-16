@@ -20,7 +20,7 @@ type QueueEvent struct {
 	Config internalconfig.PipelineConfig
 }
 
-func (c *ResourceWatcher) startWatching(s cache.SharedIndexInformer) {
+func (c *ResourceWatcher) registerHandlers(s cache.SharedIndexInformer) {
 
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
@@ -66,10 +66,7 @@ func (c *ResourceWatcher) startWatching(s cache.SharedIndexInformer) {
 			c.log.Info("Added DELETE event for:", objCasted.GetName(), " to the queue")
 		},
 	}
-
 	s.AddEventHandler(handlers)
-	s.Run(c.stopChan)
-
 }
 
 func (pq *ProcessQueue) startProcessing() {
