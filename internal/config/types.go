@@ -14,6 +14,7 @@ const (
 	RequestStream = "request-stream"
 	LogStream     = "log-stream"
 	ExecShell     = "exec-shell"
+	InformerStore = "informer-store"
 )
 
 type PipelineConfigs []PipelineConfig

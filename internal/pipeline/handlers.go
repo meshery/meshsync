@@ -5,19 +5,29 @@ import (
 	"strconv"
 
 	"github.com/layer5io/meshkit/broker"
+	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/tools/cache"
 )
 
+// type of the events that will be added to the workqueue
+type QueueEvent struct {
+	Obj    *unstructured.Unstructured
+	EvType broker.EventType
+	Config internalconfig.PipelineConfig
+}
+
 func (c *ResourceWatcher) startWatching(s cache.SharedIndexInformer) {
+
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			c.log.Info("received add event for:", obj.(*unstructured.Unstructured).GetName())
-			c.publishItem(obj.(*unstructured.Unstructured), broker.Add)
+			c.queue.Add(QueueEvent{Obj: obj.(*unstructured.Unstructured), EvType: broker.Add, Config: c.config})
+			c.log.Info("Added ADD event for:", obj.(*unstructured.Unstructured).GetName(), "to the queue")
+
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
+
 			oldObjCasted := oldObj.(*unstructured.Unstructured)
 			objCasted := obj.(*unstructured.Unstructured)
 
@@ -25,12 +35,11 @@ func (c *ResourceWatcher) startWatching(s cache.SharedIndexInformer) {
 			newRV, _ := strconv.ParseInt(oldObjCasted.GetResourceVersion(), 0, 64)
 
 			if oldRV < newRV {
-				c.log.Info("received update event for:", objCasted.GetName())
-
-				c.publishItem(objCasted, broker.Update)
+				c.queue.Add(QueueEvent{Obj: objCasted, EvType: broker.Update, Config: c.config})
+				c.log.Info("Added UPDATE event for:", obj.(*unstructured.Unstructured).GetName(), " to the queue")
 			} else {
 				c.log.Debug(fmt.Sprintf(
-					"skipping update event for: %s => [No changes detected]: %d %d",
+					"Skipping UPDATE event for: %s => [No changes detected]: %d %d",
 					objCasted.GetName(),
 					oldRV,
 					newRV,
@@ -51,21 +60,56 @@ func (c *ResourceWatcher) startWatching(s cache.SharedIndexInformer) {
 			if ok {
 				objCasted = possiblyStaleObj.Obj.(*unstructured.Unstructured)
 			}
-			c.log.Info("received delete event for:", objCasted.GetName())
-			c.publishItem(objCasted, broker.Delete)
+			c.queue.Add(QueueEvent{Obj: objCasted, EvType: broker.Delete, Config: c.config})
+			c.log.Info("Added DELETE event for:", objCasted.GetName(), " to the queue")
 		},
 	}
+
 	s.AddEventHandler(handlers)
 	s.Run(c.stopChan)
+
 }
 
-func (c *ResourceWatcher) publishItem(obj *unstructured.Unstructured, evtype broker.EventType) {
-	err := c.brokerClient.Publish(c.config.PublishTo, &broker.Message{
+func (pq *ProcessQueue) startProcessing() {
+	for pq.processQueueItem() {
+	}
+}
+
+func (pq *ProcessQueue) processQueueItem() bool {
+	item, shutdown := pq.queue.Get()
+	if shutdown {
+		return false
+	}
+
+	defer pq.queue.Forget(item) // to remove the item from the retries list
+	defer pq.queue.Done(item)   // to remove the item from the queue
+	informerEvent, ok := item.(QueueEvent)
+	if !ok {
+		pq.log.Error(fmt.Errorf("This type of event cannot be processed: %v", item))
+		// TODO:what to do when the event format is invalid ?
+		return true
+	}
+
+	switch informerEvent.EvType {
+	case broker.Add:
+		pq.publishItem(informerEvent.Obj, broker.Add, informerEvent.Config)
+	case broker.Update:
+		pq.publishItem(informerEvent.Obj, broker.Update, informerEvent.Config)
+	case broker.Delete:
+		pq.publishItem(informerEvent.Obj, broker.Delete, informerEvent.Config)
+	}
+
+	return true
+
+}
+
+func (pq *ProcessQueue) publishItem(obj *unstructured.Unstructured, evtype broker.EventType, config internalconfig.PipelineConfig) {
+	err := pq.brokerClient.Publish(config.PublishTo, &broker.Message{
 		ObjectType: broker.MeshSync,
 		EventType:  evtype,
 		Object:     model.ParseList(*obj),
 	})
 	if err != nil {
-		c.log.Error(ErrPublish(c.config.Name, err))
+		pq.log.Error(ErrPublish(config.Name, err))
 	}
 }

@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/util/workqueue"
 )
 
 type ResourceWatcher struct {
@@ -17,15 +18,17 @@ type ResourceWatcher struct {
 	brokerClient broker.Handler
 	config       internalconfig.PipelineConfig
 	stopChan     chan struct{}
+	queue        workqueue.RateLimitingInterface
 }
 
-func addResource(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, bclient broker.Handler, config internalconfig.PipelineConfig, stopChan chan struct{}) *ResourceWatcher {
+func addResource(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, bclient broker.Handler, config internalconfig.PipelineConfig, stopChan chan struct{}, queue workqueue.RateLimitingInterface) *ResourceWatcher {
 	return &ResourceWatcher{
 		log:          log,
 		informer:     informer,
 		brokerClient: bclient,
 		config:       config,
 		stopChan:     stopChan,
+		queue:        queue,
 	}
 }
 
@@ -44,5 +47,36 @@ func (c *ResourceWatcher) Exec(request *pipeline.Request) *pipeline.Result {
 // Cancel - step interface
 func (c *ResourceWatcher) Cancel() error {
 	c.Status("cancel step")
+	return nil
+}
+
+// ProcessQueue Step
+
+type ProcessQueue struct {
+	pipeline.StepContext
+	queue        workqueue.RateLimitingInterface
+	brokerClient broker.Handler
+	log          logger.Handler
+}
+
+func newProcessQueueStep(log logger.Handler, queue workqueue.RateLimitingInterface, bclient broker.Handler, informer dynamicinformer.DynamicSharedInformerFactory) *ProcessQueue {
+	return &ProcessQueue{
+		log:          log,
+		brokerClient: bclient,
+		queue:        queue,
+	}
+}
+
+func (pq *ProcessQueue) Exec(request *pipeline.Request) *pipeline.Result {
+	go pq.startProcessing()
+
+	return &pipeline.Result{
+		Error: nil,
+	}
+}
+
+// Cancel - step interface
+func (pq *ProcessQueue) Cancel() error {
+	pq.Status("cancel step")
 	return nil
 }

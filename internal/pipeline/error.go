@@ -8,6 +8,7 @@ const (
 	ErrListCode          = "1001"
 	ErrPublishCode       = "1002"
 	ErrDynamicClientCode = "1003"
+	ErrCacheSyncCode     = "1014"
 )
 
 func ErrDynamicClient(name string, err error) error {
@@ -20,4 +21,8 @@ func ErrList(name string, err error) error {
 
 func ErrPublish(name string, err error) error {
 	return errors.New(ErrPublishCode, errors.Alert, []string{"Error while publishing for: " + name, err.Error()}, []string{}, []string{}, []string{})
+}
+
+func ErrCacheSync(name string, err error) error {
+	return errors.New(ErrCacheSyncCode, errors.Alert, []string{"Error while syncing the informer store for: " + name, err.Error()}, []string{}, []string{}, []string{})
 }

@@ -84,5 +84,10 @@ var (
 			ConnectionName: "meshsync-request-stream",
 			SubscribeTo:    "meshery.meshsync.request",
 		},
+		InformerStore: {
+			Name:           InformerStore,
+			ConnectionName: "meshsync-informer-store",
+			SubscribeTo:    "meshery.meshsync.store",
+		},
 	}
 )
