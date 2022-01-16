@@ -42,14 +42,14 @@ func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFacto
 	gdstage := GlobalDiscoveryStage
 	configs := plConfigs[gdstage.Name]
 	for _, config := range configs {
-		gdstage.AddStep(newRegisterInformerStep(log, informer, broker, config, stopChan, queue)) // register the informers for different resources
+		gdstage.AddStep(newRegisterInformerStep(log, informer, config, queue)) // register the informers for different resources
 	}
 
 	// Local discovery
 	ldstage := LocalDiscoveryStage
 	configs = plConfigs[ldstage.Name]
 	for _, config := range configs {
-		ldstage.AddStep(newRegisterInformerStep(log, informer, broker, config, stopChan, queue)) // register the informers for different resources
+		ldstage.AddStep(newRegisterInformerStep(log, informer, config, queue)) // register the informers for different resources
 	}
 
 	strtInfmrs := StartInformersStage

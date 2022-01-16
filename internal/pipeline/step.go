@@ -11,29 +11,25 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
-type ResourceWatcher struct {
+type RegisterInformer struct {
 	pipeline.StepContext
-	log          logger.Handler
-	informer     dynamicinformer.DynamicSharedInformerFactory
-	brokerClient broker.Handler
-	config       internalconfig.PipelineConfig
-	stopChan     chan struct{}
-	queue        workqueue.RateLimitingInterface
+	log      logger.Handler
+	informer dynamicinformer.DynamicSharedInformerFactory
+	config   internalconfig.PipelineConfig
+	queue    workqueue.RateLimitingInterface
 }
 
-func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, bclient broker.Handler, config internalconfig.PipelineConfig, stopChan chan struct{}, queue workqueue.RateLimitingInterface) *ResourceWatcher {
-	return &ResourceWatcher{
-		log:          log,
-		informer:     informer,
-		brokerClient: bclient,
-		config:       config,
-		stopChan:     stopChan,
-		queue:        queue,
+func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, config internalconfig.PipelineConfig, queue workqueue.RateLimitingInterface) *RegisterInformer {
+	return &RegisterInformer{
+		log:      log,
+		informer: informer,
+		config:   config,
+		queue:    queue,
 	}
 }
 
 // Exec - step interface
-func (c *ResourceWatcher) Exec(request *pipeline.Request) *pipeline.Result {
+func (c *RegisterInformer) Exec(request *pipeline.Request) *pipeline.Result {
 	gvr, _ := schema.ParseResourceArg(c.config.Name)
 	iclient := c.informer.ForResource(*gvr)
 	c.registerHandlers(iclient.Informer())
@@ -44,7 +40,7 @@ func (c *ResourceWatcher) Exec(request *pipeline.Request) *pipeline.Result {
 }
 
 // Cancel - step interface
-func (c *ResourceWatcher) Cancel() error {
+func (c *RegisterInformer) Cancel() error {
 	c.Status("cancel step")
 	return nil
 }
@@ -82,7 +78,7 @@ func (pq *ProcessQueue) Cancel() error {
 	return nil
 }
 
-// StartInformer Step
+// StartInformers Step
 
 type StartInformers struct {
 	pipeline.StepContext

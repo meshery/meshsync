@@ -20,7 +20,7 @@ type QueueEvent struct {
 	Config internalconfig.PipelineConfig
 }
 
-func (c *ResourceWatcher) registerHandlers(s cache.SharedIndexInformer) {
+func (c *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
 
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
