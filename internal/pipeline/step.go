@@ -56,14 +56,16 @@ type ProcessQueue struct {
 	pipeline.StepContext
 	queue        workqueue.RateLimitingInterface
 	brokerClient broker.Handler
+	stopChan     chan struct{}
 	log          logger.Handler
 }
 
-func newProcessQueueStep(log logger.Handler, queue workqueue.RateLimitingInterface, bclient broker.Handler, informer dynamicinformer.DynamicSharedInformerFactory) *ProcessQueue {
+func newProcessQueueStep(stopChan chan struct{}, log logger.Handler, queue workqueue.RateLimitingInterface, bclient broker.Handler, informer dynamicinformer.DynamicSharedInformerFactory) *ProcessQueue {
 	return &ProcessQueue{
 		log:          log,
 		brokerClient: bclient,
 		queue:        queue,
+		stopChan:     stopChan,
 	}
 }
 

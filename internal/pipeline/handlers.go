@@ -3,11 +3,13 @@ package pipeline
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/layer5io/meshkit/broker"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -71,8 +73,14 @@ func (c *ResourceWatcher) startWatching(s cache.SharedIndexInformer) {
 }
 
 func (pq *ProcessQueue) startProcessing() {
-	for pq.processQueueItem() {
-	}
+
+	// workerqueue provides us the guarantee that an item
+	// will not be processed more than once concurrently
+	go wait.Until(func() {
+		for pq.processQueueItem() {
+		}
+	}, 1*time.Second, pq.stopChan)
+
 }
 
 func (pq *ProcessQueue) processQueueItem() bool {

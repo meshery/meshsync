@@ -48,7 +48,7 @@ func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFacto
 
 	// Queue Processing
 	qprcss := QueueProcessingStage
-	qprcss.AddStep(newProcessQueueStep(log, queue, broker, informer)) // Processes the events in the queue
+	qprcss.AddStep(newProcessQueueStep(stopChan, log, queue, broker, informer)) // Processes the events in the queue
 
 	// Create Pipeline
 	clusterPipeline := pipeline.New(Name, 1000)
