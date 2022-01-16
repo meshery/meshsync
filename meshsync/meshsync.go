@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 )
 
@@ -26,6 +27,7 @@ type Handler struct {
 	staticClient *kubernetes.Clientset
 	channelPool  map[string]channels.GenericChannel
 	queue        workqueue.RateLimitingInterface
+	stores       map[string]cache.Store
 }
 
 func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[string]channels.GenericChannel) (*Handler, error) {

@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/layer5io/meshkit/broker"
+	"github.com/layer5io/meshkit/utils"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
-	// "k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func (h *Handler) Run() {
@@ -57,9 +57,32 @@ func (h *Handler) ListenToRequests() {
 				continue
 			}
 
-			// TODO: Have to add this to the broker types
+			// TODO: Add this to the broker pkg
 		case "informer-store":
-			h.Log.Info("Sending the current state of the informer store")
+			d, err := utils.Marshal(request.Request.Payload)
+			var payload struct{ Reply string }
+			if err != nil {
+				h.Log.Error(err)
+				continue
+			}
+
+			err = utils.Unmarshal(d, &payload)
+			if err != nil {
+				h.Log.Error(err)
+				continue
+			}
+
+			replySubject := payload.Reply
+			h.Log.Info("Sending the current state of the informer store to ", replySubject)
+			// This is not an optimal way of doing this since NATS is not meant to deal with very large messages
+			// TODO: Find an alternative optimal way of doing this
+			err = h.Broker.Publish(replySubject, &broker.Message{
+				Object: h.listStoreObjects(),
+			})
+			if err != nil {
+				h.Log.Error(err)
+				continue
+			}
 
 		case broker.ReSyncDiscoveryEntity:
 			h.Log.Info("Resyncing")
@@ -80,4 +103,12 @@ func (h *Handler) ListenToRequests() {
 			}
 		}
 	}
+}
+
+func (h *Handler) listStoreObjects() []interface{} {
+	objects := make([]interface{}, 0)
+	for _, v := range h.stores {
+		objects = append(objects, v.List()...)
+	}
+	return objects
 }

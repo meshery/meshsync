@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 )
 
@@ -29,13 +30,21 @@ func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.Dynami
 }
 
 // Exec - step interface
-func (c *RegisterInformer) Exec(request *pipeline.Request) *pipeline.Result {
-	gvr, _ := schema.ParseResourceArg(c.config.Name)
-	iclient := c.informer.ForResource(*gvr)
-	c.registerHandlers(iclient.Informer())
+func (ri *RegisterInformer) Exec(request *pipeline.Request) *pipeline.Result {
+	gvr, _ := schema.ParseResourceArg(ri.config.Name)
+	iclient := ri.informer.ForResource(*gvr)
 
+	ri.registerHandlers(iclient.Informer())
+
+	// add the instance of store to the Result
+	data := make(map[string]cache.Store)
+	if request.Data != nil {
+		data = request.Data.(map[string]cache.Store)
+	}
+	data[ri.config.Name] = iclient.Informer().GetStore()
 	return &pipeline.Result{
 		Error: nil,
+		Data:  data,
 	}
 }
 
@@ -69,6 +78,7 @@ func (pq *ProcessQueue) Exec(request *pipeline.Request) *pipeline.Result {
 
 	return &pipeline.Result{
 		Error: nil,
+		Data:  request.Data,
 	}
 }
 
@@ -99,6 +109,7 @@ func (si *StartInformers) Exec(request *pipeline.Request) *pipeline.Result {
 	si.informer.Start(si.stopChan)
 	return &pipeline.Result{
 		Error: nil,
+		Data:  request.Data,
 	}
 }
 

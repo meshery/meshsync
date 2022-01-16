@@ -20,12 +20,12 @@ type QueueEvent struct {
 	Config internalconfig.PipelineConfig
 }
 
-func (c *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
+func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
 
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			c.queue.Add(QueueEvent{Obj: obj.(*unstructured.Unstructured), EvType: broker.Add, Config: c.config})
-			c.log.Info("Added ADD event for:", obj.(*unstructured.Unstructured).GetName(), "to the queue")
+			ri.queue.Add(QueueEvent{Obj: obj.(*unstructured.Unstructured), EvType: broker.Add, Config: ri.config})
+			ri.log.Info("Added ADD event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " to the queue")
 
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
@@ -37,10 +37,10 @@ func (c *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
 			newRV, _ := strconv.ParseInt(oldObjCasted.GetResourceVersion(), 0, 64)
 
 			if oldRV < newRV {
-				c.queue.Add(QueueEvent{Obj: objCasted, EvType: broker.Update, Config: c.config})
-				c.log.Info("Added UPDATE event for:", obj.(*unstructured.Unstructured).GetName(), " to the queue")
+				ri.queue.Add(QueueEvent{Obj: objCasted, EvType: broker.Update, Config: ri.config})
+				ri.log.Info("Added UPDATE event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " to the queue")
 			} else {
-				c.log.Debug(fmt.Sprintf(
+				ri.log.Debug(fmt.Sprintf(
 					"Skipping UPDATE event for: %s => [No changes detected]: %d %d",
 					objCasted.GetName(),
 					oldRV,
@@ -62,8 +62,8 @@ func (c *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
 			if ok {
 				objCasted = possiblyStaleObj.Obj.(*unstructured.Unstructured)
 			}
-			c.queue.Add(QueueEvent{Obj: objCasted, EvType: broker.Delete, Config: c.config})
-			c.log.Info("Added DELETE event for:", objCasted.GetName(), " to the queue")
+			ri.queue.Add(QueueEvent{Obj: objCasted, EvType: broker.Delete, Config: ri.config})
+			ri.log.Info("Added DELETE event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " to the queue")
 		},
 	}
 	s.AddEventHandler(handlers)
