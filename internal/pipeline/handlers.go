@@ -15,6 +15,7 @@ import (
 
 // type of the events that will be added to the workqueue
 type QueueEvent struct {
+	// TODO: Change this to store only Key from the cache
 	Obj    *unstructured.Unstructured
 	EvType broker.EventType
 	Config internalconfig.PipelineConfig
@@ -94,7 +95,7 @@ func (pq *ProcessQueue) processQueueItem() bool {
 	var err error
 
 	if !ok {
-		err = fmt.Errorf("This type of event cannot be processed: %v", item)
+		err = fmt.Errorf("This type of QueueEvent cannot be processed: %v", item)
 		pq.log.Error(err)
 	}
 
