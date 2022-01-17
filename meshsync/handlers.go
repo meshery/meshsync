@@ -96,14 +96,17 @@ func (h *Handler) ListenToRequests() {
 			}
 
 			h.Log.Info("Sending the current state of the informer store to ", replySubject)
-			// This is not an optimal way of doing this since NATS is not meant to deal with very large messages
-			// TODO: Find an alternative optimal way of doing this
-			err = h.Broker.Publish(replySubject, &broker.Message{
-				Object: h.listStoreObjects(),
-			})
-			if err != nil {
-				h.Log.Error(err)
-				continue
+
+			splitSlices := splitIntoMultipleSlices(h.listStoreObjects(), 5)
+			for _, val := range splitSlices {
+				err = h.Broker.Publish(replySubject, &broker.Message{
+					Object: val,
+				})
+				if err != nil {
+					h.Log.Error(err)
+					continue
+				}
+
 			}
 
 		case broker.ReSyncDiscoveryEntity:
@@ -133,4 +136,27 @@ func (h *Handler) listStoreObjects() []interface{} {
 		objects = append(objects, v.List()...)
 	}
 	return objects
+}
+
+// TODO: move this to meshkit
+// given [1,2,3,4,5,6,7,5,4,4] and 3 as its arguements, it would
+// return [[1,2,3], [4,5,6], [7,5,4], [4]]
+func splitIntoMultipleSlices(s []interface{}, maxItmsPerSlice int) []([]interface{}) {
+	result := make([]([]interface{}), 0)
+	temp := make([]interface{}, 0)
+
+	for idx, val := range s {
+		temp = append(temp, val)
+		if ((idx + 1) % maxItmsPerSlice) == 0 {
+			result = append(result, temp)
+			temp = nil
+		}
+		if idx+1 == len(s) {
+			if len(temp) != 0 {
+				result = append(result, temp)
+			}
+		}
+	}
+
+	return result
 }
