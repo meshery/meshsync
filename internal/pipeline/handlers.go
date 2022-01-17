@@ -73,6 +73,7 @@ func (pq *ProcessQueue) startProcessing() {
 
 	// workerqueue provides us the guarantee that an item
 	// will not be processed more than once concurrently
+	// TODO: Configure multiple workers to improve performance
 	go wait.Until(func() {
 		for pq.processQueueItem() {
 		}
@@ -86,29 +87,48 @@ func (pq *ProcessQueue) processQueueItem() bool {
 		return false
 	}
 
-	defer pq.queue.Forget(item) // to remove the item from the retries list
-	defer pq.queue.Done(item)   // to remove the item from the queue
+	defer pq.queue.Done(item) // to remove the item from the queue
+
 	informerEvent, ok := item.(QueueEvent)
+
+	var err error
+
 	if !ok {
-		pq.log.Error(fmt.Errorf("This type of event cannot be processed: %v", item))
-		// TODO:what to do when the event format is invalid ?
-		return true
+		err = fmt.Errorf("This type of event cannot be processed: %v", item)
+		pq.log.Error(err)
 	}
 
 	switch informerEvent.EvType {
 	case broker.Add:
-		pq.publishItem(informerEvent.Obj, broker.Add, informerEvent.Config)
+		err = pq.publishItem(informerEvent.Obj, broker.Add, informerEvent.Config)
 	case broker.Update:
-		pq.publishItem(informerEvent.Obj, broker.Update, informerEvent.Config)
+		err = pq.publishItem(informerEvent.Obj, broker.Update, informerEvent.Config)
 	case broker.Delete:
-		pq.publishItem(informerEvent.Obj, broker.Delete, informerEvent.Config)
+		err = pq.publishItem(informerEvent.Obj, broker.Delete, informerEvent.Config)
 	}
+
+	pq.handleError(err, item)
 
 	return true
 
 }
 
-func (pq *ProcessQueue) publishItem(obj *unstructured.Unstructured, evtype broker.EventType, config internalconfig.PipelineConfig) {
+func (pq *ProcessQueue) handleError(err error, key interface{}) {
+	if err == nil {
+		pq.queue.Forget(key) // removes the item from retries list
+		return
+	}
+	// retries for the given amount of time
+	// TODO: Get the number of retires from the caller
+	if pq.queue.NumRequeues(key) < 6 {
+		pq.queue.AddRateLimited(key)
+		return
+	}
+	pq.queue.Forget(key)
+	pq.log.Error(fmt.Errorf("Dropping item: %v out of queue as it could be processed even after several retries", key))
+}
+
+func (pq *ProcessQueue) publishItem(obj *unstructured.Unstructured, evtype broker.EventType, config internalconfig.PipelineConfig) error {
 	err := pq.brokerClient.Publish(config.PublishTo, &broker.Message{
 		ObjectType: broker.MeshSync,
 		EventType:  evtype,
@@ -116,5 +136,8 @@ func (pq *ProcessQueue) publishItem(obj *unstructured.Unstructured, evtype broke
 	})
 	if err != nil {
 		pq.log.Error(ErrPublish(config.Name, err))
+		return err
 	}
+
+	return nil
 }
