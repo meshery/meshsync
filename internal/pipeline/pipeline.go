@@ -22,11 +22,6 @@ var (
 		Steps:      []pipeline.Step{},
 	}
 
-	QueueProcessingStage = &pipeline.Stage{
-		Name:       "QueueProcessing",
-		Concurrent: false,
-		Steps:      []pipeline.Step{},
-	}
 
 	StartInformersStage = &pipeline.Stage{
 		Name:       "StartInformers",
