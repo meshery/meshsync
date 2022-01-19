@@ -6,7 +6,6 @@ import (
 	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/myntra/pipeline"
 	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/client-go/util/workqueue"
 )
 
 var (
@@ -36,36 +35,31 @@ var (
 	}
 )
 
-func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, broker broker.Handler, plConfigs map[string]internalconfig.PipelineConfigs, stopChan chan struct{}, queue workqueue.RateLimitingInterface) *pipeline.Pipeline {
+func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, broker broker.Handler, plConfigs map[string]internalconfig.PipelineConfigs, stopChan chan struct{}) *pipeline.Pipeline {
 
 	// Global discovery
 	gdstage := GlobalDiscoveryStage
 	configs := plConfigs[gdstage.Name]
 	for _, config := range configs {
-		gdstage.AddStep(newRegisterInformerStep(log, informer, config, queue)) // Register the informers for different resources
+		gdstage.AddStep(newRegisterInformerStep(log, informer, config, broker)) // Register the informers for different resources
 	}
 
 	// Local discovery
 	ldstage := LocalDiscoveryStage
 	configs = plConfigs[ldstage.Name]
 	for _, config := range configs {
-		ldstage.AddStep(newRegisterInformerStep(log, informer, config, queue)) // Register the informers for different resources
+		ldstage.AddStep(newRegisterInformerStep(log, informer, config, broker)) // Register the informers for different resources
 	}
 
 	// Start informers
 	strtInfmrs := StartInformersStage
 	strtInfmrs.AddStep(newStartInformersStep(stopChan, log, informer)) // Start the registered informers
 
-	// Queue Processing
-	qprcss := QueueProcessingStage
-	qprcss.AddStep(newProcessQueueStep(stopChan, log, queue, broker, informer)) // Process the events in the queue
-
 	// Create Pipeline
 	clusterPipeline := pipeline.New(Name, 1000)
 	clusterPipeline.AddStage(gdstage)
 	clusterPipeline.AddStage(ldstage)
 	clusterPipeline.AddStage(strtInfmrs)
-	clusterPipeline.AddStage(qprcss)
 
 	return clusterPipeline
 }

@@ -12,7 +12,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
 )
 
 // Handler contains all handlers, channels, clients, and other parameters for an adapter.
@@ -26,7 +25,6 @@ type Handler struct {
 	informer     dynamicinformer.DynamicSharedInformerFactory
 	staticClient *kubernetes.Clientset
 	channelPool  map[string]channels.GenericChannel
-	queue        workqueue.RateLimitingInterface
 	stores       map[string]cache.Store
 }
 
@@ -47,6 +45,5 @@ func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[
 		restConfig:   kubeClient.RestConfig,
 		staticClient: kubeClient.KubeClient,
 		channelPool:  pool,
-		queue:        workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()),
 	}, nil
 }

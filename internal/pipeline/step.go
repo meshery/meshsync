@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
 )
 
 type RegisterInformer struct {
@@ -17,15 +16,15 @@ type RegisterInformer struct {
 	log      logger.Handler
 	informer dynamicinformer.DynamicSharedInformerFactory
 	config   internalconfig.PipelineConfig
-	queue    workqueue.RateLimitingInterface
+	broker   broker.Handler
 }
 
-func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, config internalconfig.PipelineConfig, queue workqueue.RateLimitingInterface) *RegisterInformer {
+func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, config internalconfig.PipelineConfig, brkr broker.Handler) *RegisterInformer {
 	return &RegisterInformer{
 		log:      log,
 		informer: informer,
 		config:   config,
-		queue:    queue,
+		broker:   brkr,
 	}
 }
 
@@ -52,40 +51,6 @@ func (ri *RegisterInformer) Exec(request *pipeline.Request) *pipeline.Result {
 // Cancel - step interface
 func (c *RegisterInformer) Cancel() error {
 	c.Status("cancel step")
-	return nil
-}
-
-// ProcessQueue Step
-
-type ProcessQueue struct {
-	pipeline.StepContext
-	queue        workqueue.RateLimitingInterface
-	brokerClient broker.Handler
-	stopChan     chan struct{}
-	log          logger.Handler
-}
-
-func newProcessQueueStep(stopChan chan struct{}, log logger.Handler, queue workqueue.RateLimitingInterface, bclient broker.Handler, informer dynamicinformer.DynamicSharedInformerFactory) *ProcessQueue {
-	return &ProcessQueue{
-		log:          log,
-		brokerClient: bclient,
-		queue:        queue,
-		stopChan:     stopChan,
-	}
-}
-
-func (pq *ProcessQueue) Exec(request *pipeline.Request) *pipeline.Result {
-	go pq.startProcessing()
-
-	return &pipeline.Result{
-		Error: nil,
-		Data:  request.Data,
-	}
-}
-
-// Cancel - step interface
-func (pq *ProcessQueue) Cancel() error {
-	pq.Status("cancel step")
 	return nil
 }
 
