@@ -113,7 +113,6 @@ func (h *Handler) ListenToRequests() {
 					h.Log.Error(err)
 					continue
 				}
-
 			}
 
 		case broker.ReSyncDiscoveryEntity:
@@ -146,7 +145,7 @@ func (h *Handler) listStoreObjects() []interface{} {
 }
 
 // TODO: move this to meshkit
-// given [1,2,3,4,5,6,7,5,4,4] and 3 as its arguements, it would
+// given [1,2,3,4,5,6,7,5,4,4] and 3 as its arguments, it would
 // return [[1,2,3], [4,5,6], [7,5,4], [4]]
 func splitIntoMultipleSlices(s []model.Object, maxItmsPerSlice int) []([]model.Object) {
 	result := make([]([]model.Object), 0)

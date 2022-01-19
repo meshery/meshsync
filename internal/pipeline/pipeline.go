@@ -22,7 +22,6 @@ var (
 		Steps:      []pipeline.Step{},
 	}
 
-
 	StartInformersStage = &pipeline.Stage{
 		Name:       "StartInformers",
 		Concurrent: false,
@@ -31,7 +30,6 @@ var (
 )
 
 func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, broker broker.Handler, plConfigs map[string]internalconfig.PipelineConfigs, stopChan chan struct{}) *pipeline.Pipeline {
-
 	// Global discovery
 	gdstage := GlobalDiscoveryStage
 	configs := plConfigs[gdstage.Name]

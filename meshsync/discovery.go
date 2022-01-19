@@ -3,7 +3,6 @@ package meshsync
 import (
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/internal/pipeline"
-	// "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/tools/cache"
 )
 

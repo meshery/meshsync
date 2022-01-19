@@ -28,7 +28,7 @@ func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.Dynami
 	}
 }
 
-// TODO: Find a way to respond when an informer has stopped for some reason unkown
+// TODO: Find a way to respond when an informer has stopped for some reason unknown
 // Exec - step interface
 func (ri *RegisterInformer) Exec(request *pipeline.Request) *pipeline.Result {
 	gvr, _ := schema.ParseResourceArg(ri.config.Name)
@@ -49,8 +49,8 @@ func (ri *RegisterInformer) Exec(request *pipeline.Request) *pipeline.Result {
 }
 
 // Cancel - step interface
-func (c *RegisterInformer) Cancel() error {
-	c.Status("cancel step")
+func (ri *RegisterInformer) Cancel() error {
+	ri.Status("cancel step")
 	return nil
 }
 

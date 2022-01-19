@@ -12,15 +12,15 @@ import (
 )
 
 func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
-
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			ri.publishItem(obj.(*unstructured.Unstructured), broker.Add, ri.config)
+			err := ri.publishItem(obj.(*unstructured.Unstructured), broker.Add, ri.config)
+			if err != nil {
+				ri.log.Error(err)
+			}
 			ri.log.Info("Received ADD event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " of kind: ", obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
-
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
-
 			oldObjCasted := oldObj.(*unstructured.Unstructured)
 			objCasted := obj.(*unstructured.Unstructured)
 
@@ -28,7 +28,11 @@ func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
 			newRV, _ := strconv.ParseInt(oldObjCasted.GetResourceVersion(), 0, 64)
 
 			if oldRV < newRV {
-				ri.publishItem(obj.(*unstructured.Unstructured), broker.Update, ri.config)
+				err := ri.publishItem(obj.(*unstructured.Unstructured), broker.Update, ri.config)
+
+				if err != nil {
+					ri.log.Error(err)
+				}
 				ri.log.Info("Received UPDATE event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " of kind: ", obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
 			} else {
 				ri.log.Debug(fmt.Sprintf(
@@ -42,7 +46,7 @@ func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
 		DeleteFunc: func(obj interface{}) {
 			// the obj can only be of two types, Unstructured or DeletedFinalStateUnknown.
 			// DeletedFinalStateUnknown means that the object that we receive may be `stale`
-			// becuase of the way informer behaves
+			// because of the way informer behaves
 
 			// refer 'https://pkg.go.dev/k8s.io/client-go/tools/cache#ResourceEventHandler.OnDelete'
 
@@ -53,7 +57,11 @@ func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
 			if ok {
 				objCasted = possiblyStaleObj.Obj.(*unstructured.Unstructured)
 			}
-			ri.publishItem(objCasted, broker.Delete, ri.config)
+			err := ri.publishItem(objCasted, broker.Delete, ri.config)
+
+			if err != nil {
+				ri.log.Error(err)
+			}
 			ri.log.Info("Received DELETE event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " of kind: ", obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
 		},
 	}
