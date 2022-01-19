@@ -82,7 +82,6 @@ func (h *Handler) ListenToRequests() {
 				h.Log.Error(err)
 				continue
 			}
-
 			replySubject := payload.Reply
 
 			if !allInformersCacheSynced {
@@ -97,14 +96,10 @@ func (h *Handler) ListenToRequests() {
 				continue
 			}
 
-			h.Log.Info("Sending the current state of the informer store to ", replySubject)
 			storeObjects := h.listStoreObjects()
-			newList := make([]model.Object, 0)
-			for _, obj := range storeObjects {
-				newList = append(newList, model.ParseList(*obj.(*unstructured.Unstructured)))
-			}
+			splitSlices := splitIntoMultipleSlices(storeObjects, 5) //  performance of NATS is bound to degrade if huge messages are sent
 
-			splitSlices := splitIntoMultipleSlices(newList, 5)
+			h.Log.Info("Publishing the data from informer stores to the subject: ", replySubject)
 			for _, val := range splitSlices {
 				err = h.Broker.Publish(replySubject, &broker.Message{
 					Object: val,
@@ -136,12 +131,16 @@ func (h *Handler) ListenToRequests() {
 	}
 }
 
-func (h *Handler) listStoreObjects() []interface{} {
+func (h *Handler) listStoreObjects() []model.Object {
 	objects := make([]interface{}, 0)
 	for _, v := range h.stores {
 		objects = append(objects, v.List()...)
 	}
-	return objects
+	parsedObjects := make([]model.Object, 0)
+	for _, obj := range objects {
+		parsedObjects = append(parsedObjects, model.ParseList(*obj.(*unstructured.Unstructured)))
+	}
+	return parsedObjects
 }
 
 // TODO: move this to meshkit
