@@ -7,6 +7,8 @@ import (
 	"github.com/layer5io/meshkit/utils"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
+	"github.com/layer5io/meshsync/pkg/model"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func (h *Handler) Run() {
@@ -96,8 +98,13 @@ func (h *Handler) ListenToRequests() {
 			}
 
 			h.Log.Info("Sending the current state of the informer store to ", replySubject)
+			storeObjects := h.listStoreObjects()
+			newList := make([]model.Object, 0)
+			for _, obj := range storeObjects {
+				newList = append(newList, model.ParseList(*obj.(*unstructured.Unstructured)))
+			}
 
-			splitSlices := splitIntoMultipleSlices(h.listStoreObjects(), 5)
+			splitSlices := splitIntoMultipleSlices(newList, 5)
 			for _, val := range splitSlices {
 				err = h.Broker.Publish(replySubject, &broker.Message{
 					Object: val,
@@ -141,9 +148,9 @@ func (h *Handler) listStoreObjects() []interface{} {
 // TODO: move this to meshkit
 // given [1,2,3,4,5,6,7,5,4,4] and 3 as its arguements, it would
 // return [[1,2,3], [4,5,6], [7,5,4], [4]]
-func splitIntoMultipleSlices(s []interface{}, maxItmsPerSlice int) []([]interface{}) {
-	result := make([]([]interface{}), 0)
-	temp := make([]interface{}, 0)
+func splitIntoMultipleSlices(s []model.Object, maxItmsPerSlice int) []([]model.Object) {
+	result := make([]([]model.Object), 0)
+	temp := make([]model.Object, 0)
 
 	for idx, val := range s {
 		temp = append(temp, val)
