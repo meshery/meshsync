@@ -79,7 +79,7 @@ func (h *Handler) getActiveChannels() []*string {
 	return activeChannels
 }
 
-func (h *Handler) streamChannelPool() error {
+func (h *Handler) streamChannelPool() {
 	go func() {
 		for {
 			err := h.Broker.Publish("active_sessions.exec", &broker.Message{
@@ -93,8 +93,6 @@ func (h *Handler) streamChannelPool() error {
 			time.Sleep(10 * time.Second)
 		}
 	}()
-
-	return nil
 }
 
 func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.ListenerConfig) {

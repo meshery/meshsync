@@ -70,7 +70,7 @@ func main() {
 		Username:       "",
 		Password:       "",
 		ReconnectWait:  2 * time.Second,
-		MaxReconnect:   5,
+		MaxReconnect:   60,
 	})
 	if err != nil {
 		log.Error(err)

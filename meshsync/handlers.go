@@ -4,8 +4,11 @@ import (
 	"time"
 
 	"github.com/layer5io/meshkit/broker"
+	"github.com/layer5io/meshkit/utils"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
+	"github.com/layer5io/meshsync/pkg/model"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func (h *Handler) Run() {
@@ -55,6 +58,58 @@ func (h *Handler) ListenToRequests() {
 				h.Log.Error(err)
 				continue
 			}
+
+			// TODO: Add this to the broker pkg
+		case "informer-store":
+
+			allInformersCacheSynced := true
+			// checks if all the SharedInformers cache are synced atleast once
+			for _, v := range h.informer.WaitForCacheSync(make(<-chan struct{})) {
+				if !v {
+					allInformersCacheSynced = false
+				}
+			}
+
+			d, err := utils.Marshal(request.Request.Payload)
+			// TODO: Update broker pkg in Meshkit to include Reply types
+			var payload struct{ Reply string }
+			if err != nil {
+				h.Log.Error(err)
+				continue
+			}
+			err = utils.Unmarshal(d, &payload)
+			if err != nil {
+				h.Log.Error(err)
+				continue
+			}
+			replySubject := payload.Reply
+
+			if !allInformersCacheSynced {
+				err = h.Broker.Publish(replySubject, &broker.Message{
+					EventType: broker.ErrorEvent,
+					Object:    "Stores have not been synced. Please try again after sometime",
+				})
+				if err != nil {
+					h.Log.Error(err)
+					continue
+				}
+				continue
+			}
+
+			storeObjects := h.listStoreObjects()
+			splitSlices := splitIntoMultipleSlices(storeObjects, 5) //  performance of NATS is bound to degrade if huge messages are sent
+
+			h.Log.Info("Publishing the data from informer stores to the subject: ", replySubject)
+			for _, val := range splitSlices {
+				err = h.Broker.Publish(replySubject, &broker.Message{
+					Object: val,
+				})
+				if err != nil {
+					h.Log.Error(err)
+					continue
+				}
+			}
+
 		case broker.ReSyncDiscoveryEntity:
 			h.Log.Info("Resyncing")
 			h.channelPool[channels.ReSync].(channels.ReSyncChannel) <- struct{}{}
@@ -74,4 +129,39 @@ func (h *Handler) ListenToRequests() {
 			}
 		}
 	}
+}
+
+func (h *Handler) listStoreObjects() []model.Object {
+	objects := make([]interface{}, 0)
+	for _, v := range h.stores {
+		objects = append(objects, v.List()...)
+	}
+	parsedObjects := make([]model.Object, 0)
+	for _, obj := range objects {
+		parsedObjects = append(parsedObjects, model.ParseList(*obj.(*unstructured.Unstructured)))
+	}
+	return parsedObjects
+}
+
+// TODO: move this to meshkit
+// given [1,2,3,4,5,6,7,5,4,4] and 3 as its arguments, it would
+// return [[1,2,3], [4,5,6], [7,5,4], [4]]
+func splitIntoMultipleSlices(s []model.Object, maxItmsPerSlice int) []([]model.Object) {
+	result := make([]([]model.Object), 0)
+	temp := make([]model.Object, 0)
+
+	for idx, val := range s {
+		temp = append(temp, val)
+		if ((idx + 1) % maxItmsPerSlice) == 0 {
+			result = append(result, temp)
+			temp = nil
+		}
+		if idx+1 == len(s) {
+			if len(temp) != 0 {
+				result = append(result, temp)
+			}
+		}
+	}
+
+	return result
 }
