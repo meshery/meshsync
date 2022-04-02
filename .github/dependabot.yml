@@ -1,0 +1,23 @@
+version: 2
+updates:
+- package-ecosystem: gomod
+  directory: "/"
+  schedule:
+    interval: monthly
+  open-pull-requests-limit: 5
+  labels:
+  - pr/dependencies
+  - kind/chore
+  ignore:
+  - dependency-name: k8s.io/api
+    versions:
+    - ">= 0.20.a"
+    - "< 0.21"
+  - dependency-name: k8s.io/apimachinery
+    versions:
+    - ">= 0.20.a"
+    - "< 0.21"
+  - dependency-name: k8s.io/client-go
+    versions:
+    - ">= 0.20.a"
+    - "< 0.21"
