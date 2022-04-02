@@ -8,6 +8,8 @@ updates:
   labels:
   - pr/dependencies
   - kind/chore
+  reviewers:
+  - leecalcote
   ignore:
   - dependency-name: k8s.io/api
     versions:
