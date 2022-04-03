@@ -39,7 +39,7 @@ docker-run:
 
 .PHONY: run-check
 run: check
-	DEBUG=true go run meshsync.go
+	DEBUG=true go run main.go
 
 .PHONY: error
 error:
