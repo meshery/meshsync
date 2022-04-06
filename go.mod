@@ -14,7 +14,7 @@ require (
 	github.com/layer5io/meshkit v0.5.12
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/spf13/viper v1.10.1
-	gorm.io/gorm v1.20.10
+	gorm.io/gorm v1.23.4
 	k8s.io/api v0.23.0-alpha.1
 	k8s.io/apimachinery v0.23.0-alpha.1
 	k8s.io/client-go v0.23.0-alpha.1
@@ -72,7 +72,7 @@ require (
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.1 // indirect
+	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/jmoiron/sqlx v1.3.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
