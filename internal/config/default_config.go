@@ -29,6 +29,14 @@ var (
 				Name:      "secrets.v1.",
 				PublishTo: "meshery.meshsync.core",
 			},
+			{
+				Name:      "persistentvolumes.v1.",
+				PublishTo: "meshery.meshsync.core",
+			},
+			{
+				Name:      "persistentvolumeclaims.v1.",
+				PublishTo: "meshery.meshsync.core",
+			},
 		},
 		LocalResourceKey: []PipelineConfig{
 			// Core Resources
