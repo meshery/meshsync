@@ -11,5 +11,6 @@ docker-run:
 	-e DEBUG=true \
 	layer5/meshery-meshsync
 
-run: check
-	DEBUG=true go run meshsync.go
+run: 
+	cd meshsync; \
+	go mod tidy; DEBUG=true go run meshsync.go

@@ -6,15 +6,12 @@ replace (
 	vbom.ml/util => github.com/fvbommel/util v0.0.0-20180919145318-efcd4e0f9787
 )
 
-go 1.13
+go 1.17
 
 require (
-	github.com/golang/protobuf v1.4.3
+	github.com/layer5io/meshkit v0.5.12
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
-	github.com/layer5io/meshery-adapter-library v0.1.9
-	github.com/layer5io/meshery-operator v0.2.0
-	github.com/layer5io/meshkit v0.1.30
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/nats-io/nats.go v1.10.0
 	google.golang.org/grpc v1.34.0
