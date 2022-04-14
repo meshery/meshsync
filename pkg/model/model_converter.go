@@ -1,74 +1,129 @@
 package model
 
 import (
-	"encoding/json"
+	"encoding/base64"
+	"fmt"
 
+	"github.com/buger/jsonparser"
 	"github.com/google/uuid"
 	"github.com/layer5io/meshkit/utils"
-	"github.com/layer5io/meshsync/internal/cache"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/layer5io/meshsync/internal/config"
+	iutils "github.com/layer5io/meshsync/pkg/utils"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func ConvObject(typeMeta metav1.TypeMeta, objectMeta metav1.ObjectMeta, spec interface{}, status interface{}) Object {
-	kubernetesResource := getKubernetesResource()
-	kubernetesResourceTypeMeta := getKubernetesResourceTypeMeta(typeMeta, kubernetesResource.ResourceTypeMetaID)
-	kubernetesResourceObjectMeta := getKubernetesResourceObjectMeta(objectMeta, kubernetesResource.ResourceObjectMetaID)
-	kubernetesResourceSpec := getKubernetesResourceSpec(spec, kubernetesResource.ResourceSpecID)
-	kubernetesResourceStatus := getKubernetesResourceStatus(status, kubernetesResource.ResourceStatusID)
+func ParseList(object unstructured.Unstructured) Object {
+	data, _ := object.MarshalJSON()
+	result := Object{}
 
-	return Object{
-		Resource:   kubernetesResource,
-		TypeMeta:   kubernetesResourceTypeMeta,
-		ObjectMeta: kubernetesResourceObjectMeta,
-		Spec:       kubernetesResourceSpec,
-		Status:     kubernetesResourceStatus,
+	_ = utils.Unmarshal(string(data), &result)
+
+	// ObjectMeta internal models
+	labels := make([]*KeyValue, 0)
+	_ = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		labels = append(labels, &KeyValue{
+			Kind:  KindLabel,
+			Key:   string(key),
+			Value: string(value),
+		})
+
+		if string(key) == config.PatternResourceIDLabelKey {
+			id, _ := uuid.FromBytes(value)
+			result.PatternResource = &id
+		}
+
+		return nil
+	}, "metadata", "labels")
+	result.ObjectMeta.Labels = labels
+
+	annotations := make([]*KeyValue, 0)
+	_ = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
+		annotations = append(annotations, &KeyValue{
+			Kind:  KindAnnotation,
+			Key:   string(key),
+			Value: string(value),
+		})
+		return nil
+	}, "metadata", "annotations")
+	result.ObjectMeta.Annotations = annotations
+
+	if finalizers, _, _, err := jsonparser.Get(data, "metadata", "finalizers"); err == nil {
+		result.ObjectMeta.Finalizers = string(finalizers)
 	}
+
+	if managedFields, _, _, err := jsonparser.Get(data, "metadata", "managedFields"); err == nil {
+		result.ObjectMeta.ManagedFields = string(managedFields)
+	}
+
+	if ownerReferences, _, _, err := jsonparser.Get(data, "metadata", "ownerReferences"); err == nil {
+		result.ObjectMeta.OwnerReferences = string(ownerReferences)
+	}
+
+	if spec, _, _, err := jsonparser.Get(data, "spec"); err == nil {
+		result.Spec.Attribute = string(spec)
+	}
+
+	if status, _, _, err := jsonparser.Get(data, "status"); err == nil {
+		result.Status.Attribute = string(status)
+	}
+
+	if immutable, _, _, err := jsonparser.Get(data, "immutable"); err == nil {
+		result.Immutable = string(immutable)
+	}
+
+	if objData, _, _, err := jsonparser.Get(data, "data"); err == nil {
+		result.Data = string(objData)
+	}
+
+	if binaryData, _, _, err := jsonparser.Get(data, "binaryData"); err == nil {
+		result.BinaryData = string(binaryData)
+	}
+
+	if stringData, _, _, err := jsonparser.Get(data, "stringData"); err == nil {
+		result.StringData = string(stringData)
+	}
+
+	if objType, _, _, err := jsonparser.Get(data, "type"); err == nil {
+		result.Type = string(objType)
+	}
+
+	result.ClusterID = iutils.GetClusterID()
+
+	return result
 }
 
-func getKubernetesResource() KubernetesResource {
-	return KubernetesResource{
-		MesheryResourceID:    uuid.New().String(),
-		ResourceID:           uuid.New().String(),
-		ResourceTypeMetaID:   uuid.New().String(),
-		ResourceObjectMetaID: uuid.New().String(),
-		ResourceSpecID:       uuid.New().String(),
-		ResourceStatusID:     uuid.New().String(),
-	}
+func IsObject(obj Object) bool {
+	return obj.ObjectMeta != nil
 }
 
-func getKubernetesResourceTypeMeta(resource metav1.TypeMeta, id string) KubernetesResourceTypeMeta {
-	return KubernetesResourceTypeMeta{
-		TypeMeta:           resource,
-		ResourceTypeMetaID: id,
-	}
-}
+func SetID(obj *Object) {
+	if obj != nil {
+		id := base64.StdEncoding.EncodeToString([]byte(
+			fmt.Sprintf("%s.%s.%s.%s.%s", obj.ClusterID, obj.Kind, obj.APIVersion, obj.ObjectMeta.Namespace, obj.ObjectMeta.Name),
+		))
+		obj.ID = id
+		obj.ObjectMeta.ID = id
 
-func getKubernetesResourceObjectMeta(resource metav1.ObjectMeta, id string) KubernetesResourceObjectMeta {
-	return KubernetesResourceObjectMeta{
-		ObjectMeta:           resource,
-		ResourceObjectMetaID: id,
-		ClusterID:            cache.ClusterID,
-	}
-}
+		if len(obj.ObjectMeta.Labels) > 0 {
+			for _, label := range obj.ObjectMeta.Labels {
+				label.ID = id
+				label.UniqueID = uuid.New().String()
+			}
+		}
 
-func getKubernetesResourceSpec(spec interface{}, id string) KubernetesResourceSpec {
-	specJSON, _ := json.Marshal(spec)
-	var specTemp map[string]interface{}
-	_ = utils.Unmarshal(string(specJSON), &specTemp)
+		if len(obj.ObjectMeta.Annotations) > 0 {
+			for _, annotation := range obj.ObjectMeta.Annotations {
+				annotation.ID = id
+				annotation.UniqueID = uuid.New().String()
+			}
+		}
 
-	return KubernetesResourceSpec{
-		ResourceSpecID: id,
-		Attribute:      specTemp,
-	}
-}
+		if obj.Spec != nil {
+			obj.Spec.ID = id
+		}
 
-func getKubernetesResourceStatus(status interface{}, id string) KubernetesResourceStatus {
-	statusJSON, _ := json.Marshal(status)
-	var statusTemp map[string]interface{}
-	_ = utils.Unmarshal(string(statusJSON), &statusTemp)
-
-	return KubernetesResourceStatus{
-		ResourceStatusID: id,
-		Attribute:        statusTemp,
+		if obj.Status != nil {
+			obj.Status.ID = id
+		}
 	}
 }

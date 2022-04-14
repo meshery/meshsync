@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include install/Makefile.core.mk
-include install/Makefile.show-help.mk
+include build/Makefile.core.mk
+include build/Makefile.show-help.mk
 
 #-----------------------------------------------------------------------------
 # Docker-based Builds
@@ -38,3 +38,7 @@ check:
 run: 
 	cd meshsync; \
 	go mod tidy; DEBUG=true go run meshsync.go
+
+error:
+	go run github.com/layer5io/meshkit/cmd/errorutil -d . analyze -i ./helpers -o ./helpers
+.PHONY: run check error docker docker-build 

@@ -3,21 +3,30 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-	configprovider "github.com/layer5io/meshery-adapter-library/config/provider"
+	"github.com/layer5io/meshkit/broker/nats"
+	configprovider "github.com/layer5io/meshkit/config/provider"
 	"github.com/layer5io/meshkit/logger"
-	service "github.com/layer5io/meshsync/api/grpc"
+	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/meshsync"
-	"github.com/layer5io/meshsync/pkg/broker/nats"
+	"github.com/spf13/viper"
 )
 
 var (
 	serviceName = "meshsync"
 	provider    = configprovider.ViperKey
+	version     = "Not Set"
+	commitsha   = "Not Set"
 )
 
 func main() {
+	viper.SetDefault("BUILD", version)
+	viper.SetDefault("COMMITSHA", commitsha)
+
 	// Initialize Logger instance
 	log, err := logger.New(serviceName, logger.Options{
 		Format: logger.SyslogLogFormat,
@@ -27,41 +36,66 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Config init and seed
 	cfg, err := config.New(provider)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 
+	cfg.SetKey(config.BrokerURL, os.Getenv("BROKER_URL"))
+	err = cfg.SetObject(config.ServerKey, config.Server)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+
+	err = cfg.SetObject(config.ResourcesKey, config.Pipelines)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+
+	err = cfg.SetObject(config.ListenersKey, config.Listeners)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+	// Seeding done
+
 	// Initialize Broker instance
-	br, err := nats.New(cfg.GetKey(config.BrokerURL))
+	br, err := nats.New(nats.Options{
+		URLS:           []string{cfg.GetKey(config.BrokerURL)},
+		ConnectionName: "meshsync",
+		Username:       "",
+		Password:       "",
+		ReconnectWait:  2 * time.Second,
+		MaxReconnect:   60,
+	})
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 
-	meshsyncHandler, err := meshsync.New(cfg, log, br)
-	err = meshsyncHandler.StartDiscovery()
+	chPool := channels.NewChannelPool()
+	meshsyncHandler, err := meshsync.New(cfg, log, br, chPool)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
 	}
 
-	// Initialize service by running pre-defined tasks
-	sHandler := &service.Service{
-		Handler: meshsyncHandler,
-	}
-	err = cfg.GetObject(config.ServerConfig, &sHandler)
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
-	}
+	go meshsyncHandler.Run()
+	go meshsyncHandler.ListenToRequests()
 
-	// Start GRPC server
-	log.Info("Adaptor Listening at port: ", sHandler.Port)
-	err = service.Start(sHandler)
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+	log.Info("Server started")
+	// Handle graceful shutdown
+	signal.Notify(chPool[channels.OS].(channels.OSChannel), syscall.SIGTERM, os.Interrupt)
+	select {
+	case <-chPool[channels.OS].(channels.OSChannel):
+		close(chPool[channels.Stop].(channels.StopChannel))
+		log.Info("Shutting down")
+	case <-chPool[channels.Stop].(channels.StopChannel):
+		close(chPool[channels.Stop].(channels.StopChannel))
+		log.Info("Shutting down")
 	}
 }

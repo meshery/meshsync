@@ -18,38 +18,53 @@ import (
 	"github.com/layer5io/meshkit/errors"
 )
 
-const (
-	ErrSetupClusterCode     = "test_code"
-	ErrSetupIstioCode       = "test_code"
-	ErrKubeConfigCode       = "test_code"
-	ErrNewDiscoveryCode     = "test_code"
-	ErrNewInformerCode      = "test_code"
-	ErrNewKubeClientCode    = "test_code"
-	ErrNewDynClientCode     = "test_code"
-	ErrNewMesheryClientCode = "test_code"
+var (
+	ErrGetObjectCode        = "1004"
+	ErrNewPipelineCode      = "1005"
+	ErrNewInformerCode      = "1006"
+	ErrKubeConfigCode       = "1007"
+	ErrInitRequestCode      = "1008"
+	ErrSubscribeRequestCode = "1009"
+	ErrLogStreamCode        = "1010"
+	ErrCopyBufferCode       = "1011"
+	ErrInvalidRequestCode   = "1012"
+	ErrExecTerminalCode     = "1013"
+
+	ErrInvalidRequest = errors.New(ErrInvalidRequestCode, errors.Alert, []string{"Request is invalid"}, []string{}, []string{"Stale request on the broker"}, []string{"Make sure the request format is correctly configured"})
 )
 
-func ErrSetupCluster(err error) error {
-	return errors.NewDefault(ErrSetupClusterCode, "Error seting up cluster", err.Error())
+func ErrGetObject(err error) error {
+	return errors.New(ErrGetObjectCode, errors.Alert, []string{"Error getting config object"}, []string{err.Error()}, []string{"Config doesnt exist"}, []string{"Check application config is configured correct or restart the server"})
 }
-func ErrSetupIstio(err error) error {
-	return errors.NewDefault(ErrSetupIstioCode, "Error setting up istio", err.Error())
+
+func ErrNewPipeline(err error) error {
+	return errors.New(ErrNewPipelineCode, errors.Alert, []string{"Error creating pipeline"}, []string{err.Error()}, []string{"Pipeline step failed"}, []string{"Investigate on the respective pipeline step that has failed to figure the cause"})
 }
-func ErrKubeConfig(err error) error {
-	return errors.NewDefault(ErrKubeConfigCode, "Error initializing kubeconfig", err.Error())
-}
-func ErrNewDiscovery(err error) error {
-	return errors.NewDefault(ErrNewDiscoveryCode, "Error initializing discovery client", err.Error())
-}
+
 func ErrNewInformer(err error) error {
-	return errors.NewDefault(ErrNewInformerCode, "Error initializing informer client", err.Error())
+	return errors.New(ErrNewInformerCode, errors.Alert, []string{"Error initializing informer"}, []string{err.Error()}, []string{"Resource is invalid or doesnt exist"}, []string{"Make sure to input the existing valid resource"})
 }
-func ErrNewKubeClient(err error) error {
-	return errors.NewDefault(ErrNewKubeClientCode, "Error initializing kube client", err.Error())
+
+func ErrKubeConfig(err error) error {
+	return errors.New(ErrKubeConfigCode, errors.Alert, []string{"Error creating kubernetes client"}, []string{err.Error()}, []string{"Kubernetes config is invalid or APi server is not reachable"}, []string{"Make sure to upload a valid kubernetes config", "Make sure kubernetes API server is reachable"})
 }
-func ErrNewDynClient(err error) error {
-	return errors.NewDefault(ErrNewDynClientCode, "Error initializing dynamic kube client", err.Error())
+
+func ErrInitRequest(err error) error {
+	return errors.New(ErrInitRequestCode, errors.Alert, []string{"Error while initializing requests channel"}, []string{err.Error()}, []string{"Application resource deficit"}, []string{"Make sure meshsync has enough resources to create channels"})
 }
-func ErrNewMesheryClient(err error) error {
-	return errors.NewDefault(ErrNewMesheryClientCode, "Error initializing meshery kube client", err.Error())
+
+func ErrSubscribeRequest(err error) error {
+	return errors.New(ErrSubscribeRequestCode, errors.Alert, []string{"Error while subscribing to requests"}, []string{err.Error()}, []string{"Broker resource deficit"}, []string{"Make sure Broker has enough resources to create channels"})
+}
+
+func ErrLogStream(err error) error {
+	return errors.New(ErrLogStreamCode, errors.Alert, []string{"Error while open log stream connection"}, []string{err.Error()}, []string{"requested Resource could be invalid"}, []string{"Make sure the requested resource is valid and existing"})
+}
+
+func ErrExecTerminal(err error) error {
+	return errors.New(ErrExecTerminalCode, errors.Alert, []string{"Error while opening a terminal session"}, []string{err.Error()}, []string{"requested Resource could be invalid"}, []string{"Make sure the requested resource is valid and existing"})
+}
+
+func ErrCopyBuffer(err error) error {
+	return errors.New(ErrCopyBufferCode, errors.Alert, []string{"Error while copying log buffer"}, []string{err.Error()}, []string{}, []string{})
 }

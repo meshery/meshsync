@@ -13,4 +13,9 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+.idea
 .vscode/
+
+**errorutil_analyze_errors.json
+**errorutil_analyze_summary.json
+**errorutil_errors_export.json

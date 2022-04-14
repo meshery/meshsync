@@ -1,20 +1,23 @@
 package meshsync
 
 import (
-	"github.com/layer5io/meshsync/internal/cluster"
-	"github.com/layer5io/meshsync/internal/meshes/istio"
+	"github.com/layer5io/meshsync/internal/config"
+	"github.com/layer5io/meshsync/internal/pipeline"
+	"k8s.io/client-go/tools/cache"
 )
 
-func (h *Handler) StartDiscovery() error {
-
-	err := cluster.Setup(h.DiscoveryClient, h.Broker, h.InformerClient)
+func (h *Handler) startDiscovery(pipelineCh chan struct{}) {
+	pipelineConfigs := make(map[string]config.PipelineConfigs, 10)
+	err := h.Config.GetObject(config.ResourcesKey, &pipelineConfigs)
 	if err != nil {
-		return ErrSetupCluster(err)
+		h.Log.Error(ErrGetObject(err))
 	}
 
-	err = istio.Setup(h.DiscoveryClient, h.Broker, h.InformerClient)
-	if err != nil {
-		return ErrSetupIstio(err)
+	h.Log.Info("Pipeline started")
+	pl := pipeline.New(h.Log, h.informer, h.Broker, pipelineConfigs, pipelineCh)
+	result := pl.Run()
+	h.stores = result.Data.(map[string]cache.Store)
+	if result.Error != nil {
+		h.Log.Error(ErrNewPipeline(result.Error))
 	}
-	return nil
 }
