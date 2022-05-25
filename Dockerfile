@@ -20,5 +20,6 @@ FROM gcr.io/distroless/base-debian10
 WORKDIR /
 ENV GODISTRO="debian"
 ENV GOARCH="amd64"
+ENV VERSION=$GIT_VERSION
 COPY --from=builder /build/meshery-meshsync .
 ENTRYPOINT ["/meshery-meshsync"]
