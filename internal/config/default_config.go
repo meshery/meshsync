@@ -1,12 +1,16 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/spf13/viper"
+)
 
 var (
 	Server = map[string]string{
 		"name":      "meshery-meshsync",
 		"port":      "11000",
-		"version":   "v0.0.1-alpha3",
+		"version":   viper.GetString("BUILD"),
 		"startedat": time.Now().String(),
 	}
 

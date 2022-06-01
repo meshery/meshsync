@@ -127,6 +127,15 @@ func (h *Handler) ListenToRequests() {
 				h.Log.Error(err)
 				continue
 			}
+		case "meshsync-meta":
+			h.Log.Info("Publishing MeshSync metadata to the subject")
+			err := h.Broker.Publish("meshsync-meta", &broker.Message{
+				Object: config.Server["version"],
+			})
+			if err != nil {
+				h.Log.Error(err)
+				continue
+			}
 		}
 	}
 }
