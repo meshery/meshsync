@@ -44,6 +44,8 @@ func main() {
 	}
 
 	cfg.SetKey(config.BrokerURL, os.Getenv("BROKER_URL"))
+	
+	config.Server["version"] = version
 	err = cfg.SetObject(config.ServerKey, config.Server)
 	if err != nil {
 		log.Error(err)
