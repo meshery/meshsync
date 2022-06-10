@@ -97,7 +97,7 @@ func IsObject(obj Object) bool {
 }
 
 func SetID(obj *Object) {
-	if obj != nil {
+	if obj != nil && IsObject(*obj) {
 		id := base64.StdEncoding.EncodeToString([]byte(
 			fmt.Sprintf("%s.%s.%s.%s.%s", obj.ClusterID, obj.Kind, obj.APIVersion, obj.ObjectMeta.Namespace, obj.ObjectMeta.Name),
 		))
