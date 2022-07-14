@@ -14,13 +14,6 @@ assignees: ''
 <!-- A brief description of the enhancement. -->
 
 
----
-**Resources**
-<!-- Helpful tools and reference information. -->
-
-**Alternatives / Additional Context**
-<!-- A brief description of any alternative solutions or features you've considered or other context that might be helpful. -->
-
 ### Contributor Resources
 
 The meshery.io website uses Jekyll and GitHub Pages. Site content is found under the [`master` branch](https://github.com/meshery/meshery.io/tree/master).
