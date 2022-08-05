@@ -43,6 +43,10 @@ var (
 		LocalResourceKey: []PipelineConfig{
 			// Core Resources
 			{
+				Name:      "replicasets.v1.apps",
+				PublishTo: "meshery.meshsyc.core",
+			},
+			{
 				Name:      "pods.v1.",
 				PublishTo: "meshery.meshsync.core",
 			},
