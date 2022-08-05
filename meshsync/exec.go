@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -98,7 +97,7 @@ func (h *Handler) streamChannelPool() {
 func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.ListenerConfig) {
 	subCh := make(chan *broker.Message)
 	tstdin, putStdin := io.Pipe()
-	stdin := ioutil.NopCloser(tstdin)
+	stdin := io.NopCloser(tstdin)
 	getStdout, stdout := io.Pipe()
 
 	err := h.Broker.SubscribeWithChannel(fmt.Sprintf("input.%s", id), generateID(), subCh)
