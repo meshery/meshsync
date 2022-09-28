@@ -74,7 +74,7 @@ func main() {
 			log.Error(err)
 			os.Exit(1)
 		}
-		pingURL := "http://" + urls[0] + ":4222"
+		pingURL := "http://" + urls[0] + pingEndpoint
 		resp, err := http.Get(pingURL) //remove nats port and use status port for ping
 		if err != nil {
 			log.Error(err)
