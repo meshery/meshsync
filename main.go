@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -17,10 +19,11 @@ import (
 )
 
 var (
-	serviceName = "meshsync"
-	provider    = configprovider.ViperKey
-	version     = "Not Set"
-	commitsha   = "Not Set"
+	serviceName  = "meshsync"
+	provider     = configprovider.ViperKey
+	version      = "Not Set"
+	commitsha    = "Not Set"
+	pingEndpoint = ":8222/connz"
 )
 
 func main() {
@@ -63,7 +66,26 @@ func main() {
 		log.Error(err)
 		os.Exit(1)
 	}
-	// Seeding done
+	// Make sure Broker has started before starting NATS client
+
+	for {
+		urls := strings.Split(config.BrokerURL, ":")
+		if len(urls) == 0 {
+			log.Error(err)
+			os.Exit(1)
+		}
+		pingURL := "http://" + urls[0] + ":4222"
+		resp, err := http.Get(pingURL) //remove nats port and use status port for ping
+		if err != nil {
+			log.Error(err)
+			continue
+		}
+		if resp.StatusCode == http.StatusOK {
+			break
+		}
+		log.Error(fmt.Errorf("could not ping broker at: "+pingURL, " retrying..."))
+		time.Sleep(1 * time.Second)
+	}
 
 	// Initialize Broker instance
 	br, err := nats.New(nats.Options{
