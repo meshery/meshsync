@@ -15,10 +15,10 @@ require (
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/spf13/viper v1.13.0
 	gorm.io/gorm v1.23.10
-	k8s.io/api v0.25.1
-	k8s.io/apimachinery v0.25.1
-	k8s.io/client-go v0.25.1
-	k8s.io/kubectl v0.24.2
+	k8s.io/api v0.25.2
+	k8s.io/apimachinery v0.25.2
+	k8s.io/client-go v0.25.2
+	k8s.io/kubectl v0.25.2
 )
 
 require (
@@ -37,7 +37,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
-	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
+	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.1 // indirect
 	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/containerd/continuity v0.2.2 // indirect
@@ -155,8 +155,8 @@ require (
 	helm.sh/helm/v3 v3.9.4 // indirect
 	k8s.io/apiextensions-apiserver v0.25.1 // indirect
 	k8s.io/apiserver v0.25.1 // indirect
-	k8s.io/cli-runtime v0.25.1 // indirect
-	k8s.io/component-base v0.25.1 // indirect
+	k8s.io/cli-runtime v0.25.2 // indirect
+	k8s.io/component-base v0.25.2 // indirect
 	k8s.io/klog/v2 v2.70.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed // indirect
