@@ -7,7 +7,7 @@ go-vet:
 
 .PHONY: go-lint
 go-lint:
-	go run github.com/golangci/golangci-lint/cmd/golangci-lint run --config .golangci.yml
+	golangci-lint run --config .golangci.yml
 
 .PHONY: go-fmt
 go-fmt:
@@ -39,7 +39,7 @@ docker-run:
 
 .PHONY: run-check
 run: check
-	go$(v) mod tidy -compat=1.17; \
+	go$(v) mod tidy; \
 	DEBUG=true GOPROXY=direct GOSUMDB=off go run main.go
 
 .PHONY: error
