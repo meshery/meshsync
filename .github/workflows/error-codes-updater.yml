@@ -12,7 +12,7 @@ jobs:
     if: github.repository == 'meshery/meshsync'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       # token here with write access to meshsync repo
         with:
           token: ${{ secrets.GH_ACCESS_TOKEN }}
@@ -40,7 +40,7 @@ jobs:
 
       # to push changes to meshery docs
       - name: Checkout meshery
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: 'meshery/meshery'
           # token with write access to meshery repository
