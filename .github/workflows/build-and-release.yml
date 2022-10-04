@@ -12,13 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
-      uses: actions/checkout@master
+      uses: actions/checkout@v3
       with:
         fetch-depth: 1
     - name: Setup Go
       uses: actions/setup-go@v3
       with:
-        go-version: '1.17'
+        go-version: '1.19'
         check-latest: 'true'
     - run: GOPROXY=direct GOSUMDB=off GO111MODULE=on go build -o meshery-meshsync . 
   docker:
@@ -26,13 +26,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
-      uses: actions/checkout@master
+      uses: actions/checkout@v3
       with:
         fetch-depth: 1
     - name: Setup go
       uses: actions/setup-go@v3
       with:
-        go-version: '1.17'
+        go-version: '1.19'
         check-latest: 'true'
     - name: Docker login
       uses: azure/docker-login@v1
