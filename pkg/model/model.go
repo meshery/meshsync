@@ -50,7 +50,7 @@ type ResourceObjectMeta struct {
 	DeletionGracePeriodSeconds *int64      `json:"deletionGracePeriodSeconds,omitempty"`
 	Labels                     []*KeyValue `json:"labels,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Annotations                []*KeyValue `json:"annotations,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	OwnerReferences            string      `json:"ownerReferences,omitempty" gorm:"type:json"`
+	OwnerReferences            string      `json:"ownerReferences,omitempty" gorm:"type:jsonb"`
 	Finalizers                 string      `json:"finalizers,omitempty" gorm:"type:json"`
 	ClusterName                string      `json:"clusterName,omitempty"`
 	ManagedFields              string      `json:"managedFields,omitempty" gorm:"type:json"`
@@ -59,12 +59,12 @@ type ResourceObjectMeta struct {
 
 type ResourceSpec struct {
 	ID        string `json:"id" gorm:"primarykey"`
-	Attribute string `json:"attribute,omitempty" gorm:"type:json"`
+	Attribute string `json:"attribute,omitempty"`
 }
 
 type ResourceStatus struct {
 	ID        string `json:"id" gorm:"primarykey"`
-	Attribute string `json:"attribute,omitempty" gorm:"type:json"`
+	Attribute string `json:"attribute,omitempty"`
 }
 
 func (obj *Object) BeforeCreate(tx *gorm.DB) (err error) {
