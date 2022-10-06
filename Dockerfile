@@ -1,4 +1,4 @@
-FROM golang:1.17 as builder
+FROM golang:1.19 as builder
 ARG GIT_VERSION
 ARG GIT_COMMITSHA
 
@@ -12,13 +12,12 @@ RUN go mod download
 # Copy the go source
 COPY . .
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -ldflags="-w -s -X main.version=$GIT_VERSION -X main.commitsha=$GIT_COMMITSHA" -a -o meshery-meshsync main.go
+RUN CGO_ENABLED=0 GO111MODULE=on go build -ldflags="-w -s -X main.version=$GIT_VERSION -X main.commitsha=$GIT_COMMITSHA" -a -o meshery-meshsync main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/base-debian10
 WORKDIR /
 ENV GODISTRO="debian"
-ENV GOARCH="amd64"
 COPY --from=builder /build/meshery-meshsync .
 ENTRYPOINT ["/meshery-meshsync"]
