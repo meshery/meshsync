@@ -29,11 +29,11 @@ type Object struct {
 }
 
 type KeyValue struct {
-	ID       string `json:"id" gorm:"index"`
-	UniqueID string `json:"unique_id" gorm:"primarykey"`
-	Kind     string `json:"kind" gorm:"index"`
-	Key      string `json:"key,omitempty" gorm:"index"`
-	Value    string `json:"value,omitempty" gorm:"index"`
+	ID       string `json:"id" gorm:"primarykey"`
+	UniqueID string `json:"unique_id" gorm:"index"`
+	Kind     string `json:"kind" gorm:"primarykey"`
+	Key      string `json:"key,omitempty" gorm:"primarykey"`
+	Value    string `json:"value,omitempty" gorm:"primarykey"`
 }
 
 type ResourceObjectMeta struct {
