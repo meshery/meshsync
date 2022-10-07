@@ -67,23 +67,23 @@ func main() {
 		os.Exit(1)
 	}
 	// Make sure Broker has started before starting NATS client
-
+	urls := strings.Split(cfg.GetKey(config.BrokerURL), ":")
+	if len(urls) == 0 {
+		log.Info("invalid URL")
+		os.Exit(1)
+	}
+	pingURL := "http://" + urls[0] + pingEndpoint
 	for {
-		urls := strings.Split(config.BrokerURL, ":")
-		if len(urls) == 0 {
-			log.Info("invalid URL")
-			os.Exit(1)
-		}
-		pingURL := "http://" + urls[0] + pingEndpoint
 		resp, err := http.Get(pingURL) //remove nats port and use status port for ping
 		if err != nil {
 			log.Info("could not connect to broker: " + err.Error() + " retrying...")
+			time.Sleep(1 * time.Second)
 			continue
 		}
 		if resp.StatusCode == http.StatusOK {
 			break
 		}
-		log.Error(fmt.Errorf("could not recieve OK response from broker: "+pingURL, " retrying..."))
+		log.Info("could not recieve OK response from broker: "+pingURL, " retrying...")
 		time.Sleep(1 * time.Second)
 	}
 
