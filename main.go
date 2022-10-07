@@ -71,19 +71,19 @@ func main() {
 	for {
 		urls := strings.Split(config.BrokerURL, ":")
 		if len(urls) == 0 {
-			log.Error(err)
+			log.Info("invalid URL")
 			os.Exit(1)
 		}
 		pingURL := "http://" + urls[0] + pingEndpoint
 		resp, err := http.Get(pingURL) //remove nats port and use status port for ping
 		if err != nil {
-			log.Error(err)
+			log.Info("could not connect to broker: " + err.Error() + " retrying...")
 			continue
 		}
 		if resp.StatusCode == http.StatusOK {
 			break
 		}
-		log.Error(fmt.Errorf("could not ping broker at: "+pingURL, " retrying..."))
+		log.Error(fmt.Errorf("could not recieve OK response from broker: "+pingURL, " retrying..."))
 		time.Sleep(1 * time.Second)
 	}
 
