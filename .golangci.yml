@@ -80,7 +80,7 @@ linters:
     # TODO: consider continuously if more should be enabled.
     # Can also be useful to run with more strict settings before commit locally, i.e. to test for TODOs (godox)
     # - bodyclose
-    - deadcode
+    # - deadcode
     - dogsled
     # - dupl
     - errcheck
@@ -91,7 +91,7 @@ linters:
     # - gocyclo
     - gofmt
     - goimports
-    - golint
+    # - golint
     - gomodguard
     - gosec
     # - gomnd
@@ -107,13 +107,13 @@ linters:
     # - rowserrcheck
     # - scopelint
     - staticcheck
-    - structcheck
+    # - structcheck
     - stylecheck
     - typecheck
     # - unconvert
     # - unparam
     - unused
-    - varcheck
+    # - varcheck
     - whitespace
     - asciicheck
 #    - gochecknoglobals

@@ -29,11 +29,11 @@ type Object struct {
 }
 
 type KeyValue struct {
-	ID       string `json:"id" gorm:"index"`
-	UniqueID string `json:"unique_id" gorm:"primarykey"`
-	Kind     string `json:"kind" gorm:"index"`
-	Key      string `json:"key,omitempty" gorm:"index"`
-	Value    string `json:"value,omitempty" gorm:"index"`
+	ID       string `json:"id" gorm:"primarykey"`
+	UniqueID string `json:"unique_id" gorm:"index"`
+	Kind     string `json:"kind" gorm:"primarykey"`
+	Key      string `json:"key,omitempty" gorm:"primarykey"`
+	Value    string `json:"value,omitempty" gorm:"primarykey"`
 }
 
 type ResourceObjectMeta struct {
@@ -50,21 +50,21 @@ type ResourceObjectMeta struct {
 	DeletionGracePeriodSeconds *int64      `json:"deletionGracePeriodSeconds,omitempty"`
 	Labels                     []*KeyValue `json:"labels,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Annotations                []*KeyValue `json:"annotations,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	OwnerReferences            string      `json:"ownerReferences,omitempty" gorm:"type:json"`
-	Finalizers                 string      `json:"finalizers,omitempty" gorm:"type:json"`
+	OwnerReferences            string      `json:"ownerReferences,omitempty" gorm:"-"`
+	Finalizers                 string      `json:"finalizers,omitempty" gorm:"-"`
 	ClusterName                string      `json:"clusterName,omitempty"`
-	ManagedFields              string      `json:"managedFields,omitempty" gorm:"type:json"`
+	ManagedFields              string      `json:"managedFields,omitempty" gorm:"-"`
 	ClusterID                  string      `json:"cluster_id"`
 }
 
 type ResourceSpec struct {
 	ID        string `json:"id" gorm:"primarykey"`
-	Attribute string `json:"attribute,omitempty" gorm:"type:json"`
+	Attribute string `json:"attribute,omitempty"`
 }
 
 type ResourceStatus struct {
 	ID        string `json:"id" gorm:"primarykey"`
-	Attribute string `json:"attribute,omitempty" gorm:"type:json"`
+	Attribute string `json:"attribute,omitempty"`
 }
 
 func (obj *Object) BeforeCreate(tx *gorm.DB) (err error) {
