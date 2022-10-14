@@ -61,15 +61,6 @@ func (h *Handler) ListenToRequests() {
 
 			// TODO: Add this to the broker pkg
 		case "informer-store":
-
-			allInformersCacheSynced := true
-			// checks if all the SharedInformers cache are synced atleast once
-			for _, v := range h.informer.WaitForCacheSync(make(<-chan struct{})) {
-				if !v {
-					allInformersCacheSynced = false
-				}
-			}
-
 			d, err := utils.Marshal(request.Request.Payload)
 			// TODO: Update broker pkg in Meshkit to include Reply types
 			var payload struct{ Reply string }
@@ -83,19 +74,6 @@ func (h *Handler) ListenToRequests() {
 				continue
 			}
 			replySubject := payload.Reply
-
-			if !allInformersCacheSynced {
-				err = h.Broker.Publish(replySubject, &broker.Message{
-					EventType: broker.ErrorEvent,
-					Object:    "Stores have not been synced. Please try again after sometime",
-				})
-				if err != nil {
-					h.Log.Error(err)
-					continue
-				}
-				continue
-			}
-
 			storeObjects := h.listStoreObjects()
 			splitSlices := splitIntoMultipleSlices(storeObjects, 5) //  performance of NATS is bound to degrade if huge messages are sent
 
