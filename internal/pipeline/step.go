@@ -72,6 +72,7 @@ func newStartInformersStep(stopChan chan struct{}, log logger.Handler, informer 
 }
 
 func (si *StartInformers) Exec(request *pipeline.Request) *pipeline.Result {
+	si.informer.WaitForCacheSync(si.stopChan)
 	si.informer.Start(si.stopChan)
 	return &pipeline.Result{
 		Error: nil,
