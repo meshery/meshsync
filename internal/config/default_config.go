@@ -67,18 +67,18 @@ var (
 				PublishTo: "meshery.meshsync.core",
 			},
 			// Istio Resources
-			{
-				Name:      "virtualservices.v1beta1.networking.istio.io",
-				PublishTo: "meshery.meshsync.istio",
-			},
-			{
-				Name:      "gateways.v1beta1.networking.istio.io",
-				PublishTo: "meshery.meshsync.istio",
-			},
-			{
-				Name:      "destinationrules.v1beta1.networking.istio.io",
-				PublishTo: "meshery.meshsync.istio",
-			},
+			// {
+			// 	Name:      "virtualservices.v1beta1.networking.istio.io",
+			// 	PublishTo: "meshery.meshsync.istio",
+			// },
+			// {
+			// 	Name:      "gateways.v1beta1.networking.istio.io",
+			// 	PublishTo: "meshery.meshsync.istio",
+			// },
+			// {
+			// 	Name:      "destinationrules.v1beta1.networking.istio.io",
+			// 	PublishTo: "meshery.meshsync.istio",
+			// },
 		},
 	}
 
