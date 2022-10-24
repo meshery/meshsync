@@ -25,7 +25,7 @@ func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
 			objCasted := obj.(*unstructured.Unstructured)
 
 			oldRV, _ := strconv.ParseInt(oldObjCasted.GetResourceVersion(), 0, 64)
-			newRV, _ := strconv.ParseInt(oldObjCasted.GetResourceVersion(), 0, 64)
+			newRV, _ := strconv.ParseInt(objCasted.GetResourceVersion(), 0, 64)
 
 			if oldRV < newRV {
 				err := ri.publishItem(obj.(*unstructured.Unstructured), broker.Update, ri.config)
