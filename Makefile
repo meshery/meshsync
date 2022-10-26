@@ -1,3 +1,10 @@
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell go env GOBIN))
+GOBIN=$(shell go env GOPATH)/bin
+else
+GOBIN=$(shell go env GOBIN)
+endif
+
 .PHONY: go-checks
 go-checks: go-lint go-fmt go-mod-tidy
 
@@ -7,7 +14,7 @@ go-vet:
 
 .PHONY: go-lint
 go-lint:
-	golangci-lint run --config .golangci.yml
+	$(GOBIN)/golangci-lint run ./...
 
 .PHONY: go-fmt
 go-fmt:
@@ -23,7 +30,7 @@ go-test:
 
 .PHONY: check
 check: error
-	golangci-lint run
+	$(GOBIN)/golangci-lint run ./...
 
 .PHONY: docker-check
 docker: check
