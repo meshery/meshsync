@@ -1,3 +1,15 @@
+<picture>
+  <p style="text-align:center;" align="center">
+<a href="https://layer5.io/meshery">
+<picture align="center">
+<source media="(prefers-color-scheme: dark)" srcset=".github\readme\images\meshery-logo-dark-text-side.svg" width="70%" align="center" style="margin-bottom:20px;">
+<source media="(prefers-color-scheme: light)" srcset=".github\readme\images\meshery-logo-light-text-side.svg" width="70%" align="center" style="margin-bottom:20px;">
+<img alt="Shows an illustrated light mode meshery logo in light color mode and a dark mode meshery logo dark color mode." src=".github\readme\images\meshery-logo-light-text-side.svg" width="70%" align="center" style="margin-bottom:20px;"> </picture>
+</a>
+
+<br/><br/></p>
+</picture>
+
 <p style="text-align:center;" align="center"><a href="https://layer5.io/meshery"><img align="center" style="margin-bottom:20px;" src="https://raw.githubusercontent.com/layer5io/meshsync/master/.github/readme/images/meshsync.svg"  width="50%" /></a><br /><br /></p>
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/layer5/meshsync.svg)](https://hub.docker.com/r/layer5/meshsync)
