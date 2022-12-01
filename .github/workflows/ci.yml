@@ -15,12 +15,12 @@ on:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@main
       - name: Setup go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@main
         with:
           check-latest: 'true'
           go-version: '^1.19'
@@ -41,3 +41,4 @@ jobs:
 
           # Optional: show only new issues if it's a pull request. The default value is `false`.
           # only-new-issues: true
+          skip-build-cache: true

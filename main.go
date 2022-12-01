@@ -83,7 +83,7 @@ func main() {
 		if resp.StatusCode == http.StatusOK {
 			break
 		}
-		log.Info("could not recieve OK response from broker: "+pingURL, " retrying...")
+		log.Info("could not receive OK response from broker: "+pingURL, " retrying...")
 		time.Sleep(1 * time.Second)
 	}
 

@@ -10,16 +10,16 @@ jobs:
   Update-error-codes:
     name: Error codes utility
     if: github.repository == 'meshery/meshsync'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@main
       # token here with write access to meshsync repo
         with:
           token: ${{ secrets.GH_ACCESS_TOKEN }}
           ref: 'master'
 
       - name: Setup Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@main
         with:
           go-version: ${{ secrets.GO_VERSION }}
 
@@ -40,7 +40,7 @@ jobs:
 
       # to push changes to meshery docs
       - name: Checkout meshery
-        uses: actions/checkout@v3
+        uses: actions/checkout@main
         with:
           repository: 'meshery/meshery'
           # token with write access to meshery repository

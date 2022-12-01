@@ -49,7 +49,7 @@ linters-settings:
           - return
   gosec:
     settings:
-      exclude: -G204
+      exclude: -G204,-G107
   govet:
     check-shadowing: false
     settings:
