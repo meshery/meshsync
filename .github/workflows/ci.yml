@@ -13,6 +13,7 @@ on:
       - master
 
 jobs:
+
   lint:
     name: Lint
     runs-on: ubuntu-22.04
@@ -24,6 +25,8 @@ jobs:
         with:
           check-latest: 'true'
           go-version: '^1.19'
+      - name: Build check
+        run: GOPROXY=direct GOSUMDB=off GO111MODULE=on go build -o meshery-meshsync . 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         env:
