@@ -66,27 +66,8 @@ func main() {
 		log.Error(err)
 		os.Exit(1)
 	}
-	// Make sure Broker has started before starting NATS client
-	urls := strings.Split(cfg.GetKey(config.BrokerURL), ":")
-	if len(urls) == 0 {
-		log.Info("invalid URL")
-		os.Exit(1)
-	}
-	pingURL := "http://" + urls[0] + pingEndpoint
-	for {
-		resp, err := http.Get(pingURL) //remove nats port and use status port for ping
-		if err != nil {
-			log.Info("could not connect to broker: " + err.Error() + " retrying...")
-			time.Sleep(1 * time.Second)
-			continue
-		}
-		if resp.StatusCode == http.StatusOK {
-			break
-		}
-		log.Info("could not receive OK response from broker: "+pingURL, " retrying...")
-		time.Sleep(1 * time.Second)
-	}
-
+	//Skip/Comment the below connectivity test in local environment
+	connectivityTest(cfg.GetKey(config.BrokerURL), log)
 	// Initialize Broker instance
 	br, err := nats.New(nats.Options{
 		URLS:           []string{cfg.GetKey(config.BrokerURL)},
@@ -121,5 +102,28 @@ func main() {
 	case <-chPool[channels.Stop].(channels.StopChannel):
 		close(chPool[channels.Stop].(channels.StopChannel))
 		log.Info("Shutting down")
+	}
+}
+
+func connectivityTest(url string, log logger.Handler) {
+	// Make sure Broker has started before starting NATS client
+	urls := strings.Split(url, ":")
+	if len(urls) == 0 {
+		log.Info("invalid URL")
+		os.Exit(1)
+	}
+	pingURL := "http://" + urls[0] + pingEndpoint
+	for {
+		resp, err := http.Get(pingURL) //remove nats port and use status port for ping
+		if err != nil {
+			log.Info("could not connect to broker: " + err.Error() + " retrying...")
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		if resp.StatusCode == http.StatusOK {
+			break
+		}
+		log.Info("could not receive OK response from broker: "+pingURL, " retrying...")
+		time.Sleep(1 * time.Second)
 	}
 }
