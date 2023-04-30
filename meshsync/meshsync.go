@@ -35,7 +35,11 @@ func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[
 		return nil, ErrKubeConfig(err)
 	}
 
-	informer := dynamicinformer.NewFilteredDynamicSharedInformerFactory(kubeClient.DynamicKubeClient, 0, v1.NamespaceAll, nil)
+	listOptionsFunc := dynamicinformer.TweakListOptionsFunc(func(options *v1.ListOptions) {
+		options.FieldSelector = "type!=configMap"
+	})
+
+	informer := dynamicinformer.NewFilteredDynamicSharedInformerFactory(kubeClient.DynamicKubeClient, 0, v1.NamespaceAll, listOptionsFunc)
 
 	return &Handler{
 		Config:       config,
