@@ -11,7 +11,7 @@ go 1.19
 require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/google/uuid v1.3.0
-	github.com/layer5io/meshkit v0.6.35
+	github.com/layer5io/meshkit v0.6.40
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/spf13/viper v1.15.0
 	gorm.io/gorm v1.24.3
