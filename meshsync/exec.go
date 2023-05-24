@@ -14,6 +14,7 @@ import (
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
+	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
@@ -136,7 +137,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 				return err
 			}
 
-			if err := exec.Stream(remotecommand.StreamOptions{
+			if err := exec.StreamWithContext(context.TODO(), remotecommand.StreamOptions{
 				Stdin:             stdin,
 				Stdout:            stdout,
 				Stderr:            stdout,

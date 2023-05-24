@@ -35,7 +35,26 @@ func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[
 		return nil, ErrKubeConfig(err)
 	}
 
-	informer := dynamicinformer.NewFilteredDynamicSharedInformerFactory(kubeClient.DynamicKubeClient, 0, v1.NamespaceAll, nil)
+	var blacklist []string
+	err = config.GetObject("spec.informer_config", blacklist)
+	if err != nil {
+		return nil, err
+	}
+
+	listOptionsFunc := func(lo *v1.ListOptions) {
+		// Create a label selector to include all objects
+		labelSelector := &v1.LabelSelector{}
+
+		// Add label selector requirements to exclude blacklisted types
+		labelSelectorReq := v1.LabelSelectorRequirement{
+			Key:      "type",
+			Operator: v1.LabelSelectorOpNotIn,
+			Values:   blacklist,
+		}
+		labelSelector.MatchExpressions = append(labelSelector.MatchExpressions, labelSelectorReq)
+	}
+
+	informer := dynamicinformer.NewFilteredDynamicSharedInformerFactory(kubeClient.DynamicKubeClient, 0, v1.NamespaceAll, listOptionsFunc)
 
 	return &Handler{
 		Config:       config,
