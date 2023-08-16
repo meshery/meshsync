@@ -11,6 +11,7 @@ require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/google/uuid v1.3.0
 	github.com/layer5io/meshkit v0.6.48
+	github.com/layer5io/meshkit v0.6.50
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/spf13/viper v1.15.0
 	golang.org/x/net v0.9.0
@@ -134,6 +135,7 @@ require (
 	github.com/xlab/treeprint v1.1.0 // indirect
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
+	golang.org/x/mod v0.8.0 // indirect
 	golang.org/x/oauth2 v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
