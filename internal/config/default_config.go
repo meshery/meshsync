@@ -68,9 +68,9 @@ var (
 			},
 			//Added Ingress support
 			{
-   				Name:      "ingresses.v1.",
-        			PublishTo: "meshery.meshsync.core",
-    			},
+				Name:      "ingresses.v1.",
+				PublishTo: "meshery.meshsync.core",
+			},
 			// Istio Resources
 			// {
 			// 	Name:      "virtualservices.v1beta1.networking.istio.io",
