@@ -65,7 +65,7 @@ func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
 			ri.log.Info("Received DELETE event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " of kind: ", obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
 		},
 	}
-	s.AddEventHandler(handlers)
+	s.AddEventHandler(handlers) // nolint
 }
 
 func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype broker.EventType, config internalconfig.PipelineConfig) error {

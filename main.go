@@ -114,7 +114,7 @@ func connectivityTest(url string, log logger.Handler) {
 	}
 	pingURL := "http://" + urls[0] + pingEndpoint
 	for {
-		resp, err := http.Get(pingURL) //remove nats port and use status port for ping
+		resp, err := http.Get(pingURL) //nolint
 		if err != nil {
 			log.Info("could not connect to broker: " + err.Error() + " retrying...")
 			time.Sleep(1 * time.Second)
