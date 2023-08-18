@@ -71,6 +71,11 @@ var (
 				Name:      "ingresses.v1.",
 				PublishTo: "meshery.meshsync.core",
 			},
+			//Added endpoint support
+			{
+				Name:      "endpoints.v1",
+				PublishTo: " meshery.meshSync.core",
+			},
 			// Istio Resources
 			// {
 			// 	Name:      "virtualservices.v1beta1.networking.istio.io",
