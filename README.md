@@ -10,8 +10,6 @@
 <br/><br/></p>
 </picture>
 
-<p style="text-align:center;" align="center"><a href="https://layer5.io/meshery"><img align="left" style="margin-bottom:20px;" src="https://raw.githubusercontent.com/layer5io/meshsync/master/.github/readme/images/meshsync.svg"  width="25%" /></a><br /><br /></p>
-
 [![Docker Pulls](https://img.shields.io/docker/pulls/layer5/meshsync.svg)](https://hub.docker.com/r/layer5/meshsync)
 [![Go Report Card](https://goreportcard.com/badge/github.com/layer5io/meshsync)](https://goreportcard.com/report/github.com/layer5io/meshsync)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/meshery/meshsync/multi-platform.yml?branch=master)](https://github.com/meshery/meshsync/actions)
@@ -21,6 +19,9 @@
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3564/badge)](https://bestpractices.coreinfrastructure.org/projects/3564)
 <a href="https://discuss.layer5.io/c/service-mesh-patterns/10" alt="Discuss Users">
   <img src="https://img.shields.io/discourse/users?label=discuss&logo=discourse&server=https%3A%2F%2Fdiscuss.layer5.io" /></a>
+<br /><br />
+<p style="text-align:center;" align="center"><a href="https://layer5.io/meshery"><img align="left" style="margin-bottom:20px;" src="https://raw.githubusercontent.com/layer5io/meshsync/master/.github/readme/images/meshsync.svg"  width="150px" /></a></p>
+
 # MeshSync
 
 MeshSync (Service Mesh Synchronization), an event-driven, continuous synchronization routine performs the task of ensuring that the state of configuration and status of operation of any service mesh and of the Kubernetes environment are known to Meshery. MeshSync runs as a Kubernetes custom controller under the control of Meshery Operator.
