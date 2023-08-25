@@ -76,6 +76,11 @@ var (
 				Name:      "endpoints.v1.",
 				PublishTo: "meshery.meshsync.core",
 			},
+			//Added endpointslice support
+			{
+				Name:      "endpointslices.v1.",
+				PublishTo: "meshery.meshsync.core",
+			},
 			// Istio Resources
 			// {
 			// 	Name:      "virtualservices.v1beta1.networking.istio.io",
