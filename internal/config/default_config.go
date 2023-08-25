@@ -91,6 +91,11 @@ var (
 				Name:      "replicationcontrollers.v1.",
 				PublishTo: "meshery.meshsync.core",
 			},
+			//Added storageClass support
+			{
+				Name:      "storageclasses.v1.",
+				PublishTo: "meshery.meshsync.core",
+			},
 			// Istio Resources
 			// {
 			// 	Name:      "virtualservices.v1beta1.networking.istio.io",
