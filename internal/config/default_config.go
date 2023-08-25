@@ -81,6 +81,11 @@ var (
 				Name:      "endpointslices.v1.",
 				PublishTo: "meshery.meshsync.core",
 			},
+			//Added cronJob support
+			{
+				Name:      "cronjobs.v1.",
+				PublishTo: "meshery.meshsync.core",
+			},
 			// Istio Resources
 			// {
 			// 	Name:      "virtualservices.v1beta1.networking.istio.io",
