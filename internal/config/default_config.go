@@ -101,6 +101,11 @@ var (
 				Name:      "clusterroles.v1.",
 				PublishTo: "meshery.meshsync.core",
 			},
+			//Added VolumeAttachment support
+			{
+				Name:      "volumeattachments.v1.",
+				PublishTo: "meshery.meshsync.core",
+			},
 			// Istio Resources
 			// {
 			// 	Name:      "virtualservices.v1beta1.networking.istio.io",
