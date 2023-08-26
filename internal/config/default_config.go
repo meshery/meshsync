@@ -44,7 +44,7 @@ var (
 			// Core Resources
 			{
 				Name:      "replicasets.v1.apps",
-				PublishTo: "meshery.meshsyc.core",
+				PublishTo: "meshery.meshsync.core",
 			},
 			{
 				Name:      "pods.v1.",
