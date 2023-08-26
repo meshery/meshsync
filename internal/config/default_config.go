@@ -106,6 +106,11 @@ var (
 				Name:      "volumeattachments.v1.storage.k8s.io",
 				PublishTo: "meshery.meshsync.core",
 			},
+			//Added apiservice support
+			{
+				Name:      "apiservices.v1.apiregistration.k8s.io",
+				PublishTo: "meshery.meshsync.core",
+			},
 			// Istio Resources
 			// {
 			// 	Name:      "virtualservices.v1beta1.networking.istio.io",
