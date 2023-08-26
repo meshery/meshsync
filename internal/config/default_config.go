@@ -78,12 +78,12 @@ var (
 			},
 			//Added endpointslice support
 			{
-				Name:      "endpointslices.v1.",
+				Name:      "endpointslices.v1.discovery.k8s.io",
 				PublishTo: "meshery.meshsync.core",
 			},
 			//Added cronJob support
 			{
-				Name:      "cronjobs.v1.",
+				Name:      "cronjobs.v1.batch",
 				PublishTo: "meshery.meshsync.core",
 			},
 			//Added ReplicationController support
@@ -93,17 +93,17 @@ var (
 			},
 			//Added storageClass support
 			{
-				Name:      "storageclasses.v1.",
+				Name:      "storageclasses.v1.storage.k8s.io",
 				PublishTo: "meshery.meshsync.core",
 			},
 			//Added ClusterRole support
 			{
-				Name:      "clusterroles.v1.",
+				Name:      "clusterroles.v1.rbac.authorization.k8s.io",
 				PublishTo: "meshery.meshsync.core",
 			},
 			//Added VolumeAttachment support
 			{
-				Name:      "volumeattachments.v1.",
+				Name:      "volumeattachments.v1.storage.k8s.io",
 				PublishTo: "meshery.meshsync.core",
 			},
 			// Istio Resources
