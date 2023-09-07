@@ -1,4 +1,8 @@
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+
+include install/Makefile.core.mk
+include install/Makefile.show-help.mk
+
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
 else
