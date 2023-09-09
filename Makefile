@@ -58,6 +58,6 @@ error:
 	go run github.com/layer5io/meshkit/cmd/errorutil -d . analyze -i ./helpers -o ./helpers
 
  # runs a local instance of nats server in detached mode
-PHONY: run-nats
-run-nats:
+PHONY: nats
+nats:
 	docker run --name nats --rm -p 4222:4222 -p 8222:8222 -d nats --http_port 8222 
