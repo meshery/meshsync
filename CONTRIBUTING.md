@@ -95,7 +95,7 @@ docker run --name nats --rm -p 4222:4222 -p 8222:8222 nats --http_port 8222
 Alternatively, the above command has been simplified on the makefile as: 
 
 ```
-make run-nats
+make nats
 ```
 
  Now you can run meshsync using make file
