@@ -80,6 +80,29 @@ To build a Docker image of the project, please ensure you have `Docker` installe
 ```sh
 make docker
 ```
+#### Running locally
+Running meshsync locally requires an instance of [NATS](https://nats.io/) server running locally. First installation of NATS via [NATS installation](https://docs.nats.io/running-a-nats-service/introduction/installation) for the desired operating system or docker then running NATS server
+
+For Linux of MacOS based systems, once you have installed nats ctl run
+```sh
+nats-server -m 8222
+```
+Or for Docker:
+
+```
+docker run --name nats --rm -p 4222:4222 -p 8222:8222 nats --http_port 8222
+```
+Alternatively, the above command has been simplified on the makefile as: 
+
+```
+make nats
+```
+
+ Now you can run meshsync using make file
+
+ ```
+ make run
+ ```
 
 ### UI Lint Rules
 
