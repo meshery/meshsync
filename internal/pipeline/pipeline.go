@@ -5,6 +5,7 @@ import (
 	"github.com/layer5io/meshkit/logger"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/myntra/pipeline"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 )
 
@@ -29,30 +30,48 @@ var (
 	}
 )
 
-func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, broker broker.Handler, plConfigs map[string]internalconfig.PipelineConfigs, stopChan chan struct{}) *pipeline.Pipeline {
+func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, broker broker.Handler, plConfigs map[string]internalconfig.PipelineConfigs, stopChan chan struct{}, dynamicKube dynamic.Interface) *pipeline.Pipeline {
+	// TODO: best way to check whether WatchList feature is enabled
+	watchList := true
+
 	// Global discovery
 	gdstage := GlobalDiscoveryStage
 	configs := plConfigs[gdstage.Name]
-	for _, config := range configs {
-		gdstage.AddStep(newRegisterInformerStep(log, informer, config, broker)) // Register the informers for different resources
+	if watchList {
+		for _, config := range configs {
+			gdstage.AddStep(newStartWatcherStage(dynamicKube, config, stopChan, log, broker)) // Register the watchers for different resources
+		}
+	} else {
+		for _, config := range configs {
+			gdstage.AddStep(newRegisterInformerStep(log, informer, config, broker)) // Register the informers for different resources
+		}
 	}
 
 	// Local discovery
 	ldstage := LocalDiscoveryStage
 	configs = plConfigs[ldstage.Name]
-	for _, config := range configs {
-		ldstage.AddStep(newRegisterInformerStep(log, informer, config, broker)) // Register the informers for different resources
-	}
 
-	// Start informers
-	strtInfmrs := StartInformersStage
-	strtInfmrs.AddStep(newStartInformersStep(stopChan, log, informer)) // Start the registered informers
+	if watchList {
+		for _, config := range configs {
+			ldstage.AddStep(newStartWatcherStage(dynamicKube, config, stopChan, log, broker)) // Register the watchers for different resources
+		}
+	} else {
+		for _, config := range configs {
+			ldstage.AddStep(newRegisterInformerStep(log, informer, config, broker)) // Register the informers for different resources
+		}
+	}
 
 	// Create Pipeline
 	clusterPipeline := pipeline.New(Name, 1000)
+
+	// add stages to pipeline
 	clusterPipeline.AddStage(gdstage)
 	clusterPipeline.AddStage(ldstage)
-	clusterPipeline.AddStage(strtInfmrs)
-
+	if !watchList {
+		// Start informers
+		strtInfmrs := StartInformersStage
+		strtInfmrs.AddStep(newStartInformersStep(stopChan, log, informer)) // Start the registered informers
+		clusterPipeline.AddStage(strtInfmrs)
+	}
 	return clusterPipeline
 }
