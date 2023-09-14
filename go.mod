@@ -13,7 +13,7 @@ require (
 	github.com/layer5io/meshkit v0.6.61
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/spf13/viper v1.15.0
-	golang.org/x/net v0.9.0
+	golang.org/x/net v0.13.0
 	gorm.io/gorm v1.25.4
 	k8s.io/api v0.28.1
 	k8s.io/apimachinery v0.28.1
