@@ -5,12 +5,14 @@ replace (
 	vbom.ml/util => github.com/fvbommel/util v0.0.0-20180919145318-efcd4e0f9787
 )
 
-go 1.19
+go 1.21
+
+toolchain go1.21.1
 
 require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/google/uuid v1.3.0
-	github.com/layer5io/meshkit v0.6.61
+	github.com/layer5io/meshkit v0.6.67
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/spf13/viper v1.15.0
 	golang.org/x/net v0.13.0
@@ -142,7 +144,7 @@ require (
 	golang.org/x/crypto v0.11.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
 	golang.org/x/sync v0.2.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/term v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
