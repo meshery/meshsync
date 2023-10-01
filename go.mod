@@ -10,7 +10,7 @@ go 1.19
 require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/google/uuid v1.3.1
-	github.com/layer5io/meshkit v0.6.61
+	github.com/layer5io/meshkit v0.6.69
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/spf13/viper v1.15.0
 	golang.org/x/net v0.15.0
