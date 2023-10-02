@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	broker "github.com/layer5io/meshkit/broker"
+	"github.com/layer5io/meshkit/config"
 	"github.com/layer5io/meshkit/logger"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/myntra/pipeline"
@@ -101,24 +102,50 @@ type StartWatcher struct {
 	log         logger.Handler
 	broker      broker.Handler
 	config      internalconfig.PipelineConfig
+	hConfig     config.Handler
 }
 
-func newStartWatcherStage(dynamicKube dynamic.Interface, config internalconfig.PipelineConfig, stopChan chan struct{}, log logger.Handler, broker broker.Handler) *StartWatcher {
+func newStartWatcherStage(dynamicKube dynamic.Interface, config internalconfig.PipelineConfig, stopChan chan struct{}, log logger.Handler, broker broker.Handler, hConfig config.Handler) *StartWatcher {
 	return &StartWatcher{
 		stopChan:    stopChan,
 		dynamicKube: dynamicKube,
 		config:      config,
 		log:         log,
 		broker:      broker,
+		hConfig:     hConfig,
 	}
 }
 
 func (w *StartWatcher) Exec(request *pipeline.Request) *pipeline.Result {
+
+	var blacklist []string
+	err := w.hConfig.GetObject("spec.informer_config", blacklist)
+	if err != nil {
+		return &pipeline.Result{
+			Error: err,
+			Data:  nil,
+		}
+	}
+
 	b := true
 	opts := metav1.ListOptions{
 		Watch:                true,
 		SendInitialEvents:    &b,
 		ResourceVersionMatch: metav1.ResourceVersionMatchNotOlderThan,
+	}
+
+	if len(blacklist) != 0 {
+		// Create a label selector to include all objects
+		labelSelector := &metav1.LabelSelector{}
+		// Add label selector requirements to exclude blacklisted types
+		labelSelectorReq := metav1.LabelSelectorRequirement{
+			Key:      "type",
+			Operator: metav1.LabelSelectorOpNotIn,
+			Values:   blacklist,
+		}
+		labelSelector.MatchExpressions = append(labelSelector.MatchExpressions, labelSelectorReq)
+
+		opts.LabelSelector = labelSelector.String()
 	}
 	// attempts to begin watching the namespaces
 	// returns a `watch.Interface`, or an error
