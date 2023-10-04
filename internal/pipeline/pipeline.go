@@ -48,7 +48,7 @@ func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFacto
 	configs := plConfigs[gdstage.Name]
 	if watchList {
 		for _, config := range configs {
-			gdstage.AddStep(newStartWatcherStage(dynamicKube, config, stopChan, log, broker, hConfig)) // Register the watchers for different resources
+			gdstage.AddStep(newStartWatcherStage(dynamicKube, config, stopChan, log, broker, hConfig, informer)) // Register the watchers for different resources
 		}
 	} else {
 		for _, config := range configs {
@@ -62,7 +62,7 @@ func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFacto
 
 	if watchList {
 		for _, config := range configs {
-			ldstage.AddStep(newStartWatcherStage(dynamicKube, config, stopChan, log, broker, hConfig)) // Register the watchers for different resources
+			ldstage.AddStep(newStartWatcherStage(dynamicKube, config, stopChan, log, broker, hConfig, informer)) // Register the watchers for different resources
 		}
 	} else {
 		for _, config := range configs {
