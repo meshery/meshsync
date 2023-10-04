@@ -10,7 +10,6 @@ import (
 	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/myntra/pipeline"
 
-	"github.com/layer5io/meshsync/pkg/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -103,9 +102,10 @@ type StartWatcher struct {
 	broker      broker.Handler
 	config      internalconfig.PipelineConfig
 	hConfig     config.Handler
+	informer    dynamicinformer.DynamicSharedInformerFactory
 }
 
-func newStartWatcherStage(dynamicKube dynamic.Interface, config internalconfig.PipelineConfig, stopChan chan struct{}, log logger.Handler, broker broker.Handler, hConfig config.Handler) *StartWatcher {
+func newStartWatcherStage(dynamicKube dynamic.Interface, config internalconfig.PipelineConfig, stopChan chan struct{}, log logger.Handler, broker broker.Handler, hConfig config.Handler, informer dynamicinformer.DynamicSharedInformerFactory) *StartWatcher {
 	return &StartWatcher{
 		stopChan:    stopChan,
 		dynamicKube: dynamicKube,
@@ -113,6 +113,7 @@ func newStartWatcherStage(dynamicKube dynamic.Interface, config internalconfig.P
 		log:         log,
 		broker:      broker,
 		hConfig:     hConfig,
+		informer:    informer,
 	}
 }
 
@@ -151,6 +152,8 @@ func (w *StartWatcher) Exec(request *pipeline.Request) *pipeline.Result {
 	// returns a `watch.Interface`, or an error
 
 	gvr, _ := schema.ParseResourceArg(w.config.Name)
+	iclient := w.informer.ForResource(*gvr)
+
 	watcher, err := w.dynamicKube.Resource(*gvr).Watch(context.TODO(), opts)
 	if err != nil {
 		return &pipeline.Result{
@@ -165,6 +168,10 @@ func (w *StartWatcher) Exec(request *pipeline.Request) *pipeline.Result {
 	wg.Add(1)
 	go w.backgroundWatchProcessor(watcher.ResultChan(), w.stopChan, &wg)
 	data := make(map[string]cache.Store)
+	if request.Data != nil {
+		data = request.Data.(map[string]cache.Store)
+	}
+	data[w.config.Name] = iclient.Informer().GetStore()
 
 	return &pipeline.Result{
 		Error: nil,
@@ -212,18 +219,6 @@ func (w *StartWatcher) backgroundWatchProcessor(result <-chan watch.Event, stopC
 		}
 	}
 	wg.Wait()
-}
-func (w *StartWatcher) publishItem(obj *unstructured.Unstructured, evtype broker.EventType, config internalconfig.PipelineConfig) error {
-	err := w.broker.Publish(config.PublishTo, &broker.Message{
-		ObjectType: broker.MeshSync,
-		EventType:  evtype,
-		Object:     model.ParseList(*obj),
-	})
-	if err != nil {
-		w.log.Error(ErrPublish(config.Name, err))
-		return err
-	}
-	return nil
 }
 
 func (w *StartWatcher) Cancel() error {
