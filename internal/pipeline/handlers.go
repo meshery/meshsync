@@ -81,3 +81,15 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 
 	return nil
 }
+func (w *StartWatcher) publishItem(obj *unstructured.Unstructured, evtype broker.EventType, config internalconfig.PipelineConfig) error {
+	err := w.broker.Publish(config.PublishTo, &broker.Message{
+		ObjectType: broker.MeshSync,
+		EventType:  evtype,
+		Object:     model.ParseList(*obj),
+	})
+	if err != nil {
+		w.log.Error(ErrPublish(config.Name, err))
+		return err
+	}
+	return nil
+}
