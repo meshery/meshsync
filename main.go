@@ -39,6 +39,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	// get configs from meshsync crd if available
+	crdConfigs, err := config.GetMeshsyncCRDConfigs()
+
+	if err != nil {
+		// no configs found from meshsync CRD log warning
+		log.Warn(err)
+	}
+
+	// pass configs from crd to default configs
+	if crdConfigs != nil {
+		config.Pipelines = crdConfigs.PipelineConfigs
+		config.Listeners = crdConfigs.ListenerConfigs
+	}
+
 	// Config init and seed
 	cfg, err := config.New(provider)
 	if err != nil {
