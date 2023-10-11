@@ -1,3 +1,17 @@
+// Copyright 2023 Layer5, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package meshsync
 
 import (
@@ -132,18 +146,18 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 				TTY:       true,
 			}, scheme.ParameterCodec)
 
-			exec, err := remotecommand.NewSPDYExecutor(&h.restConfig, "POST", request.URL())
-			if err != nil {
+			exec, postErr := remotecommand.NewSPDYExecutor(&h.restConfig, "POST", request.URL())
+			if postErr != nil {
 				return err
 			}
 
-			if err := exec.StreamWithContext(context.TODO(), remotecommand.StreamOptions{
+			err = exec.StreamWithContext(context.TODO(), remotecommand.StreamOptions{
 				Stdin:             stdin,
 				Stdout:            stdout,
 				Stderr:            stdout,
 				Tty:               true,
-				TerminalSizeQueue: sizeQueue,
-			}); err != nil {
+				TerminalSizeQueue: sizeQueue})
+			if err != nil {
 				return err
 			}
 
@@ -152,12 +166,12 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 			return nil
 		}
 
-		if err := t.Safe(fn); err != nil {
+		if err = t.Safe(fn); err != nil {
 			h.Log.Error(ErrExecTerminal(err))
 			execCleanup(h, id)
 
 			// If the TTY fails then send the error message to the client
-			if err := h.Broker.Publish(id, &broker.Message{
+			if err = h.Broker.Publish(id, &broker.Message{
 				ObjectType: broker.ErrorObject,
 				Object:     err.Error(),
 			}); err != nil {
@@ -173,7 +187,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 		rdr := bufio.NewReader(getStdout)
 		for {
 			data := make([]byte, 1*KB)
-			_, err := rdr.Read(data)
+			_, err = rdr.Read(data)
 			if err == io.EOF {
 				break // No clean up here as this can generate a false positive
 			}

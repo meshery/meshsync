@@ -9,32 +9,24 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-.PHONY: go-checks
-go-checks: go-lint go-fmt go-mod-tidy
 
-.PHONY: go-vet
-go-vet:
-	go vet ./...
-
-.PHONY: go-lint
-go-lint:
-	$(GOBIN)/golangci-lint run ./...
-
-.PHONY: go-fmt
-go-fmt:
-	go fmt ./...
+# Test covergae
+.PHONY: coverage
+coverage:
+	go test -v ./... -coverprofile cover.out
+	go tool cover -html=cover.out -o cover.html
 
 .PHONY: go-mod-tidy
 go-mod-tidy:
 	./scripts/go-mod-tidy.sh
 
-.PHONY: go-test
-go-test:
-	./scripts/go-test.sh
-
 .PHONY: check
-check: error
+check:
 	$(GOBIN)/golangci-lint run ./...
+
+.PHONY: build
+build:
+	go build -o bin/meshsync main.go
 
 .PHONY: docker-check
 docker: check
@@ -53,9 +45,6 @@ run: check
 	go$(v) mod tidy; \
 	DEBUG=true GOPROXY=direct GOSUMDB=off go run main.go
 
-.PHONY: error
-error:
-	go run github.com/layer5io/meshkit/cmd/errorutil -d . analyze -i ./helpers -o ./helpers
 
  # runs a local instance of nats server in detached mode
 PHONY: nats
