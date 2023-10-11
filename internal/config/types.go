@@ -32,3 +32,9 @@ type ListenerConfig struct {
 	PublishTo      string `json:"publish-to" yaml:"publish-to"`
 	SubscribeTo    string `json:"subscribe-to" yaml:"subscribe-to"`
 }
+
+// Meshsync configuration controls the resources meshsync produces and consumes
+type MeshsyncConfig struct {
+	PipelineConfigs map[string]PipelineConfigs `json:"pipeline-configs,omitempty" yaml:"pipeline-configs,omitempty"`
+	ListenerConfigs map[string]ListenerConfig  `json:"listener-config,omitempty" yaml:"listener-config,omitempty"`
+}
