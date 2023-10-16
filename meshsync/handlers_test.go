@@ -12,26 +12,26 @@ import (
 func TestSplitIntoMultipleSlices(t *testing.T) {
 	testCases := []struct {
 		name            string
-		input           []model.KubernetesObject
+		input           []model.KubernetesResource
 		maxItmsPerSlice int
-		expectedOutput  [][]model.KubernetesObject
+		expectedOutput  [][]model.KubernetesResource
 	}{
 		{
 			name:            "test with 0 items",
-			input:           []model.KubernetesObject{},
+			input:           []model.KubernetesResource{},
 			maxItmsPerSlice: 10,
-			expectedOutput:  [][]model.KubernetesObject{},
+			expectedOutput:  [][]model.KubernetesResource{},
 		},
 
 		{
 			name: "test with 1 item",
-			input: []model.KubernetesObject{
+			input: []model.KubernetesResource{
 				{
 					Kind: "test",
 				},
 			},
 			maxItmsPerSlice: 10,
-			expectedOutput: [][]model.KubernetesObject{
+			expectedOutput: [][]model.KubernetesResource{
 				{
 					{
 						Kind: "test",

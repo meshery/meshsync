@@ -118,12 +118,12 @@ func (h *Handler) ListenToRequests() {
 	}
 }
 
-func (h *Handler) listStoreObjects() []model.KubernetesObject {
+func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	objects := make([]interface{}, 0)
 	for _, v := range h.stores {
 		objects = append(objects, v.List()...)
 	}
-	parsedObjects := make([]model.KubernetesObject, 0)
+	parsedObjects := make([]model.KubernetesResource, 0)
 	for _, obj := range objects {
 		parsedObjects = append(parsedObjects, model.ParseList(*obj.(*unstructured.Unstructured)))
 	}
@@ -133,9 +133,9 @@ func (h *Handler) listStoreObjects() []model.KubernetesObject {
 // TODO: move this to meshkit
 // given [1,2,3,4,5,6,7,5,4,4] and 3 as its arguments, it would
 // return [[1,2,3], [4,5,6], [7,5,4], [4]]
-func splitIntoMultipleSlices(s []model.KubernetesObject, maxItmsPerSlice int) []([]model.KubernetesObject) {
-	result := make([]([]model.KubernetesObject), 0)
-	temp := make([]model.KubernetesObject, 0)
+func splitIntoMultipleSlices(s []model.KubernetesResource, maxItmsPerSlice int) []([]model.KubernetesResource) {
+	result := make([]([]model.KubernetesResource), 0)
+	temp := make([]model.KubernetesResource, 0)
 
 	for idx, val := range s {
 		temp = append(temp, val)
