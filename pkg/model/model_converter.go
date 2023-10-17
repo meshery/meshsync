@@ -12,16 +12,16 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func ParseList(object unstructured.Unstructured) Object {
+func ParseList(object unstructured.Unstructured) KubernetesResource {
 	data, _ := object.MarshalJSON()
-	result := Object{}
+	result := KubernetesResource{}
 
 	_ = utils.Unmarshal(string(data), &result)
 
 	// ObjectMeta internal models
-	labels := make([]*KeyValue, 0)
+	labels := make([]*KubernetesKeyValue, 0)
 	_ = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		labels = append(labels, &KeyValue{
+		labels = append(labels, &KubernetesKeyValue{
 			Kind:  KindLabel,
 			Key:   string(key),
 			Value: string(value),
@@ -34,29 +34,29 @@ func ParseList(object unstructured.Unstructured) Object {
 
 		return nil
 	}, "metadata", "labels")
-	result.ObjectMeta.Labels = labels
+	result.KubernetesResourceMeta.Labels = labels
 
-	annotations := make([]*KeyValue, 0)
+	annotations := make([]*KubernetesKeyValue, 0)
 	_ = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
-		annotations = append(annotations, &KeyValue{
+		annotations = append(annotations, &KubernetesKeyValue{
 			Kind:  KindAnnotation,
 			Key:   string(key),
 			Value: string(value),
 		})
 		return nil
 	}, "metadata", "annotations")
-	result.ObjectMeta.Annotations = annotations
+	result.KubernetesResourceMeta.Annotations = annotations
 
 	if finalizers, _, _, err := jsonparser.Get(data, "metadata", "finalizers"); err == nil {
-		result.ObjectMeta.Finalizers = string(finalizers)
+		result.KubernetesResourceMeta.Finalizers = string(finalizers)
 	}
 
 	if managedFields, _, _, err := jsonparser.Get(data, "metadata", "managedFields"); err == nil {
-		result.ObjectMeta.ManagedFields = string(managedFields)
+		result.KubernetesResourceMeta.ManagedFields = string(managedFields)
 	}
 
 	if ownerReferences, _, _, err := jsonparser.Get(data, "metadata", "ownerReferences"); err == nil {
-		result.ObjectMeta.OwnerReferences = string(ownerReferences)
+		result.KubernetesResourceMeta.OwnerReferences = string(ownerReferences)
 	}
 
 	if spec, _, _, err := jsonparser.Get(data, "spec"); err == nil {
@@ -92,27 +92,27 @@ func ParseList(object unstructured.Unstructured) Object {
 	return result
 }
 
-func IsObject(obj Object) bool {
-	return obj.ObjectMeta != nil
+func IsObject(obj KubernetesResource) bool {
+	return obj.KubernetesResourceMeta != nil
 }
 
-func SetID(obj *Object) {
+func SetID(obj *KubernetesResource) {
 	if obj != nil && IsObject(*obj) {
 		id := base64.StdEncoding.EncodeToString([]byte(
-			fmt.Sprintf("%s.%s.%s.%s.%s", obj.ClusterID, obj.Kind, obj.APIVersion, obj.ObjectMeta.Namespace, obj.ObjectMeta.Name),
+			fmt.Sprintf("%s.%s.%s.%s.%s", obj.ClusterID, obj.Kind, obj.APIVersion, obj.KubernetesResourceMeta.Namespace, obj.KubernetesResourceMeta.Name),
 		))
 		obj.ID = id
-		obj.ObjectMeta.ID = id
+		obj.KubernetesResourceMeta.ID = id
 
-		if len(obj.ObjectMeta.Labels) > 0 {
-			for _, label := range obj.ObjectMeta.Labels {
+		if len(obj.KubernetesResourceMeta.Labels) > 0 {
+			for _, label := range obj.KubernetesResourceMeta.Labels {
 				label.ID = id
 				label.UniqueID = uuid.New().String()
 			}
 		}
 
-		if len(obj.ObjectMeta.Annotations) > 0 {
-			for _, annotation := range obj.ObjectMeta.Annotations {
+		if len(obj.KubernetesResourceMeta.Annotations) > 0 {
+			for _, annotation := range obj.KubernetesResourceMeta.Annotations {
 				annotation.ID = id
 				annotation.UniqueID = uuid.New().String()
 			}
