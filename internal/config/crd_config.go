@@ -36,7 +36,11 @@ func GetMeshsyncCRDConfigs() (*MeshsyncConfig, error) {
 	if err != nil {
 		return nil, ErrInitConfig(err)
 	}
-	// get the spec section of the unstructured object
+
+	if crd == nil {
+		return nil, ErrInitConfig(errors.New("Custom Resource is nil"))
+	}
+
 	spec := crd.Object["spec"]
 	configObj := spec.(map[string]interface{})["config"]
 
