@@ -42,7 +42,6 @@ func GetMeshsyncCRDConfigs() (*MeshsyncConfig, error) {
 	}
 
 	spec := crd.Object["spec"]
-	configObj := spec.(map[string]interface{})["config"]
 	specMap, ok := spec.(map[string]interface{})
 	if !ok {
 		return nil, ErrInitConfig(errors.New("Unable to convert spec to map"))
