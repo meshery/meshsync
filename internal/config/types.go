@@ -35,6 +35,6 @@ type ListenerConfig struct {
 
 // Meshsync configuration controls the resources meshsync produces and consumes
 type MeshsyncConfig struct {
-	PipelineConfigs map[string]PipelineConfigs `json:"pipeline-configs,omitempty" yaml:"pipeline-configs,omitempty"`
-	ListenerConfigs map[string]ListenerConfig  `json:"listener-config,omitempty" yaml:"listener-config,omitempty"`
+	Pipelines map[string]PipelineConfigs `json:"pipeline-configs,omitempty" yaml:"pipeline-configs,omitempty"`
+	Listeners map[string]ListenerConfig  `json:"listener-config,omitempty" yaml:"listener-config,omitempty"`
 }
