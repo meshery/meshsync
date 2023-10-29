@@ -49,8 +49,13 @@ func main() {
 
 	// pass configs from crd to default configs
 	if crdConfigs != nil {
-		config.Pipelines = crdConfigs.Pipelines
-		config.Listeners = crdConfigs.Listeners
+		if len(crdConfigs.Pipelines) > 0 {
+			config.Pipelines = crdConfigs.Pipelines
+		}
+
+		if len(crdConfigs.Listeners) > 0 {
+			config.Listeners = crdConfigs.Listeners
+		}
 	}
 
 	// Config init and seed
