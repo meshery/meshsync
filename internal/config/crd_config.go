@@ -103,7 +103,9 @@ func GetMeshsyncCRDConfigs() (*MeshsyncConfig, error) {
 	}
 
 	if len(localPipelines) > 0 {
-		meshsyncConfig.Pipelines = make(map[string]PipelineConfigs)
+		if meshsyncConfig.Pipelines == nil {
+			meshsyncConfig.Pipelines = make(map[string]PipelineConfigs)
+		}
 		meshsyncConfig.Pipelines[LocalResourceKey] = localPipelines
 	}
 
