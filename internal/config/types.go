@@ -20,21 +20,31 @@ const (
 type PipelineConfigs []PipelineConfig
 
 type PipelineConfig struct {
-	Name      string `json:"name" yaml:"name"`
-	PublishTo string `json:"publish-to" yaml:"publish-to"`
+	Name      string   `json:"name" yaml:"name"`
+	PublishTo string   `json:"publish-to" yaml:"publish-to"`
+	Events    []string `json:"events" yaml:"events"`
 }
 
 type ListenerConfigs []ListenerConfig
 
 type ListenerConfig struct {
-	Name           string `json:"name" yaml:"name"`
-	ConnectionName string `json:"connection-name" yaml:"connection-name"`
-	PublishTo      string `json:"publish-to" yaml:"publish-to"`
-	SubscribeTo    string `json:"subscribe-to" yaml:"subscribe-to"`
+	Name           string   `json:"name" yaml:"name"`
+	ConnectionName string   `json:"connection-name" yaml:"connection-name"`
+	PublishTo      string   `json:"publish-to" yaml:"publish-to"`
+	SubscribeTo    string   `json:"subscribe-to" yaml:"subscribe-to"`
+	Events         []string `json:"events" yaml:"events"`
 }
 
 // Meshsync configuration controls the resources meshsync produces and consumes
 type MeshsyncConfig struct {
+	BlackList []string                   `json:"blacklist" yaml:"blacklist"`
 	Pipelines map[string]PipelineConfigs `json:"pipeline-configs,omitempty" yaml:"pipeline-configs,omitempty"`
 	Listeners map[string]ListenerConfig  `json:"listener-config,omitempty" yaml:"listener-config,omitempty"`
+	WhiteList []ResourceConfig           `json:"resource-configs" yaml:"resource-configs"`
+}
+
+// Watched Resource configuration
+type ResourceConfig struct {
+	Resource string
+	Events   []string
 }
