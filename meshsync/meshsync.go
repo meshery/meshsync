@@ -25,9 +25,9 @@ type Handler struct {
 	restConfig    rest.Config
 	informer      dynamicinformer.DynamicSharedInformerFactory
 	staticClient  *kubernetes.Clientset
-	dynamicClient dynamic.Interface
 	channelPool   map[string]channels.GenericChannel
 	stores        map[string]cache.Store
+	dynamicClient dynamic.Interface
 }
 
 func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[string]channels.GenericChannel) (*Handler, error) {

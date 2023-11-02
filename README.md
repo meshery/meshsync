@@ -24,7 +24,9 @@
 
 # MeshSync
 
-MeshSync (Service Mesh Synchronization), an event-driven, continuous synchronization routine performs the task of ensuring that the state of configuration and status of operation of any service mesh and of the Kubernetes environment are known to Meshery. MeshSync runs as a Kubernetes custom controller under the control of Meshery Operator.
+MeshSync, an event-driven, continuous discovery and synchronization engine performs the task of ensuring that the state of configuration and status of operation of any supported Meshery platform (e.g. Kubernetes) and environment are known to Meshery Server. When deployed into Kubernetes enviroments, MeshSync runs as a Kubernetes custom controller under the control of Meshery Operator.
+
+See [MeshSync in Meshery Docs](https://docs.meshery.io/concepts/architecture/meshsync) for additional information.
 
 
 <div>&nbsp;</div>

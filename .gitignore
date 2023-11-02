@@ -20,3 +20,5 @@
 **errorutil_errors_export.json
 
 .vscode/
+cover.html
+.DS_Store

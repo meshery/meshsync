@@ -72,8 +72,6 @@ func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFacto
 
 	// Create Pipeline
 	clusterPipeline := pipeline.New(Name, 1000)
-
-	// add stages to pipeline
 	clusterPipeline.AddStage(gdstage)
 	clusterPipeline.AddStage(ldstage)
 	if !watchList {
