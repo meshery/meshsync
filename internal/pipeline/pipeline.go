@@ -1,10 +1,7 @@
 package pipeline
 
 import (
-	"bytes"
 	"context"
-	"os/exec"
-	"regexp"
 
 	broker "github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/config"
@@ -40,8 +37,7 @@ var (
 
 func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, broker broker.Handler, plConfigs map[string]internalconfig.PipelineConfigs, stopChan chan struct{}, dynamicKube dynamic.Interface, hConfig config.Handler) *pipeline.Pipeline {
 	// TODO: best way to check whether WatchList feature is enabled
-	watchList := checkWatchListFeatureOs()
-	// watchList := checkWatchListFeatureBruteForce()
+	watchList := checkWatchListFeatureBruteForce(dynamicKube)
 
 	// Global discovery
 	gdstage := GlobalDiscoveryStage
@@ -81,26 +77,6 @@ func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFacto
 		clusterPipeline.AddStage(strtInfmrs)
 	}
 	return clusterPipeline
-}
-
-// checkWatchListFeatureOs checks whether the WatchList feature gate is enabled
-// by doing a ps aux command and matching the output with 'WatchList=true' string that would signify
-// the feature being set
-func checkWatchListFeatureOs() bool {
-	cmd := exec.Command("ps", "aux")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		print(err.Error())
-	}
-	r, _ := regexp.Compile("WatchList=true")
-
-	if r.MatchString(out.String()) {
-		return true
-	}
-
-	return false
 }
 
 // checkWatchListFeatureBruteForce checks if the WatchList feature is present by doing a test
