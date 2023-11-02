@@ -16,7 +16,7 @@ require (
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/spf13/viper v1.15.0
 	golang.org/x/net v0.17.0
-	gorm.io/gorm v1.25.4
+	gorm.io/gorm v1.25.5
 	k8s.io/api v0.28.2
 	k8s.io/apimachinery v0.28.2
 	k8s.io/client-go v0.28.2
