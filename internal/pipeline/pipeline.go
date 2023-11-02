@@ -92,9 +92,5 @@ func checkWatchListFeatureBruteForce(client dynamic.Interface) bool {
 	gvr, _ := schema.ParseResourceArg("pods.v1.")
 	_, err := client.Resource(*gvr).Watch(context.TODO(), opts)
 
-	if err != nil {
-
-		return false
-	}
-	return true
+	return err == nil
 }
