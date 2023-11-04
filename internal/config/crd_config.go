@@ -5,11 +5,11 @@ import (
 	"errors"
 
 	"github.com/layer5io/meshkit/utils"
-	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
 	"golang.org/x/exp/slices"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 )
 
 var (
@@ -20,15 +20,7 @@ var (
 	resource  = "meshsyncs"         //Name of the Resource
 )
 
-func GetMeshsyncCRDConfigs() (*MeshsyncConfig, error) {
-	// Initialize kubeclient
-	kubeClient, err := mesherykube.New(nil)
-	if err != nil {
-		return nil, ErrInitConfig(err)
-	}
-	// initialize the dynamic kube client
-	dyClient := kubeClient.DynamicKubeClient
-
+func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) {
 	// initialize the group version resource to access the custom resource
 	gvr := schema.GroupVersionResource{Version: version, Group: group, Resource: resource}
 
@@ -56,7 +48,7 @@ func GetMeshsyncCRDConfigs() (*MeshsyncConfig, error) {
 	if err != nil {
 		return nil, ErrInitConfig(err)
 	}
-	meshsyncConfig := MeshsyncConfig{}
+
 	configMap := corev1.ConfigMap{}
 	err = utils.Unmarshal(string(configStr), &configMap)
 
@@ -64,65 +56,131 @@ func GetMeshsyncCRDConfigs() (*MeshsyncConfig, error) {
 		return nil, ErrInitConfig(err)
 	}
 
+	// populate the required configs
+	meshsyncConfig, err := PopulateConfigs(configMap)
+
+	if err != nil {
+		return nil, ErrInitConfig(err)
+	}
+	return meshsyncConfig, nil
+}
+
+// PopulateConfigs compares the default configs and the whitelist and blacklist
+func PopulateConfigs(configMap corev1.ConfigMap) (*MeshsyncConfig, error) {
+	meshsyncConfig := &MeshsyncConfig{}
+
 	if _, ok := configMap.Data["blacklist"]; ok {
-		err = utils.Unmarshal(configMap.Data["blacklist"], &meshsyncConfig.BlackList)
-		if err != nil {
-			return nil, ErrInitConfig(err)
+		if len(configMap.Data["blacklist"]) > 0 {
+			err := utils.Unmarshal(configMap.Data["blacklist"], &meshsyncConfig.BlackList)
+			if err != nil {
+				return nil, ErrInitConfig(err)
+			}
 		}
 	}
 
 	if _, ok := configMap.Data["whitelist"]; ok {
-		err = utils.Unmarshal(configMap.Data["whitelist"], &meshsyncConfig.WhiteList)
-		if err != nil {
-			return nil, ErrInitConfig(err)
+		if len(configMap.Data["whitelist"]) > 0 {
+			err := utils.Unmarshal(configMap.Data["whitelist"], &meshsyncConfig.WhiteList)
+			if err != nil {
+				return nil, ErrInitConfig(err)
+			}
 		}
+	}
+
+	// ensure that atleast one of whitelist or blacklist has been supplied
+	if len(meshsyncConfig.BlackList) == 0 && len(meshsyncConfig.WhiteList) == 0 {
+		return nil, ErrInitConfig(errors.New("Both whitelisted and blacklisted resources missing"))
 	}
 
 	// Handle global resources
 	globalPipelines := make(PipelineConfigs, 0)
-	for _, v := range Pipelines[GlobalResourceKey] {
-		if idx := slices.IndexFunc(meshsyncConfig.WhiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
-			config := meshsyncConfig.WhiteList[idx]
-			v.Events = config.Events
-			globalPipelines = append(globalPipelines, v)
-		}
-	}
-	if len(globalPipelines) > 0 {
-		meshsyncConfig.Pipelines = map[string]PipelineConfigs{}
-		meshsyncConfig.Pipelines[GlobalResourceKey] = globalPipelines
-	}
-
-	// Handle local resources
 	localPipelines := make(PipelineConfigs, 0)
-	for _, v := range Pipelines[LocalResourceKey] {
-		if idx := slices.IndexFunc(meshsyncConfig.WhiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
-			config := meshsyncConfig.WhiteList[idx]
-			v.Events = config.Events
-			localPipelines = append(localPipelines, v)
+
+	if len(meshsyncConfig.WhiteList) != 0 {
+		for _, v := range Pipelines[GlobalResourceKey] {
+			if idx := slices.IndexFunc(meshsyncConfig.WhiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
+				config := meshsyncConfig.WhiteList[idx]
+				v.Events = config.Events
+				globalPipelines = append(globalPipelines, v)
+			}
+		}
+		if len(globalPipelines) > 0 {
+			meshsyncConfig.Pipelines = map[string]PipelineConfigs{}
+			meshsyncConfig.Pipelines[GlobalResourceKey] = globalPipelines
+		}
+
+		// Handle local resources
+		for _, v := range Pipelines[LocalResourceKey] {
+			if idx := slices.IndexFunc(meshsyncConfig.WhiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
+				config := meshsyncConfig.WhiteList[idx]
+				v.Events = config.Events
+				localPipelines = append(localPipelines, v)
+			}
+		}
+
+		if len(localPipelines) > 0 {
+			if meshsyncConfig.Pipelines == nil {
+				meshsyncConfig.Pipelines = make(map[string]PipelineConfigs)
+			}
+			meshsyncConfig.Pipelines[LocalResourceKey] = localPipelines
+		}
+
+		// Handle listeners
+		listerners := make(ListenerConfigs, 0)
+		for _, v := range Listeners {
+			if idx := slices.IndexFunc(meshsyncConfig.WhiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
+				config := meshsyncConfig.WhiteList[idx]
+				v.Events = config.Events
+				listerners = append(listerners, v)
+			}
+		}
+
+		if len(listerners) > 0 {
+			meshsyncConfig.Listeners = make(map[string]ListenerConfig)
+			meshsyncConfig.Listeners = Listeners
+		}
+	} else if len(meshsyncConfig.BlackList) != 0 {
+
+		for _, v := range Pipelines[GlobalResourceKey] {
+			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx == -1 {
+				v.Events = DefaultEvents
+				globalPipelines = append(globalPipelines, v)
+			}
+		}
+		if len(globalPipelines) > 0 {
+			meshsyncConfig.Pipelines = map[string]PipelineConfigs{}
+			meshsyncConfig.Pipelines[GlobalResourceKey] = globalPipelines
+		}
+
+		// Handle local resources
+		for _, v := range Pipelines[LocalResourceKey] {
+			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx == -1 {
+				v.Events = DefaultEvents
+				localPipelines = append(localPipelines, v)
+			}
+		}
+
+		if len(localPipelines) > 0 {
+			if meshsyncConfig.Pipelines == nil {
+				meshsyncConfig.Pipelines = make(map[string]PipelineConfigs)
+			}
+			meshsyncConfig.Pipelines[LocalResourceKey] = localPipelines
+		}
+
+		// Handle listeners
+		listerners := make(ListenerConfigs, 0)
+		for _, v := range Listeners {
+			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx != -1 {
+				v.Events = DefaultEvents
+				listerners = append(listerners, v)
+			}
+		}
+
+		if len(listerners) > 0 {
+			meshsyncConfig.Listeners = make(map[string]ListenerConfig)
+			meshsyncConfig.Listeners = Listeners
 		}
 	}
 
-	if len(localPipelines) > 0 {
-		if meshsyncConfig.Pipelines == nil {
-			meshsyncConfig.Pipelines = make(map[string]PipelineConfigs)
-		}
-		meshsyncConfig.Pipelines[LocalResourceKey] = localPipelines
-	}
-
-	// Handle listeners
-	listerners := make(ListenerConfigs, 0)
-	for _, v := range Listeners {
-		if idx := slices.IndexFunc(meshsyncConfig.WhiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
-			config := meshsyncConfig.WhiteList[idx]
-			v.Events = config.Events
-			listerners = append(listerners, v)
-		}
-	}
-
-	if len(listerners) > 0 {
-		meshsyncConfig.Listeners = make(map[string]ListenerConfig)
-		meshsyncConfig.Listeners = Listeners
-	}
-
-	return &meshsyncConfig, nil
+	return meshsyncConfig, nil
 }
