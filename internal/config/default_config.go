@@ -144,4 +144,6 @@ var (
 			SubscribeTo:    "meshery.meshsync.request",
 		},
 	}
+
+	DefaultEvents = []string{"ADD", "UPDATE", "DELETE"}
 )
