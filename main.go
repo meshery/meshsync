@@ -12,6 +12,7 @@ import (
 	"github.com/layer5io/meshkit/broker/nats"
 	configprovider "github.com/layer5io/meshkit/config/provider"
 	"github.com/layer5io/meshkit/logger"
+	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/meshsync"
@@ -39,8 +40,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Initialize kubeclient
+	kubeClient, err := mesherykube.New(nil)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	// get configs from meshsync crd if available
-	crdConfigs, err := config.GetMeshsyncCRDConfigs()
+	crdConfigs, err := config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
 
 	if err != nil {
 		// no configs found from meshsync CRD log warning
