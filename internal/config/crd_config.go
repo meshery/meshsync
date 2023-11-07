@@ -92,6 +92,11 @@ func PopulateConfigs(configMap corev1.ConfigMap) (*MeshsyncConfig, error) {
 		return nil, ErrInitConfig(errors.New("Both whitelisted and blacklisted resources missing"))
 	}
 
+	// ensure that only one of whitelist or blacklist has been supplied
+	if len(meshsyncConfig.BlackList) != 0 && len(meshsyncConfig.WhiteList) != 0 {
+		return nil, ErrInitConfig(errors.New("Both whitelisted and blacklisted resources not currently supported"))
+	}
+
 	// Handle global resources
 	globalPipelines := make(PipelineConfigs, 0)
 	localPipelines := make(PipelineConfigs, 0)
@@ -125,21 +130,7 @@ func PopulateConfigs(configMap corev1.ConfigMap) (*MeshsyncConfig, error) {
 			meshsyncConfig.Pipelines[LocalResourceKey] = localPipelines
 		}
 
-		// Handle listeners
-		listerners := make(ListenerConfigs, 0)
-		for _, v := range Listeners {
-			if idx := slices.IndexFunc(meshsyncConfig.WhiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
-				config := meshsyncConfig.WhiteList[idx]
-				v.Events = config.Events
-				listerners = append(listerners, v)
-			}
-		}
-
-		if len(listerners) > 0 {
-			meshsyncConfig.Listeners = make(map[string]ListenerConfig)
-			meshsyncConfig.Listeners = Listeners
-		}
-	} else if len(meshsyncConfig.BlackList) != 0 {
+	} else {
 
 		for _, v := range Pipelines[GlobalResourceKey] {
 			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx == -1 {
@@ -165,20 +156,6 @@ func PopulateConfigs(configMap corev1.ConfigMap) (*MeshsyncConfig, error) {
 				meshsyncConfig.Pipelines = make(map[string]PipelineConfigs)
 			}
 			meshsyncConfig.Pipelines[LocalResourceKey] = localPipelines
-		}
-
-		// Handle listeners
-		listerners := make(ListenerConfigs, 0)
-		for _, v := range Listeners {
-			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx != -1 {
-				v.Events = DefaultEvents
-				listerners = append(listerners, v)
-			}
-		}
-
-		if len(listerners) > 0 {
-			meshsyncConfig.Listeners = make(map[string]ListenerConfig)
-			meshsyncConfig.Listeners = Listeners
 		}
 	}
 
