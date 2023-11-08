@@ -7,6 +7,7 @@ import (
 	"github.com/layer5io/meshkit/broker"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
+	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/tools/cache"
 )
@@ -69,6 +70,11 @@ func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
 }
 
 func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype broker.EventType, config internalconfig.PipelineConfig) error {
+
+	// if the event is not supported skip
+	if !slices.Contains(ri.config.Events, string(evtype)) {
+		return nil
+	}
 	err := ri.broker.Publish(config.PublishTo, &broker.Message{
 		ObjectType: broker.MeshSync,
 		EventType:  evtype,
