@@ -1,3 +1,17 @@
+# Copyright Meshery Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 
 include install/Makefile.core.mk
@@ -9,30 +23,16 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-
-# Test covergae
-.PHONY: coverage
-coverage:
-	go test -v ./... -coverprofile cover.out
-	go tool cover -html=cover.out -o cover.html
-
-.PHONY: go-mod-tidy
-go-mod-tidy:
-	./scripts/go-mod-tidy.sh
-
-.PHONY: check
-check:
-	$(GOBIN)/golangci-lint run ./...
-
-.PHONY: build
-build:
-	go build -o bin/meshsync main.go
-
+#-----------------------------------------------------------------------------
+# Docker-based Builds
+#-----------------------------------------------------------------------------
 .PHONY: docker-check
+## Build Meshsync's docker image
 docker: check
 	docker build -t layer5/meshery-meshsync .
 
 .PHONY: docker-run
+## Runs Meshsync in docker
 docker-run:
 	(docker rm -f meshery-meshsync) || true
 	docker run --name meshery-meshsync -d \
@@ -40,13 +40,46 @@ docker-run:
 	-e DEBUG=true \
 	layer5/meshery-meshsync
 
+PHONY: nats
+## Runs a local instance of NATS server in detached mode
+nats:
+	docker run --name nats --rm -p 4222:4222 -p 8222:8222 -d nats --http_port 8222 
+
+#-----------------------------------------------------------------------------
+# Local Builds
+#-----------------------------------------------------------------------------
+.PHONY: build
+## Build Meshsync binary to ./bin folder
+build:
+	go build -o bin/meshsync main.go
+
 .PHONY: run-check
-run: check
+## Runs local instance of Meshsync: can be used during local development
+run: check nats	
 	go$(v) mod tidy; \
 	DEBUG=true GOPROXY=direct GOSUMDB=off go run main.go
 
+.PHONY: check
+## Lint check Meshsync.
+check:
+	$(GOBIN)/golangci-lint run ./...
 
- # runs a local instance of nats server in detached mode
-PHONY: nats
-nats:
-	docker run --name nats --rm -p 4222:4222 -p 8222:8222 -d nats --http_port 8222 
+.PHONY: go-mod-tidy
+## Run go mod tidy for dependency management
+go-mod-tidy:
+	go mod tidy
+
+#-----------------------------------------------------------------------------
+# Tests
+#-----------------------------------------------------------------------------
+
+# Test covergae
+.PHONY: coverage
+## Runs coverage tests for Meshsync
+coverage:
+	go test -v ./... -coverprofile cover.out
+	go tool cover -html=cover.out -o cover.html
+## Runs unit tests
+test: check 
+	go test -failfast --short ./... -race 
+
