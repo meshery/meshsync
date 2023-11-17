@@ -41,7 +41,7 @@ docker-run:
 	layer5/meshery-meshsync
 
 PHONY: nats
- # runs a local instance of nats server in detached mode
+## Runs a local instance of NATS server in detached mode
 nats:
 	docker run --name nats --rm -p 4222:4222 -p 8222:8222 -d nats --http_port 8222 
 
