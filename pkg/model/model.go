@@ -19,7 +19,7 @@ type KubernetesResource struct {
 	Status                 *KubernetesResourceStatus     `json:"status,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	ClusterID              string                        `json:"cluster_id"`
 	PatternResource        *uuid.UUID                    `json:"pattern_resource"`
-
+	ComponentMetadata      map[string]interface{}        `json:"component_metadata" gorm:"type:bytes;serializer:json"` 
 	// Secondary fields for configsmaps and secrets
 	Immutable  string `json:"immutable,omitempty"`
 	Data       string `json:"data,omitempty"`
