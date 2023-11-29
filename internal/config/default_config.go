@@ -39,6 +39,10 @@ var (
 				Name:      "persistentvolumeclaims.v1.",
 				PublishTo: "meshery.meshsync.core",
 			},
+			{
+				Name: "prometheuses.v1.monitoring.coreos.com",
+				PublishTo: "meshery.meshsync.core",
+			},
 		},
 		LocalResourceKey: []PipelineConfig{
 			// Core Resources
