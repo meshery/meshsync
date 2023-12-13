@@ -48,7 +48,7 @@ func main() {
 	}
 
 	//get all resources
-	err = config.PopulateDefaultResources(kubeClient.KubeClient)
+	err = config.PopulateDefaultResources(kubeClient.KubeClient.Discovery())
 
 	if err != nil {
 		fmt.Println(err)

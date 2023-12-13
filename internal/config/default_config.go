@@ -2,11 +2,12 @@ package config
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/discovery"
 )
 
 var (
@@ -38,12 +39,12 @@ var (
 	}
 
 	DefaultEvents     = []string{"ADD", "UPDATE", "DELETE"}
-	ExemptedResources = []string{"selfsubjectrulesreviews", "localsubjectaccessreviews", "bindings", "selfsubjectaccessreviews", "subjectaccessreviews", "tokenreviews", "componentstatuses"}
+	ExemptedResources = []string{"selfsubjectrulesreviews", "localsubjectaccessreviews", "bindings", "selfsubjectaccessreviews", "subjectaccessreviews", "tokenreviews", "componentstatuses", "flowschemas", "prioritylevelconfigurations"}
 )
 
-func PopulateDefaultResources(clientset *kubernetes.Clientset) error {
+func PopulateDefaultResources(discoveryClient discovery.DiscoveryInterface) error {
 	// Get all resources in the cluster
-	clusterResources, namespacedResources, err := getAllResources(clientset)
+	clusterResources, namespacedResources, err := getAllResources(discoveryClient)
 	if err != nil {
 		fmt.Printf("Error getting all resources: %v\n", err)
 		return ErrInitConfig(err)
@@ -64,10 +65,9 @@ func PopulateDefaultResources(clientset *kubernetes.Clientset) error {
 
 	return nil
 }
-func getAllResources(clientset *kubernetes.Clientset) ([]string, []string, error) {
-	discoveryClient := clientset.Discovery()
+func getAllResources(discoveryClient discovery.DiscoveryInterface) ([]string, []string, error) {
 
-	groupList, err := discoveryClient.ServerPreferredResources()
+	_, groupList, err := discoveryClient.ServerGroupsAndResources()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -77,6 +77,9 @@ func getAllResources(clientset *kubernetes.Clientset) ([]string, []string, error
 
 	for _, group := range groupList {
 		for _, resource := range group.APIResources {
+			if strings.Contains(resource.Name, "/") {
+				continue
+			}
 			groupVersion, _ := schema.ParseGroupVersion(group.GroupVersion)
 			gvk := groupVersion.WithKind(resource.Kind)
 			// gvk now contains the GroupVersionKind for the resource
