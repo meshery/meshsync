@@ -50,6 +50,11 @@ func main() {
 	//get all resources
 	err = config.PopulateDefaultResources(kubeClient.KubeClient)
 
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
 	// augment default resources from meshsync crd if available
 	_, err = config.AugmentDefaultResourcesWithCRD(kubeClient.DynamicKubeClient)
 
