@@ -20,7 +20,7 @@ var (
 	resource  = "meshsyncs"         //Name of the Resource
 )
 
-func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) {
+func AugmentDefaultResourcesWithCRD(dyClient dynamic.Interface) (*MeshsyncConfig, error) {
 	// initialize the group version resource to access the custom resource
 	gvr := schema.GroupVersionResource{Version: version, Group: group, Resource: resource}
 
@@ -87,75 +87,36 @@ func PopulateConfigs(configMap corev1.ConfigMap) (*MeshsyncConfig, error) {
 		}
 	}
 
-	// ensure that atleast one of whitelist or blacklist has been supplied
-	if len(meshsyncConfig.BlackList) == 0 && len(meshsyncConfig.WhiteList) == 0 {
-		return nil, ErrInitConfig(errors.New("Both whitelisted and blacklisted resources missing"))
-	}
-
-	// ensure that only one of whitelist or blacklist has been supplied
-	if len(meshsyncConfig.BlackList) != 0 && len(meshsyncConfig.WhiteList) != 0 {
-		return nil, ErrInitConfig(errors.New("Both whitelisted and blacklisted resources not currently supported"))
-	}
-
-	// Handle global resources
-	globalPipelines := make(PipelineConfigs, 0)
-	localPipelines := make(PipelineConfigs, 0)
-
 	if len(meshsyncConfig.WhiteList) != 0 {
-		for _, v := range Pipelines[GlobalResourceKey] {
+		for k, v := range Pipelines[GlobalResourceKey] {
 			if idx := slices.IndexFunc(meshsyncConfig.WhiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
 				config := meshsyncConfig.WhiteList[idx]
-				v.Events = config.Events
-				globalPipelines = append(globalPipelines, v)
+				Pipelines[GlobalResourceKey][k].Events = config.Events
 			}
 		}
-		if len(globalPipelines) > 0 {
-			meshsyncConfig.Pipelines = map[string]PipelineConfigs{}
-			meshsyncConfig.Pipelines[GlobalResourceKey] = globalPipelines
+		// Handle local resources
+		for k, v := range Pipelines[LocalResourceKey] {
+			if idx := slices.IndexFunc(meshsyncConfig.WhiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
+				config := meshsyncConfig.WhiteList[idx]
+				Pipelines[LocalResourceKey][k].Events = config.Events
+			}
+		}
+	}
+	if len(meshsyncConfig.BlackList) != 0 {
+
+		for _, v := range Pipelines[GlobalResourceKey] {
+			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx != -1 {
+				confIdx := slices.IndexFunc(Pipelines[GlobalResourceKey], func(c PipelineConfig) bool { return c.Name == v.Name })
+				Pipelines[GlobalResourceKey] = slices.Delete(Pipelines[GlobalResourceKey], confIdx, confIdx+1)
+			}
 		}
 
 		// Handle local resources
 		for _, v := range Pipelines[LocalResourceKey] {
-			if idx := slices.IndexFunc(meshsyncConfig.WhiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
-				config := meshsyncConfig.WhiteList[idx]
-				v.Events = config.Events
-				localPipelines = append(localPipelines, v)
+			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx != -1 {
+				confIdx := slices.IndexFunc(Pipelines[LocalResourceKey], func(c PipelineConfig) bool { return c.Name == v.Name })
+				Pipelines[LocalResourceKey] = slices.Delete(Pipelines[LocalResourceKey], confIdx, confIdx+1)
 			}
-		}
-
-		if len(localPipelines) > 0 {
-			if meshsyncConfig.Pipelines == nil {
-				meshsyncConfig.Pipelines = make(map[string]PipelineConfigs)
-			}
-			meshsyncConfig.Pipelines[LocalResourceKey] = localPipelines
-		}
-
-	} else {
-
-		for _, v := range Pipelines[GlobalResourceKey] {
-			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx == -1 {
-				v.Events = DefaultEvents
-				globalPipelines = append(globalPipelines, v)
-			}
-		}
-		if len(globalPipelines) > 0 {
-			meshsyncConfig.Pipelines = map[string]PipelineConfigs{}
-			meshsyncConfig.Pipelines[GlobalResourceKey] = globalPipelines
-		}
-
-		// Handle local resources
-		for _, v := range Pipelines[LocalResourceKey] {
-			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx == -1 {
-				v.Events = DefaultEvents
-				localPipelines = append(localPipelines, v)
-			}
-		}
-
-		if len(localPipelines) > 0 {
-			if meshsyncConfig.Pipelines == nil {
-				meshsyncConfig.Pipelines = make(map[string]PipelineConfigs)
-			}
-			meshsyncConfig.Pipelines[LocalResourceKey] = localPipelines
 		}
 	}
 
