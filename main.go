@@ -47,23 +47,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	// get configs from meshsync crd if available
-	crdConfigs, err := config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
+	//get all resources
+	err = config.PopulateDefaultResources(kubeClient.KubeClient)
+
+	// augment default resources from meshsync crd if available
+	_, err = config.AugmentDefaultResourcesWithCRD(kubeClient.DynamicKubeClient)
 
 	if err != nil {
 		// no configs found from meshsync CRD log warning
 		log.Warn(err)
-	}
-
-	// pass configs from crd to default configs
-	if crdConfigs != nil {
-		if len(crdConfigs.Pipelines) > 0 {
-			config.Pipelines = crdConfigs.Pipelines
-		}
-
-		if len(crdConfigs.Listeners) > 0 {
-			config.Listeners = crdConfigs.Listeners
-		}
 	}
 
 	// Config init and seed
