@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"testing"
 
+	"golang.org/x/exp/slices"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic/fake"
@@ -21,6 +22,44 @@ var (
 
 func TestWhiteListResources(t *testing.T) {
 
+	Pipelines = map[string]PipelineConfigs{
+		GlobalResourceKey: []PipelineConfig{
+			// Core Resources
+			{
+				Name:      "namespaces.v1.",
+				PublishTo: "meshery.meshsync.core",
+				Events:    DefaultEvents,
+			},
+			{
+				Name:      "configmaps.v1.",
+				PublishTo: "meshery.meshsync.core",
+				Events:    DefaultEvents,
+			},
+			{
+				Name:      "nodes.v1.",
+				PublishTo: "meshery.meshsync.core",
+				Events:    DefaultEvents,
+			},
+		},
+		LocalResourceKey: []PipelineConfig{
+			// Core Resources
+			{
+				Name:      "replicasets.v1.apps",
+				PublishTo: "meshery.meshsync.core",
+				Events:    DefaultEvents,
+			},
+			{
+				Name:      "pods.v1.",
+				PublishTo: "meshery.meshsync.core",
+				Events:    DefaultEvents,
+			},
+			{
+				Name:      "services.v1.",
+				PublishTo: "meshery.meshsync.core",
+				Events:    DefaultEvents,
+			},
+		},
+	}
 	// Create an instance of the custom resource.
 	watchList := corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -60,17 +99,57 @@ func TestWhiteListResources(t *testing.T) {
 	// global pipelines: namespaces
 	// local pipelines: pods, replicasets
 
-	if len(meshsyncConfig.Pipelines["global"]) != 1 {
-		t.Error("global pipelines not well configured expected 1")
+	if len(Pipelines["global"]) != 3 {
+		t.Error("global pipelines not well configured expected 3")
 	}
 
-	if len(meshsyncConfig.Pipelines["local"]) != 2 {
-		t.Error("global pipelines not well configured expected 2")
+	if len(Pipelines["local"]) != 3 {
+		t.Error("global pipelines not well configured expected 3")
+	}
+
+	// granular test to ensure the required events are well propagated
+	// namespaces expects two events
+	idx := slices.IndexFunc(Pipelines["global"], func(c PipelineConfig) bool { return c.Name == "namespaces.v1." })
+	namespaces := Pipelines["global"][idx]
+	if !reflect.DeepEqual(namespaces.Events, []string{"ADDED", "DELETE"}) {
+		t.Errorf("failure propagating required events expected [ADDED,DELETE] found %v", namespaces.Events)
 	}
 }
 
 func TestBlackListResources(t *testing.T) {
 
+	Pipelines = map[string]PipelineConfigs{
+		GlobalResourceKey: []PipelineConfig{
+			// Core Resources
+			{
+				Name:      "namespaces.v1.",
+				PublishTo: "meshery.meshsync.core",
+			},
+			{
+				Name:      "configmaps.v1.",
+				PublishTo: "meshery.meshsync.core",
+			},
+			{
+				Name:      "nodes.v1.",
+				PublishTo: "meshery.meshsync.core",
+			},
+		},
+		LocalResourceKey: []PipelineConfig{
+			// Core Resources
+			{
+				Name:      "replicasets.v1.apps",
+				PublishTo: "meshery.meshsync.core",
+			},
+			{
+				Name:      "pods.v1.",
+				PublishTo: "meshery.meshsync.core",
+			},
+			{
+				Name:      "services.v1.",
+				PublishTo: "meshery.meshsync.core",
+			},
+		},
+	}
 	// Create an instance of the custom resource.
 	watchList := corev1.ConfigMap{
 		TypeMeta: metav1.TypeMeta{
@@ -94,23 +173,31 @@ func TestBlackListResources(t *testing.T) {
 	}
 
 	if len(meshsyncConfig.BlackList) == 0 {
-		t.Errorf("WhiteListed resources")
+		t.Errorf("Blacklisted resources missing")
 	}
 
 	expectedBlackList := []string{"namespaces.v1.", "pods.v1."}
 	if !reflect.DeepEqual(meshsyncConfig.BlackList, expectedBlackList) {
-		t.Error("WhiteListed resources not equal")
+		t.Error("Blacklisted resources not equal")
 	}
 
 	// now we assertain the global and local pipelines have been correctly configured
 	// excempted global pipelines: namespaces
 	// excempted local pipelines: pods, replicasets
 
-	if len(meshsyncConfig.Pipelines["global"]) != 5 {
-		t.Error("global pipelines not well configured expected 5")
+	if len(Pipelines["global"]) != 2 {
+		t.Error("global pipelines not well configured expected 2")
 	}
 
-	if len(meshsyncConfig.Pipelines["local"]) != 14 {
-		t.Error("global pipelines not well configured expected 15")
+	if len(Pipelines["local"]) != 2 {
+		t.Error("global pipelines not well configured expected 2")
+	}
+
+	if idx := slices.IndexFunc(Pipelines["global"], func(c PipelineConfig) bool { return c.Name == "namespaces.v1." }); idx != -1 {
+		t.Error("failed to remove blacklisted item, expected namespaces to be removed")
+	}
+
+	if idx := slices.IndexFunc(Pipelines["local"], func(c PipelineConfig) bool { return c.Name == "pods.v1." }); idx != -1 {
+		t.Error("failed to remove blacklisted item, expected pods to be removed")
 	}
 }
