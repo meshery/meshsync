@@ -65,8 +65,6 @@ jobs:
 
       - name: Subscribe messages
         run: |
-          echo | nats -sub meshery.meshsync.core --count 10
-            #deploy meshsync
-      #test publishing
-
+          echo | nats sub meshery.meshsync.core --count 10
+          
 
