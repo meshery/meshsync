@@ -45,15 +45,17 @@ jobs:
         run: |
           
 
+      - name: Setup Go
+        uses: actions/setup-go@master
+        with:
+            go-version: "1.21"  
+            
       - name: Setup nats-cli
         run: |
           go install github.com/nats-io/natscli/nats@latest
           nats --version
 
-      - name: Setup Go
-        uses: actions/setup-go@master
-        with:
-            go-version: "1.21"        
+      
             
       - name: Run MeshSync
         run: |
