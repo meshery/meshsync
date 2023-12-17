@@ -65,7 +65,7 @@ jobs:
         run: |
           # Run nats-sub with a timeout
 
-          if result=$(timeout 3m0s nats sub meshery.meshsync.core --count 10); then
+          if result=$(timeout 3m nats sub meshery.meshsync.core --count 10); then
             echo "Messages received within the timeout: $result"
           else
             echo "Error: No message received within the timeout."
