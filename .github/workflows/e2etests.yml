@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         k8s_version: ['v1.27.3']
-        platform: ['docker', 'kubernetes']
+        # platform: ['docker', 'kubernetes']
 
     steps: 
       - name: Setup Kubernetes
@@ -36,8 +36,8 @@ jobs:
       
       - name: Set Up Nats
         run: |
-          sudo apt install zip
-          curl -L https://github.com/nats-io/nats-server/releases/download/vX.Y.Z/nats-server-v2.10.7-linux-amd64.zip -o nats-server.zip
+          sudo apt install unzip
+          curl -L https://github.com/nats-io/nats-server/releases/download/v2.10.7/nats-server-v2.10.7-linux-amd64.zip -o nats-server.zip
           unzip nats-server.zip -d nats-server
           sudo cp nats-server/nats-server-2.10.7-linux-amd64/nats-server /usr/local/bin
           nats-server --version
