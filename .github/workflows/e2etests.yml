@@ -61,7 +61,7 @@ jobs:
             
       - name: Run MeshSync
         run: |
-          go run main.go
+          go run main.go &
 
       - name: Subscribe messages
         run: |
