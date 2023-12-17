@@ -34,7 +34,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@master
       
-      - name: Set Up Nats
+      - name: Setup Nats Server
         run: |
           sudo apt install unzip
           curl -L https://github.com/nats-io/nats-server/releases/download/v2.10.7/nats-server-v2.10.7-linux-amd64.zip -o nats-server.zip
@@ -42,10 +42,7 @@ jobs:
           sudo cp nats-server/nats-server-v2.10.7-linux-amd64/nats-server /usr/local/bin
           nats-server --version
           nats-server -m 8222 &
-
-      - name: Start nats server
-        run: |
-          
+        shell: bash
 
       - name: Setup Go
         uses: actions/setup-go@master
@@ -56,16 +53,24 @@ jobs:
         run: |
           go install github.com/nats-io/natscli/nats@latest
           nats --version
+        shell: bash
 
-      
-            
+                  
       - name: Run MeshSync
         run: |
           export BROKER_URL=localhost
           go run main.go &
 
-      - name: Subscribe messages
+      - name: Monitor Publishing Subject
         run: |
-          echo | nats sub meshery.meshsync.core --count 10
-          
+          # Run nats-sub with a timeout
+
+          if result=$(timeout 3m0s nats sub meshery.meshsync.core --count 10); then
+            echo "Messages received within the timeout: $result"
+          else
+            echo "Error: No message received within the timeout."
+            exit 1
+          fi
+        shell: bash
+
 
