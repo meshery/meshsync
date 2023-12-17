@@ -61,6 +61,7 @@ jobs:
             
       - name: Run MeshSync
         run: |
+          export BROKER_URL=localhost
           go run main.go &
 
       - name: Subscribe messages
