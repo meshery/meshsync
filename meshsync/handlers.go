@@ -167,6 +167,71 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	return parsedObjects
 }
 
+func (h *Handler) WatchCRDs() {
+	kubeclient, err := kubernetes.New(nil)
+	if err != nil {
+		h.Log.Error(err)
+		return
+	}
+
+	crdWatcher, err := kubeclient.DynamicKubeClient.Resource(schema.GroupVersionResource{
+		Group:    "apiextensions.k8s.io",
+		Version:  "v1",
+		Resource: "customresourcedefinitions",
+	}).Watch(context.Background(), metav1.ListOptions{})
+
+	if err != nil {
+		h.Log.Error(err)
+		return
+	}
+
+	for event := range crdWatcher.ResultChan() {
+
+		crd := &kubernetes.CRDItem{}
+		byt, err := utils.Marshal(event.Object)
+		if err != nil {
+			h.Log.Error(err)
+			continue
+		}
+
+		err = utils.Unmarshal(byt, crd)
+		if err != nil {
+			h.Log.Error(err)
+			continue
+		}
+
+		gvr := kubernetes.GetGVRForCustomResources(crd)
+
+		existingPipelines := config.Pipelines
+		err = h.Config.GetObject(config.ResourcesKey, existingPipelines)
+		if err != nil {
+			h.Log.Error(err)
+			continue
+		}
+
+		existingPipelineConfigs := existingPipelines[config.GlobalResourceKey]
+
+		configName := fmt.Sprintf("%s.%s.%s", gvr.Resource, gvr.Version, gvr.Group)
+		updatedPipelineConfigs := existingPipelineConfigs
+
+		switch event.Type {
+		case watch.Added:
+			updatedPipelineConfigs = existingPipelineConfigs.Add(config.PipelineConfig{
+				Name:      configName,
+				PublishTo: config.DefaultPublishingSubject,
+				Events:    []string{"ADDED", "MODIFIED", "DELETED"},
+			})
+		case watch.Deleted:
+			updatedPipelineConfigs = existingPipelineConfigs.Delete(config.PipelineConfig{
+				Name: configName,
+			})
+		}
+		existingPipelines[config.GlobalResourceKey] = updatedPipelineConfigs
+		h.Config.SetObject(config.ResourcesKey, existingPipelines)
+		h.channelPool[channels.ReSync].(channels.ReSyncChannel).ReSyncInformer()
+	}
+}
+
 // TODO: move this to meshkit
 // given [1,2,3,4,5,6,7,5,4,4] and 3 as its arguments, it would
 // return [[1,2,3], [4,5,6], [7,5,4], [4]]
