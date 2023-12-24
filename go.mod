@@ -12,7 +12,7 @@ toolchain go1.21.1
 require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/google/uuid v1.4.0
-	github.com/layer5io/meshkit v0.6.88
+	github.com/layer5io/meshkit v0.7.2
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/spf13/viper v1.17.0
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
@@ -45,7 +45,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/cli v24.0.6+incompatible // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
-	github.com/docker/docker v24.0.6+incompatible // indirect
+	github.com/docker/docker v24.0.7+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-metrics v0.0.1 // indirect
@@ -162,7 +162,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.5.3 // indirect
 	gorm.io/driver/sqlite v1.5.4 // indirect
-	helm.sh/helm/v3 v3.13.0 // indirect
+	helm.sh/helm/v3 v3.13.2 // indirect
 	k8s.io/apiextensions-apiserver v0.28.3 // indirect
 	k8s.io/apiserver v0.28.3 // indirect
 	k8s.io/cli-runtime v0.28.3 // indirect
