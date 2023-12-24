@@ -35,24 +35,22 @@ func (h *Handler) Run() {
 	go h.startDiscovery(pipelineCh)
 
 	debouncedStartDiscovery := debounce(time.Second*5, func(pipelinechannel chan struct{}) {
-		go func() {
-			err := h.UpdateInformer()
-			if err != nil {
-				h.Log.Error(err)
-			}
-			h.Log.Info("starting over")
-			h.startDiscovery(pipelinechannel)
-		}()
+		if !utils.IsClosed[struct{}](pipelinechannel) {
+			h.Log.Info("closing previous instance ")
+			close(pipelinechannel)
+		}
+		pipelineCh = make(chan struct{})
+
+		err := h.UpdateInformer()
+		if err != nil {
+			h.Log.Error(err)
+		}
+		h.Log.Info("starting over")
+		h.startDiscovery(pipelineCh)
+	
 	})
 	for range h.channelPool[channels.ReSync].(channels.ReSyncChannel) {
-		go func(ch chan struct{}) {
-			if !utils.IsClosed[struct{}](ch) {
-				h.Log.Info("closing previous instance ")
-				close(ch)
-			}
-			pipelineCh = make(chan struct{})
-			go debouncedStartDiscovery(pipelineCh)
-		}(pipelineCh)
+		go debouncedStartDiscovery(pipelineCh)
 	}
 }
 
