@@ -1,33 +1,70 @@
 package meshsync
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
+	"github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
+	"golang.org/x/net/context"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/dynamic"
 )
+
+func debounce(d time.Duration, f func(ch chan struct{})) func(ch chan struct{}) {
+	timer := time.NewTimer(d)
+	return func(pipelineCh chan struct{}) {
+		timer.Stop()
+		timer = time.NewTimer(d)
+		<-timer.C
+		f(pipelineCh)
+		timer.Reset(d)
+		timer.Stop()
+	}
+}
 
 func (h *Handler) Run() {
 	pipelineCh := make(chan struct{})
 	go h.startDiscovery(pipelineCh)
+
+	debouncedStartDiscovery := debounce(time.Second*5, func(pipelinechannel chan struct{}) {
+		go func() {
+			// h.DeleteIndexers()
+			h.UpdateInformer()
+			h.startDiscovery(pipelinechannel)
+		}()
+	})
 	for range h.channelPool[channels.ReSync].(channels.ReSyncChannel) {
 		go func(ch chan struct{}) {
-			for {
-				h.Log.Info("stopping previous instance")
-				if _, ok := <-ch; ok {
-					ch <- struct{}{}
-				}
+
+			if !utils.IsClosed[struct{}](ch) {
+				close(ch)
 			}
+			h.Log.Info("starting over")
+			pipelineCh = make(chan struct{})
+			go debouncedStartDiscovery(pipelineCh)
 		}(pipelineCh)
-		h.Log.Info("starting over")
-		pipelineCh = make(chan struct{})
-		go h.startDiscovery(pipelineCh)
-		time.Sleep(5 * time.Second)
 	}
+}
+
+func(h *Handler) UpdateInformer() error {
+	dynamicClient, err := dynamic.NewForConfig(&h.restConfig)
+	if err != nil {
+		return ErrNewInformer(err)
+	}
+	listOptionsFunc, err := GetListOptionsFunc(h.Config)
+	if err != nil {
+		return err
+	}
+	h.informer = GetDynamicInformer(h.Config, dynamicClient, listOptionsFunc)
+	return nil
 }
 
 func (h *Handler) ListenToRequests() {
