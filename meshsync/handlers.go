@@ -216,6 +216,8 @@ func (h *Handler) WatchCRDs() {
 
 		switch event.Type {
 		case watch.Added:
+			// No need to verify if config is already added because If the config already exists then it indicates the informer has already synced that resource.
+			// Any subsequent updates will have event type as "modified"
 			updatedPipelineConfigs = existingPipelineConfigs.Add(config.PipelineConfig{
 				Name:      configName,
 				PublishTo: config.DefaultPublishingSubject,
