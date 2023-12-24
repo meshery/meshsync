@@ -43,6 +43,7 @@ docker-run:
 PHONY: nats
 ## Runs a local instance of NATS server in detached mode
 nats:
+	(docker rm -f nats) || true
 	docker run --name nats --rm -p 4222:4222 -p 8222:8222 -d nats --http_port 8222 
 
 #-----------------------------------------------------------------------------

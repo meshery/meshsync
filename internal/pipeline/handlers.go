@@ -69,7 +69,7 @@ func(ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 }
 
 func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
-	s.AddEventHandler(ri.GetEventHandlers())
+	s.AddEventHandler(ri.GetEventHandlers()) // nolint
 }
 
 func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype broker.EventType, config internalconfig.PipelineConfig) error {

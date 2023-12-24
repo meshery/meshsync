@@ -36,18 +36,20 @@ func (h *Handler) Run() {
 
 	debouncedStartDiscovery := debounce(time.Second*5, func(pipelinechannel chan struct{}) {
 		go func() {
-			// h.DeleteIndexers()
-			h.UpdateInformer()
+			err := h.UpdateInformer()
+			if err != nil {
+				h.Log.Error(err)
+			}
+			h.Log.Info("starting over")
 			h.startDiscovery(pipelinechannel)
 		}()
 	})
 	for range h.channelPool[channels.ReSync].(channels.ReSyncChannel) {
 		go func(ch chan struct{}) {
-
 			if !utils.IsClosed[struct{}](ch) {
+				h.Log.Info("closing previous instance ")
 				close(ch)
 			}
-			h.Log.Info("starting over")
 			pipelineCh = make(chan struct{})
 			go debouncedStartDiscovery(pipelineCh)
 		}(pipelineCh)
@@ -229,7 +231,12 @@ func (h *Handler) WatchCRDs() {
 			})
 		}
 		existingPipelines[config.GlobalResourceKey] = updatedPipelineConfigs
-		h.Config.SetObject(config.ResourcesKey, existingPipelines)
+		err = h.Config.SetObject(config.ResourcesKey, existingPipelines)
+		if err != nil {
+			h.Log.Error(err)
+			h.Log.Info("skipping informer resync")
+			return
+		}
 		h.channelPool[channels.ReSync].(channels.ReSyncChannel).ReSyncInformer()
 	}
 }
