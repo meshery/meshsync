@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
@@ -60,7 +61,17 @@ func (s *K8SService) Process(data []byte, k8sresource *KubernetesResource, evtyp
 }
 
 func (s *K8SService) validateURL(address string, port int32) (serviceurl string, err error) {
-	serviceurl = fmt.Sprintf("%s:%d", address, port)
-	_, err = url.Parse(serviceurl)
+	protocol := "http"
+	if port == 443 {
+		protocol = "https"
+	}
+
+	// For some Cluster IP type svc the address is set as None
+	// Hence to prevent adding these IPs as URLs, below check is added.
+	if strings.Contains(strings.ToLower(address), "none") {
+		return serviceurl, kubernetes.ErrEndpointNotFound
+	}
+	serviceurl = fmt.Sprintf("%s://%s:%d", protocol, address, port)
+	_, err = url.ParseRequestURI(serviceurl)
 	return serviceurl, err
 }
