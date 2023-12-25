@@ -40,11 +40,11 @@ var (
 				PublishTo: "meshery.meshsync.core",
 			},
 			{
-				Name: "prometheuses.v1.monitoring.coreos.com",
+				Name:      "prometheuses.v1.monitoring.coreos.com",
 				PublishTo: "meshery.meshsync.core",
 			},
 			{
-				Name: "grafanas.v1beta1.grafana.integreatly.org",
+				Name:      "grafanas.v1beta1.grafana.integreatly.org",
 				PublishTo: "meshery.meshsync.core",
 			},
 		},
