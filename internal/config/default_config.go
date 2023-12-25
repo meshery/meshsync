@@ -12,12 +12,14 @@ var (
 		"startedat": time.Now().String(),
 	}
 
+	DefaultPublishingSubject = "meshery.meshsync.core"
+	
 	Pipelines = map[string]PipelineConfigs{
 		GlobalResourceKey: []PipelineConfig{
 			// Core Resources
 			{
 				Name:      "namespaces.v1.",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			{
 				Name:      "configmaps.v1.",
@@ -39,99 +41,78 @@ var (
 				Name:      "persistentvolumeclaims.v1.",
 				PublishTo: "meshery.meshsync.core",
 			},
-			{
-				Name:      "prometheuses.v1.monitoring.coreos.com",
-				PublishTo: "meshery.meshsync.core",
-			},
-			{
-				Name:      "grafanas.v1beta1.grafana.integreatly.org",
-				PublishTo: "meshery.meshsync.core",
-			},
 		},
 		LocalResourceKey: []PipelineConfig{
 			// Core Resources
 			{
 				Name:      "replicasets.v1.apps",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			{
 				Name:      "pods.v1.",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			{
 				Name:      "services.v1.",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			{
 				Name:      "deployments.v1.apps",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			{
 				Name:      "statefulsets.v1.apps",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			{
 				Name:      "daemonsets.v1.apps",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			//Added Ingress support
 			{
 				Name:      "ingresses.v1.networking.k8s.io",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
-			//Added endpoint support
+			// Added endpoint support
 			{
 				Name:      "endpoints.v1.",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			//Added endpointslice support
 			{
 				Name:      "endpointslices.v1.discovery.k8s.io",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
-			//Added cronJob support
+			// Added cronJob support
 			{
 				Name:      "cronjobs.v1.batch",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			//Added ReplicationController support
 			{
 				Name:      "replicationcontrollers.v1.",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			//Added storageClass support
 			{
 				Name:      "storageclasses.v1.storage.k8s.io",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			//Added ClusterRole support
 			{
 				Name:      "clusterroles.v1.rbac.authorization.k8s.io",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			//Added VolumeAttachment support
 			{
 				Name:      "volumeattachments.v1.storage.k8s.io",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
 			//Added apiservice support
 			{
 				Name:      "apiservices.v1.apiregistration.k8s.io",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: DefaultPublishingSubject,
 			},
-			// Istio Resources
-			// {
-			// 	Name:      "virtualservices.v1beta1.networking.istio.io",
-			// 	PublishTo: "meshery.meshsync.istio",
-			// },
-			// {
-			// 	Name:      "gateways.v1beta1.networking.istio.io",
-			// 	PublishTo: "meshery.meshsync.istio",
-			// },
-			// {
-			// 	Name:      "destinationrules.v1beta1.networking.istio.io",
-			// 	PublishTo: "meshery.meshsync.istio",
-			// },
 		},
 	}
 
