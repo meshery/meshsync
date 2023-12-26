@@ -116,6 +116,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	go meshsyncHandler.WatchCRDs()
+
 	go meshsyncHandler.Run()
 	go meshsyncHandler.ListenToRequests()
 

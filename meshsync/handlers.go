@@ -1,33 +1,70 @@
 package meshsync
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
+	"github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
+	"golang.org/x/net/context"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/dynamic"
 )
+
+func debounce(d time.Duration, f func(ch chan struct{})) func(ch chan struct{}) {
+	timer := time.NewTimer(d)
+	return func(pipelineCh chan struct{}) {
+		timer.Stop()
+		timer = time.NewTimer(d)
+		<-timer.C
+		f(pipelineCh)
+		timer.Reset(d)
+		timer.Stop()
+	}
+}
 
 func (h *Handler) Run() {
 	pipelineCh := make(chan struct{})
 	go h.startDiscovery(pipelineCh)
-	for range h.channelPool[channels.ReSync].(channels.ReSyncChannel) {
-		go func(ch chan struct{}) {
-			for {
-				h.Log.Info("stopping previous instance")
-				if _, ok := <-ch; ok {
-					ch <- struct{}{}
-				}
-			}
-		}(pipelineCh)
-		h.Log.Info("starting over")
+
+	debouncedStartDiscovery := debounce(time.Second*5, func(pipelinechannel chan struct{}) {
+		if !utils.IsClosed[struct{}](pipelinechannel) {
+			h.Log.Info("closing previous instance ")
+			close(pipelinechannel)
+		}
 		pipelineCh = make(chan struct{})
-		go h.startDiscovery(pipelineCh)
-		time.Sleep(5 * time.Second)
+
+		err := h.UpdateInformer()
+		if err != nil {
+			h.Log.Error(err)
+		}
+		h.Log.Info("starting over")
+		h.startDiscovery(pipelineCh)
+	
+	})
+	for range h.channelPool[channels.ReSync].(channels.ReSyncChannel) {
+		go debouncedStartDiscovery(pipelineCh)
 	}
+}
+
+func(h *Handler) UpdateInformer() error {
+	dynamicClient, err := dynamic.NewForConfig(&h.restConfig)
+	if err != nil {
+		return ErrNewInformer(err)
+	}
+	listOptionsFunc, err := GetListOptionsFunc(h.Config)
+	if err != nil {
+		return err
+	}
+	h.informer = GetDynamicInformer(h.Config, dynamicClient, listOptionsFunc)
+	return nil
 }
 
 func (h *Handler) ListenToRequests() {
@@ -125,9 +162,81 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	}
 	parsedObjects := make([]model.KubernetesResource, 0)
 	for _, obj := range objects {
-		parsedObjects = append(parsedObjects, model.ParseList(*obj.(*unstructured.Unstructured)))
+		parsedObjects = append(parsedObjects, model.ParseList(*obj.(*unstructured.Unstructured), broker.Add))
 	}
 	return parsedObjects
+}
+
+func (h *Handler) WatchCRDs() {
+	kubeclient, err := kubernetes.New(nil)
+	if err != nil {
+		h.Log.Error(err)
+		return
+	}
+
+	crdWatcher, err := kubeclient.DynamicKubeClient.Resource(schema.GroupVersionResource{
+		Group:    "apiextensions.k8s.io",
+		Version:  "v1",
+		Resource: "customresourcedefinitions",
+	}).Watch(context.Background(), metav1.ListOptions{})
+
+	if err != nil {
+		h.Log.Error(err)
+		return
+	}
+
+	for event := range crdWatcher.ResultChan() {
+
+		crd := &kubernetes.CRDItem{}
+		byt, err := utils.Marshal(event.Object)
+		if err != nil {
+			h.Log.Error(err)
+			continue
+		}
+
+		err = utils.Unmarshal(byt, crd)
+		if err != nil {
+			h.Log.Error(err)
+			continue
+		}
+
+		gvr := kubernetes.GetGVRForCustomResources(crd)
+
+		existingPipelines := config.Pipelines
+		err = h.Config.GetObject(config.ResourcesKey, existingPipelines)
+		if err != nil {
+			h.Log.Error(err)
+			continue
+		}
+
+		existingPipelineConfigs := existingPipelines[config.GlobalResourceKey]
+
+		configName := fmt.Sprintf("%s.%s.%s", gvr.Resource, gvr.Version, gvr.Group)
+		updatedPipelineConfigs := existingPipelineConfigs
+
+		switch event.Type {
+		case watch.Added:
+			// No need to verify if config is already added because If the config already exists then it indicates the informer has already synced that resource.
+			// Any subsequent updates will have event type as "modified"
+			updatedPipelineConfigs = existingPipelineConfigs.Add(config.PipelineConfig{
+				Name:      configName,
+				PublishTo: config.DefaultPublishingSubject,
+				Events:    []string{"ADDED", "MODIFIED", "DELETED"},
+			})
+		case watch.Deleted:
+			updatedPipelineConfigs = existingPipelineConfigs.Delete(config.PipelineConfig{
+				Name: configName,
+			})
+		}
+		existingPipelines[config.GlobalResourceKey] = updatedPipelineConfigs
+		err = h.Config.SetObject(config.ResourcesKey, existingPipelines)
+		if err != nil {
+			h.Log.Error(err)
+			h.Log.Info("skipping informer resync")
+			return
+		}
+		h.channelPool[channels.ReSync].(channels.ReSyncChannel).ReSyncInformer()
+	}
 }
 
 // TODO: move this to meshkit

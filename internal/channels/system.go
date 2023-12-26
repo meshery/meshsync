@@ -37,3 +37,7 @@ type ReSyncChannel chan struct{}
 func (ch ReSyncChannel) Stop() {
 	<-ch
 }
+
+func (ch ReSyncChannel) ReSyncInformer() {
+	ch <- struct{}{}
+}
