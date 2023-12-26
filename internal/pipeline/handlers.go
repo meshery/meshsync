@@ -81,7 +81,7 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 	err := ri.broker.Publish(config.PublishTo, &broker.Message{
 		ObjectType: broker.MeshSync,
 		EventType:  evtype,
-		Object:     model.ParseList(*obj),
+		Object:     model.ParseList(*obj, evtype),
 	})
 	if err != nil {
 		ri.log.Error(ErrPublish(config.Name, err))

@@ -162,7 +162,7 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	}
 	parsedObjects := make([]model.KubernetesResource, 0)
 	for _, obj := range objects {
-		parsedObjects = append(parsedObjects, model.ParseList(*obj.(*unstructured.Unstructured)))
+		parsedObjects = append(parsedObjects, model.ParseList(*obj.(*unstructured.Unstructured), broker.Add))
 	}
 	return parsedObjects
 }

@@ -56,7 +56,7 @@ build:
 
 .PHONY: run-check
 ## Runs local instance of Meshsync: can be used during local development
-run: check nats	
+run: nats	
 	go$(v) mod tidy; \
 	DEBUG=true GOPROXY=direct GOSUMDB=off go run main.go
 
