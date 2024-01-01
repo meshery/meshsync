@@ -11,7 +11,7 @@ toolchain go1.21.1
 
 require (
 	github.com/buger/jsonparser v1.1.1
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/layer5io/meshkit v0.7.2
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/spf13/viper v1.18.2
