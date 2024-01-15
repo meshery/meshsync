@@ -49,9 +49,13 @@ func main() {
 
 	// get configs from meshsync crd if available
 	crdConfigs, err := config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
-
 	if err != nil {
 		// no configs found from meshsync CRD log warning
+		log.Warn(err)
+	}
+
+	err = config.PatchCRVersion(&kubeClient.RestConfig)
+	if err != nil {
 		log.Warn(err)
 	}
 
