@@ -52,7 +52,7 @@ func (s *K8SService) Process(data []byte, k8sresource *KubernetesResource, evtyp
 	}
 	k8sresource.ComponentMetadata = map[string]interface{}{
 		"capabilities": map[string]interface{}{
-                        // indicates that this svc can be upgraded to "Meshery Connection".
+			// indicates that this svc can be upgraded to "Meshery Connection".
 			"connection": true,
 			"urls":       urls,
 		},

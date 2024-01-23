@@ -47,14 +47,14 @@ func (h *Handler) Run() {
 		}
 		h.Log.Info("starting over")
 		h.startDiscovery(pipelineCh)
-	
+
 	})
 	for range h.channelPool[channels.ReSync].(channels.ReSyncChannel) {
 		go debouncedStartDiscovery(pipelineCh)
 	}
 }
 
-func(h *Handler) UpdateInformer() error {
+func (h *Handler) UpdateInformer() error {
 	dynamicClient, err := dynamic.NewForConfig(&h.restConfig)
 	if err != nil {
 		return ErrNewInformer(err)

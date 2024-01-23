@@ -12,7 +12,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func(ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
+func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			err := ri.publishItem(obj.(*unstructured.Unstructured), broker.Add, ri.config)
