@@ -8,6 +8,7 @@ import (
 	"github.com/layer5io/meshsync/internal/channels"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -28,20 +29,14 @@ type Handler struct {
 	stores       map[string]cache.Store
 }
 
-func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[string]channels.GenericChannel) (*Handler, error) {
-	// Initialize Kubeconfig
-	kubeClient, err := mesherykube.New(nil)
-	if err != nil {
-		return nil, ErrKubeConfig(err)
-	}
-
+func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
 	var blacklist []string
-	err = config.GetObject("spec.informer_config", blacklist)
+	err := config.GetObject("spec.informer_config", blacklist)
 	if err != nil {
 		return nil, err
 	}
 
-	listOptionsFunc := func(lo *v1.ListOptions) {
+	return func(lo *v1.ListOptions) {
 		// Create a label selector to include all objects
 		labelSelector := &v1.LabelSelector{}
 
@@ -52,9 +47,21 @@ func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[
 			Values:   blacklist,
 		}
 		labelSelector.MatchExpressions = append(labelSelector.MatchExpressions, labelSelectorReq)
+	}, nil
+}
+
+func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[string]channels.GenericChannel) (*Handler, error) {
+	// Initialize Kubeconfig
+	kubeClient, err := mesherykube.New(nil)
+	if err != nil {
+		return nil, ErrKubeConfig(err)
+	}
+	listOptionsFunc, err := GetListOptionsFunc(config)
+	if err != nil {
+		return nil, err
 	}
 
-	informer := dynamicinformer.NewFilteredDynamicSharedInformerFactory(kubeClient.DynamicKubeClient, 0, v1.NamespaceAll, listOptionsFunc)
+	informer := GetDynamicInformer(config, kubeClient.DynamicKubeClient, listOptionsFunc)
 
 	return &Handler{
 		Config:       config,
@@ -65,4 +72,8 @@ func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[
 		staticClient: kubeClient.KubeClient,
 		channelPool:  pool,
 	}, nil
+}
+
+func GetDynamicInformer(config config.Handler, dynamicKubeClient dynamic.Interface, listOptionsFunc func(*v1.ListOptions)) dynamicinformer.DynamicSharedInformerFactory {
+	return dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamicKubeClient, 0, v1.NamespaceAll, listOptionsFunc)
 }

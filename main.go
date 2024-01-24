@@ -49,9 +49,26 @@ func main() {
 
 	// get configs from meshsync crd if available
 	crdConfigs, err := config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
-
 	if err != nil {
 		// no configs found from meshsync CRD log warning
+		log.Warn(err)
+	}
+	// Config init and seed
+	cfg, err := config.New(provider)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+
+	config.Server["version"] = version
+	err = cfg.SetObject(config.ServerKey, config.Server)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+
+	err = config.PatchCRVersion(&kubeClient.RestConfig)
+	if err != nil {
 		log.Warn(err)
 	}
 
@@ -66,21 +83,7 @@ func main() {
 		}
 	}
 
-	// Config init and seed
-	cfg, err := config.New(provider)
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
-	}
-
 	cfg.SetKey(config.BrokerURL, os.Getenv("BROKER_URL"))
-
-	config.Server["version"] = version
-	err = cfg.SetObject(config.ServerKey, config.Server)
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
-	}
 
 	err = cfg.SetObject(config.ResourcesKey, config.Pipelines)
 	if err != nil {
@@ -115,6 +118,8 @@ func main() {
 		log.Error(err)
 		os.Exit(1)
 	}
+
+	go meshsyncHandler.WatchCRDs()
 
 	go meshsyncHandler.Run()
 	go meshsyncHandler.ListenToRequests()

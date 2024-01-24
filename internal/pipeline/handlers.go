@@ -12,8 +12,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
-	handlers := cache.ResourceEventHandlerFuncs{
+func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			err := ri.publishItem(obj.(*unstructured.Unstructured), broker.Add, ri.config)
 			if err != nil {
@@ -66,7 +66,10 @@ func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
 			ri.log.Info("Received DELETE event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " of kind: ", obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
 		},
 	}
-	s.AddEventHandler(handlers) // nolint
+}
+
+func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
+	s.AddEventHandler(ri.GetEventHandlers()) // nolint
 }
 
 func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype broker.EventType, config internalconfig.PipelineConfig) error {
@@ -78,7 +81,7 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 	err := ri.broker.Publish(config.PublishTo, &broker.Message{
 		ObjectType: broker.MeshSync,
 		EventType:  evtype,
-		Object:     model.ParseList(*obj),
+		Object:     model.ParseList(*obj, evtype),
 	})
 	if err != nil {
 		ri.log.Error(ErrPublish(config.Name, err))

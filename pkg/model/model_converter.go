@@ -6,18 +6,19 @@ import (
 
 	"github.com/buger/jsonparser"
 	"github.com/google/uuid"
+	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
 	"github.com/layer5io/meshsync/internal/config"
 	iutils "github.com/layer5io/meshsync/pkg/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func ParseList(object unstructured.Unstructured) KubernetesResource {
+func ParseList(object unstructured.Unstructured, eventType broker.EventType) KubernetesResource {
 	data, _ := object.MarshalJSON()
 	result := KubernetesResource{}
-
 	_ = utils.Unmarshal(string(data), &result)
 
+	processorInstance := GetProcessorInstance(result.Kind)
 	// ObjectMeta internal models
 	labels := make([]*KubernetesKeyValue, 0)
 	_ = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
@@ -88,6 +89,9 @@ func ParseList(object unstructured.Unstructured) KubernetesResource {
 	}
 
 	result.ClusterID = iutils.GetClusterID()
+	if processorInstance != nil {
+		_ = processorInstance.Process(data, &result, eventType)
+	}
 
 	return result
 }
