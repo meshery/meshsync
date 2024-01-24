@@ -36,7 +36,7 @@ jobs:
       
       - name: Build MeshSync docker image
         run: |
-          docker build -t meshery-meshsync:test
+          docker build -t meshery-meshsync:test .
 
       - name: Install Meshery
         run: |
