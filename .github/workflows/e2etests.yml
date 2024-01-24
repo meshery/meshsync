@@ -60,8 +60,8 @@ jobs:
             fi
             cat ~/.meshery/auth.json
 
-            - name: Cluster info for debugging before starting Meshery
-            run: kubectl get all -A
+      - name: Cluster info for debugging before starting Meshery
+        run: kubectl get all -A
       # Start Meshery Server (Assuming that this step will create the meshery namespace)
       - name: Start Meshery Server using mesheryctl
         run: |
