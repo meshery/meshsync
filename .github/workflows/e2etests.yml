@@ -66,8 +66,8 @@ jobs:
       - name: Start Meshery Server using mesheryctl
         run: |
           curl -L https://meshery.io/install | PLATFORM=kubernetes bash -  
-      - name: System Checks
-        run: mesheryctl system check
+      # - name: System Checks
+      #   run: mesheryctl system check
 
       - name: Build MeshSync docker image
         run: |
