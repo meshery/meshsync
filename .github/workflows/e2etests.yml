@@ -34,43 +34,30 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@master
       
-      - name: Setup Nats Server
+      - name: Build MeshSync docker image
         run: |
-          sudo apt install unzip
-          curl -L https://github.com/nats-io/nats-server/releases/download/v2.10.7/nats-server-v2.10.7-linux-amd64.zip -o nats-server.zip
-          unzip nats-server.zip -d nats-server
-          sudo cp nats-server/nats-server-v2.10.7-linux-amd64/nats-server /usr/local/bin
-          nats-server --version
-          nats-server -m 8222 &
+          docker build -t meshery-meshsync:test
+
+      - name: Install Meshery
+        run: |
+          curl -L https://meshery.io/install | PLATFORM=kubernetes bash -
+
+      - name: System Checks
+        run: mesheryctl system check
+
+      - name: Replace MeshSync 
+        run: |
+          # Set your deployment name, container name, new image version, and new image pull policy
+          DEPLOYMENT_NAME="meshery-meshsync"
+          CONTAINER_NAME="meshsync"
+          NEW_IMAGE_VERSION="meshery-meshsync:test"
+          NEW_IMAGE_PULL_POLICY="Never"  
+          NAMESPACE="meshery"
+          # Update the deployment with the new image and pull policy
+          kubectl scale --replicas=0 deployment ${DEPLOYMENT_NAME} -n meshery
+          kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${NEW_IMAGE_VERSION} -n $NAMESPACE
+          kubectl patch -n meshery deployment meshery-meshsync -p '{"spec":{"template":{"spec":{"containers":[{"name":"meshsync","imagePullPolicy":"IfNotPresent", "image":$NEW_IMAGE_VERSION}]}}}}'
+          kubectl scale --replicas=1 deployment ${DEPLOYMENT_NAME} -n meshery
+
+          kubectl describe deployment -n $NAMESPACE ${DEPLOYMENT_NAME}
         shell: bash
-
-      - name: Setup Go
-        uses: actions/setup-go@master
-        with:
-            go-version: "1.21"  
-
-      - name: Setup nats-cli
-        run: |
-          go install github.com/nats-io/natscli/nats@latest
-          nats --version
-        shell: bash
-
-                  
-      - name: Run MeshSync
-        run: |
-          export BROKER_URL=localhost
-          go run main.go &
-
-      - name: Monitor Publishing Subject
-        run: |
-          # Run nats-sub with a timeout
-
-          if result=$(timeout 3m nats sub meshery.meshsync.core --count 10); then
-            echo "Messages received within the timeout: $result"
-          else
-            echo "Error: No message received within the timeout."
-            exit 1
-          fi
-        shell: bash
-
-
