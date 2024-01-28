@@ -90,6 +90,7 @@ jobs:
           echo "this is $svcip"
           config='{"contexts":{"local":{"endpoint":'$svcip',"token":"default","platform":"kubernetes","adapters":["meshery-istio"],"channel":"stable","version":"latest"}},"current-context":"local","tokens":[{"location":"auth.json","name":"default"}]}'
               echo $config  > ~/.meshery/config.yam
+          mesheryctl mesh deploy meshery-istio
       - name: System Checks
         run: mesheryctl system check
 
