@@ -90,8 +90,8 @@ jobs:
           echo "this is $svcip"
           config='{"contexts":{"local":{"endpoint":'$svcip',"token":"default","platform":"kubernetes","adapters":[],"channel":"stable","version":"latest"}},"current-context":"local","tokens":[{"location":"auth.json","name":"default"}]}'
               echo $config  > ~/.meshery/config.yam
-      # - name: System Checks
-      #   run: mesheryctl system check
+      - name: System Checks
+        run: mesheryctl system check
 
       # - name: Build MeshSync Docker image
       #   run: |
