@@ -25,11 +25,11 @@ jobs:
           kubernetes version: ${{matrix.k8s_version}}
           driver: docker
 
-      - name: Run minikube tunnel
-        run: | 
-          echo 'Running minikube tunnel'
-          minikube tunnel $> /dev/null &
-        shell: bash
+      # - name: Run minikube tunnel
+      #   run: | 
+      #     echo 'Running minikube tunnel'
+      #     minikube tunnel $> /dev/null &
+      #   shell: bash
 
       - name: Checkout Code
         uses: actions/checkout@master
