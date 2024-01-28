@@ -69,7 +69,7 @@ jobs:
       # - name: System Checks
       #   run: mesheryctl system check
 
-      - name: Build MeshSync docker image
+      - name: Build MeshSync Docker image
         run: |
           docker build -t meshery-meshsync:test .
       - name: Replace MeshSync 
@@ -87,4 +87,15 @@ jobs:
           kubectl scale --replicas=1 deployment ${DEPLOYMENT_NAME} -n meshery
 
           kubectl describe deployment -n $NAMESPACE ${DEPLOYMENT_NAME}
+          kubectl get pods -A
+          CLUSTER_ID=kubectl get ns kube-system -o jsonpath'{.metadata.uid}'
+
+          # Deploy pod
+          kubectl run nginx-pod --image=nginx --labels=app=web,tier=frontend,purpose=meshsync-test
+
+          curl --location 'http://localhost:9081/api/system/meshsync/resources?kind=Pod&status=true&spec=true&annotations=true&labels=true&clusterIds=%5B"$CLUSTER_ID"%5D&page=0&pagesize=25&search=&order=' \
+          --header 'meshery-token: ${{ secrets.PROVIDER_TOKEN }}' \
+          --header 'Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}'
         shell: bash
+
+      
