@@ -67,8 +67,29 @@ jobs:
       - name: Start Meshery Server using mesheryctl
         run: |
           curl -L https://meshery.io/install | PLATFORM=kubernetes bash -  
-          kubectl port-forward svc/meshery -n meshery 9081:9081 & disown
-          curl http://localhost:9081
+
+      - name: Run minikube tunnel
+        run: | 
+          echo 'Running minikube tunnel'
+          minikube tunnel $> /dev/null &
+        shell: bash
+    
+      # If external IP has not been allotted then server is unreachable, exit here in that case
+      - name: Check if Meshery has been allotted external IP
+        run: |
+          svcstatus=$(kubectl get svc  -n meshery| grep meshery | tr -s ' ' | cut -d " " -f 4)
+          echo $svcstatus
+          if [ "$svcstatus" = "<pending>" ];then
+              exit 1
+          fi
+      # Reset meshery's address to the external IP in config.yaml such that mesheryctl can reach it
+      - name: Reset Meshery address
+        run: |
+          kubectl get svc -n meshery 
+          svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
+          echo "this is $svcip"
+          config='{"contexts":{"local":{"endpoint":'$svcip',"token":"default","platform":"kubernetes","adapters":[],"channel":"stable","version":"latest"}},"current-context":"local","tokens":[{"location":"auth.json","name":"default"}]}'
+              echo $config  > ~/.meshery/config.yam
       # - name: System Checks
       #   run: mesheryctl system check
 
