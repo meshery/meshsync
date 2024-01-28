@@ -73,6 +73,18 @@ jobs:
       # - name: Build MeshSync Docker image
       #   run: |
       #     docker build -t meshery-meshsync:test .
+       # Checking meshery server logs
+      - name: Check Meshery pod logs
+        run: |
+         SECONDS=0
+         end=$((SECONDS+300))
+         while [ $SECONDS -lt $end ]; do
+             status=$(mesheryctl system  status -v | sed -n 2p | sed -e "s/[[:space:]]\+/ /g" |  cut -d " " -f 3)
+             if [ "$status" = "Running" ];then
+               break
+             fi
+         done
+         mesheryctl system  logs meshery
       - name: Replace MeshSync 
         run: |
           # # Set your deployment name, container name, new image version, and new image pull policy
