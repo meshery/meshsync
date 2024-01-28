@@ -67,7 +67,7 @@ jobs:
       - name: Start Meshery Server using mesheryctl
         run: |
           curl -L https://meshery.io/install | PLATFORM=kubernetes bash -  
-          kubectl port-forward svc/meshery -n meshery 9081:8080 & disown
+          kubectl port-forward svc/meshery -n meshery 9081:9081 & disown
           curl http://localhost:9081
       # - name: System Checks
       #   run: mesheryctl system check
