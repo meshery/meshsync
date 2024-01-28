@@ -45,15 +45,16 @@ jobs:
         # Setup meshery config.yaml and auth.json
       - name: Setup meshery config and infinite token for use
         env:
-            provider_token: ${{ secrets.token }}
+            provider_token: ${{ secrets.PROVIDER_TOKEN }}
+            provider: "Meshery"
         run: |
             echo $provider_token 
             mkdir ~/.meshery
             config='{"contexts":{"local":{"endpoint":"http://localhost:9081","token":"default","platform":"kubernetes","components":[],"channel":"stable","version":"latest"}},"current-context":"local","tokens":[{"location":"auth.json","name":"default"}]}'
             echo $config > ~/.meshery/config.yaml 
             cat ~/.meshery/config.yaml
-            echo "Using provider: ${{ inputs.provider }}"
-            if  [ "${{ inputs.provider }}" = "Meshery" ] && [ "$provider_token" != "" ] ;then
+            echo "Using provider: "$provider"
+            if  [ "$provider" = "Meshery" ] && [ "$provider_token" != "" ] ;then
               echo '{ "meshery-provider": "Meshery", "token": null }' | jq -c '.token = "'$provider_token'"' > ~/.meshery/auth.json
             else
               echo '{ "meshery-provider": "None", "token": "" }'  > ~/.meshery/auth.json
