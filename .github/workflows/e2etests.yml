@@ -135,7 +135,8 @@ jobs:
 
           CLUSTER_ID=$(kubectl get ns kube-system -o jsonpath='{.metadata.uid}')
           echo $CLUSTER_ID
-
+          podname=$(kubectl get pods -n meshery | grep meshsync | tr -s ' ' | cut -d " " -f 1)
+          kubectl logs pod/$podname -n meshery
           # Deploy pod
           kubectl run nginx-pod --image=nginx --labels=app=web,tier=frontend,purpose=meshsync-test
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
