@@ -98,9 +98,9 @@ jobs:
       # - name: System Checks
       #   run: mesheryctl system check
 
-      # - name: Build MeshSync Docker image
-      #   run: |
-      #     docker build -t meshery-meshsync:test .
+      - name: Build MeshSync Docker image
+        run: |
+          docker build -t meshery-meshsync:test .
        # Checking meshery server logs
       - name: Check Meshery pod logs
         run: |
@@ -121,13 +121,13 @@ jobs:
           NEW_IMAGE_VERSION="meshery-meshsync:test"
           NEW_IMAGE_PULL_POLICY="Never"  
           NAMESPACE="meshery"
-          # # Update the deployment with the new image and pull policy
-          # kubectl scale --replicas=0 deployment ${DEPLOYMENT_NAME} -n meshery
-          # sleep 5
-          # kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${NEW_IMAGE_VERSION} -n $NAMESPACE
-          # kubectl patch -n meshery deployment meshery-meshsync -p '{"spec":{"template":{"spec":{"containers":[{"name":"meshsync","imagePullPolicy":"IfNotPresent", "image":"meshery-meshsync:test"}]}}}}'
-          # kubectl scale --replicas=1 deployment ${DEPLOYMENT_NAME} -n meshery
-          # sleep 5
+          ## Update the deployment with the new image and pull policy
+          kubectl scale --replicas=0 deployment ${DEPLOYMENT_NAME} -n meshery
+          sleep 5
+          kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${NEW_IMAGE_VERSION} -n $NAMESPACE
+          kubectl patch -n meshery deployment meshery-meshsync -p '{"spec":{"template":{"spec":{"containers":[{"name":"meshsync","imagePullPolicy":"IfNotPresent", "image":"meshery-meshsync:test"}]}}}}'
+          kubectl scale --replicas=1 deployment ${DEPLOYMENT_NAME} -n meshery
+          sleep 5
 
           kubectl describe deployment -n $NAMESPACE ${DEPLOYMENT_NAME}
           kubectl get pods -A
