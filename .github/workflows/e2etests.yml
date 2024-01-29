@@ -147,7 +147,7 @@ jobs:
 
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
           echo "this is $svcip"
-          curl --location "${svcip}/api/system/meshsync/resources?kind=Namespace&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
+          curl --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
           --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
           --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}" | jq "."
         shell: bash
