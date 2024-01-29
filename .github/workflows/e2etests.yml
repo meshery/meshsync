@@ -149,9 +149,17 @@ jobs:
 
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
           echo "this is $svcip"
-          curl --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
+          result=$(curl --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
           --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
-          --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}" | jq "."
+          --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}" | jq '.resources[].metadata.labels[] | select(.key == "purpose" and .value == "meshsync-test")')
+
+          # Check if the variable is empty (no match found)
+          if [ -z "$result" ]; then
+            exit 1
+          else
+              # Process the variable content if a match is found
+              echo "Match found: $result"
+          fi
         shell: bash
 
       
