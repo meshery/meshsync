@@ -101,6 +101,7 @@ jobs:
       - name: Build MeshSync Docker image
         run: |
           docker build -t meshery-meshsync:test .
+          minikube cache add meshery-meshsync:test
        # Checking meshery server logs
       - name: Check Meshery pod logs
         run: |
