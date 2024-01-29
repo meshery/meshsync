@@ -127,7 +127,9 @@ jobs:
 
           kubectl describe deployment -n $NAMESPACE ${DEPLOYMENT_NAME}
           kubectl get pods -A
-          sleep 30
+          sleep 60
+          kubectl get pods -A
+
           CLUSTER_ID=$(kubectl get ns kube-system -o jsonpath='{.metadata.uid}')
           echo $CLUSTER_ID
 
