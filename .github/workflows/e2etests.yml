@@ -133,6 +133,7 @@ jobs:
           kubectl get pods -A
           # Deploy pod
           kubectl run nginx-pod --image=nginx --labels=app=web,tier=frontend,purpose=meshsync-test
+          mesheryctl pattern apply --file https://meshery.layer5.io/api/content/patterns/9527442a-7072-4c98-a187-1b9ce1b0001c
           sleep 60
           kubectl get pods -A
           mesheryctl system  logs meshery
@@ -146,7 +147,7 @@ jobs:
 
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
           echo "this is $svcip"
-          curl --location "${svcip}/api/system/meshsync/resources?kind=Pod&status=true&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=" \
+          curl --location "${svcip}/api/system/meshsync/resources?kind=Namespace&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
           --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
           --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}" | jq "."
         shell: bash
