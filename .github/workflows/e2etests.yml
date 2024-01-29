@@ -115,11 +115,12 @@ jobs:
          mesheryctl system  logs meshery
       - name: Replace MeshSync 
         run: |
+          sleep 60
           # # Set your deployment name, container name, new image version, and new image pull policy
           DEPLOYMENT_NAME="meshery-meshsync"
           CONTAINER_NAME="meshsync"
           NEW_IMAGE_VERSION="meshery-meshsync:test"
-          NEW_IMAGE_PULL_POLICY="Never"  
+          NEW_IMAGE_PULL_POLICY="IfNotPresent"  
           NAMESPACE="meshery"
           ## Update the deployment with the new image and pull policy
           kubectl scale --replicas=0 deployment ${DEPLOYMENT_NAME} -n meshery
