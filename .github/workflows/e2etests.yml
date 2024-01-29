@@ -131,6 +131,8 @@ jobs:
 
           kubectl describe deployment -n $NAMESPACE ${DEPLOYMENT_NAME}
           kubectl get pods -A
+          # Deploy pod
+          kubectl run nginx-pod --image=nginx --labels=app=web,tier=frontend,purpose=meshsync-test
           sleep 60
           kubectl get pods -A
           mesheryctl system  logs meshery
@@ -141,11 +143,10 @@ jobs:
           echo $CLUSTER_ID
           podname=$(kubectl get pods -n meshery | grep meshsync | tr -s ' ' | cut -d " " -f 1)
           kubectl logs pod/$podname -n meshery
-          # Deploy pod
-          kubectl run nginx-pod --image=nginx --labels=app=web,tier=frontend,purpose=meshsync-test
+
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
           echo "this is $svcip"
-          curl --location "${svcip}/api/system/meshsync/resources?kind=Deployment&status=true&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=" \
+          curl --location "${svcip}/api/system/meshsync/resources?kind=Pod&status=true&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=" \
           --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
           --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}" | jq "."
         shell: bash
