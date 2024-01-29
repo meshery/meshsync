@@ -129,6 +129,9 @@ jobs:
           kubectl get pods -A
           sleep 60
           kubectl get pods -A
+          mesheryctl system  logs meshery
+
+          mesheryctl system  logs meshsync
 
           CLUSTER_ID=$(kubectl get ns kube-system -o jsonpath='{.metadata.uid}')
           echo $CLUSTER_ID
