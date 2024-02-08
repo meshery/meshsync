@@ -106,8 +106,8 @@ func TestBlackListResources(t *testing.T) {
 	// excempted global pipelines: namespaces
 	// excempted local pipelines: pods, replicasets
 
-	if len(meshsyncConfig.Pipelines["global"]) != 7 {
-		t.Error("global pipelines not well configured expected 5")
+	if len(meshsyncConfig.Pipelines["global"]) != 6 {
+		t.Error("global pipelines not well configured expected 6")
 	}
 
 	if len(meshsyncConfig.Pipelines["local"]) != 14 {
