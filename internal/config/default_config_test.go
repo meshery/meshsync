@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	client = fake.NewSimpleClientset()
+	testClient = fake.NewSimpleClientset()
 )
 
 func TestPopulateDefaultResources(t *testing.T) {
@@ -29,8 +29,8 @@ func TestPopulateDefaultResources(t *testing.T) {
 	}
 
 	// mock the response from the discovery client
-	client.Discovery().(*discoveryFake.FakeDiscovery).Resources = fakeResources
-	discoveryClient := client.Discovery()
+	testClient.Discovery().(*discoveryFake.FakeDiscovery).Resources = fakeResources
+	discoveryClient := testClient.Discovery()
 
 	PopulateDefaultResources(discoveryClient)
 	if len(Pipelines[GlobalResourceKey]) != 1 {
