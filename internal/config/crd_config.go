@@ -107,17 +107,15 @@ func PopulateConfigs(configMap corev1.ConfigMap) (*MeshsyncConfig, error) {
 	}
 	if len(meshsyncConfig.BlackList) != 0 {
 
-		for _, v := range Pipelines[GlobalResourceKey] {
+		for confIdx, v := range Pipelines[GlobalResourceKey] {
 			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx != -1 {
-				confIdx := slices.IndexFunc(Pipelines[GlobalResourceKey], func(c PipelineConfig) bool { return c.Name == v.Name })
 				Pipelines[GlobalResourceKey] = slices.Delete(Pipelines[GlobalResourceKey], confIdx, confIdx+1)
 			}
 		}
 
 		// Handle local resources
-		for _, v := range Pipelines[LocalResourceKey] {
+		for confIdx, v := range Pipelines[LocalResourceKey] {
 			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx != -1 {
-				confIdx := slices.IndexFunc(Pipelines[LocalResourceKey], func(c PipelineConfig) bool { return c.Name == v.Name })
 				Pipelines[LocalResourceKey] = slices.Delete(Pipelines[LocalResourceKey], confIdx, confIdx+1)
 			}
 		}
