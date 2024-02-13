@@ -18,6 +18,8 @@ var (
 		"startedat": time.Now().String(),
 	}
 
+	DefaultPublishingSubject = "meshery.meshsync.core"
+
 	Pipelines = map[string]PipelineConfigs{}
 
 	Listeners = map[string]ListenerConfig{

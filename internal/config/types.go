@@ -1,5 +1,7 @@
 package config
 
+import "golang.org/x/exp/slices"
+
 const (
 	ServerKey                 = "server-config"
 	PipelineNameKey           = "meshsync-pipeline"
@@ -18,6 +20,21 @@ const (
 )
 
 type PipelineConfigs []PipelineConfig
+
+func (p PipelineConfigs) Add(pc PipelineConfig) PipelineConfigs {
+	p = append(p, pc)
+	return p
+}
+
+func (p PipelineConfigs) Delete(pc PipelineConfig) PipelineConfigs {
+	for index, pipelineConfig := range p {
+		if pipelineConfig.Name == pc.Name {
+			p = slices.Delete[PipelineConfigs](p, index, index+1)
+			break
+		}
+	}
+	return p
+}
 
 type PipelineConfig struct {
 	Name      string   `json:"name" yaml:"name"`
