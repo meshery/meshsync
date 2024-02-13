@@ -69,7 +69,7 @@ jobs:
       # Start Meshery Server (Assuming that this step will create the meshery namespace)
       - name: Start Meshery Server using mesheryctl
         run: |
-          curl -L https://meshery.io/install | ADAPTERS=meshery-istio PLATFORM=kubernetes bash -  
+          curl -L https://meshery.io/install | PLATFORM=kubernetes bash -  
           # mesheryctl system config minikube
           sleep 60
       - name: Run minikube tunnel
@@ -92,7 +92,7 @@ jobs:
           kubectl get svc -n meshery 
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
           echo "this is $svcip"
-          config='{"contexts":{"local":{"endpoint":'$svcip',"token":"default","platform":"kubernetes","adapters":["name":"meshery-istio","location":"10000"],"channel":"stable","version":"latest"}},"current-context":"local","tokens":[{"location":"auth.json","name":"default"}]}'
+          config='{"contexts":{"local":{"endpoint":'$svcip',"token":"default","platform":"kubernetes","channel":"stable","version":"latest"}},"current-context":"local","tokens":[{"location":"auth.json","name":"default"}]}'
               echo $config  > ~/.meshery/config.yam
           mesheryctl mesh deploy meshery-istio
       - name: System Checks
