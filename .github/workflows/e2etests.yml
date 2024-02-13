@@ -93,8 +93,9 @@ jobs:
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
           echo "this is $svcip"
           config='{"contexts":{"local":{"endpoint":'$svcip',"token":"default","platform":"kubernetes","channel":"stable","version":"latest"}},"current-context":"local","tokens":[{"location":"auth.json","name":"default"}]}'
-              echo $config  > ~/.meshery/config.yam
-          mesheryctl mesh deploy meshery-istio
+              echo $config  > ~/.meshery/config.yaml
+
+          cat ~/.meshery/config.yaml
       - name: System Checks
         run: mesheryctl system check
 
