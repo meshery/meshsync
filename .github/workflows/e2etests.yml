@@ -97,7 +97,10 @@ jobs:
 
           cat ~/.meshery/config.yaml
       - name: System Checks
-        run: mesheryctl system check
+        run: |
+          // Run Pre-mesh deployment checks (Docker and Kubernetes)
+          mesheryctl system check --preflight
+          mesheryctl system check --operator
 
       - name: Build MeshSync Docker image
         run: |
