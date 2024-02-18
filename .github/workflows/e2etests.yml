@@ -138,9 +138,8 @@ jobs:
           # Deploy pod
           kubectl run nginx-pod --image=nginx --labels=app=web,tier=frontend,purpose=meshsync-test
           mesheryctl pattern apply --file https://meshery.layer5.io/api/content/patterns/9527442a-7072-4c98-a187-1b9ce1b0001c
-          kubectl get pods -A
-
-
+          kubectl get pods -A        
+          sleep 60
           CLUSTER_ID=$(kubectl get ns kube-system -o jsonpath='{.metadata.uid}')
           echo $CLUSTER_ID
           podname=$(kubectl get pods -n meshery | grep meshsync | tr -s ' ' | cut -d " " -f 1)
