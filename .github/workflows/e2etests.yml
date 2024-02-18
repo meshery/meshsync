@@ -70,6 +70,7 @@ jobs:
       - name: Start Meshery Server using mesheryctl
         run: |
           curl -L https://meshery.io/install | PLATFORM=kubernetes bash -  
+          mesheryctl system config minikube
          
       - name: Run minikube tunnel
         run: | 
