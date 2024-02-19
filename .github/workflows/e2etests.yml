@@ -150,7 +150,7 @@ jobs:
           while [ $SECONDS -lt $end ]; do
             result=$(curl -s --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
             --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
-            --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}" | jq '.resources[].metadata.labels[] | select(.key == "purpose" and .value == "meshsync-test")')
+            --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}")
 
             # Check if the variable is empty (no match found)
             if [ -n "$result" ]; then
