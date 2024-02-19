@@ -148,7 +148,7 @@ jobs:
           SECONDS=0
           end=$((SECONDS+300))
           while [ $SECONDS -lt $end ]; do
-            result=$(curl -s --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
+            result=$(curl --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
             --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
             --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}")
 
