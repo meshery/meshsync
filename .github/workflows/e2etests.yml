@@ -109,6 +109,7 @@ jobs:
          while [ $SECONDS -lt $end ]; do
              status=$(mesheryctl system  status -v | sed -n 2p | sed -e "s/[[:space:]]\+/ /g" |  cut -d " " -f 3)
              if [ "$status" = "Running" ];then
+                echo "status: $status"
                break
              fi
          done
