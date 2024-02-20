@@ -115,7 +115,6 @@ jobs:
          mesheryctl system  logs meshery
       - name: Replace MeshSync 
         run: |
-          sleep 60
           # # Set your deployment name, container name, new image version, and new image pull policy
           DEPLOYMENT_NAME="meshery-meshsync"
           CONTAINER_NAME="meshsync"
@@ -144,7 +143,7 @@ jobs:
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
           echo "this is $svcip"
           SECONDS=0
-          end=$((SECONDS+360))
+          end=$((SECONDS+420))
           while [ $SECONDS -lt $end ]; do
             result=$(curl -s --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
             --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
