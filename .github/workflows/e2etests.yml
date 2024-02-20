@@ -28,6 +28,12 @@ jobs:
           kubernetes version: ${{matrix.k8s_version}}
           driver: docker
 
+      # - name: Run minikube tunnel
+      #   run: | 
+      #     echo 'Running minikube tunnel'
+      #     minikube tunnel $> /dev/null &
+      #   shell: bash
+
       - name: Checkout Code
         uses: actions/checkout@master
 
@@ -57,15 +63,14 @@ jobs:
               echo '{ "meshery-provider": "None", "token": "" }'  > ~/.meshery/auth.json
             fi
             cat ~/.meshery/auth.json
-
       - name: Cluster info for debugging before starting Meshery
         run: kubectl get all -A
       # Start Meshery Server (Assuming that this step will create the meshery namespace)
       - name: Start Meshery Server using mesheryctl
         run: |
-          curl -L https://meshery.io/install | PLATFORM=kubernetes bash -  
-          mesheryctl system config minikube
-         
+          curl -L https://meshery.io/install | ADAPTERS=meshery-istio PLATFORM=kubernetes bash -  
+          # mesheryctl system config minikube
+          sleep 60
       - name: Run minikube tunnel
         run: | 
           echo 'Running minikube tunnel'
@@ -86,15 +91,11 @@ jobs:
           kubectl get svc -n meshery 
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
           echo "this is $svcip"
-          config='{"contexts":{"local":{"endpoint":'$svcip',"token":"default","platform":"kubernetes","channel":"stable","version":"latest"}},"current-context":"local","tokens":[{"location":"auth.json","name":"default"}]}'
-              echo $config  > ~/.meshery/config.yaml
-
-          cat ~/.meshery/config.yaml
-      - name: System Checks
-        run: |
-          # Run Pre-mesh deployment checks (Docker and Kubernetes)
-          mesheryctl system check --preflight
-          mesheryctl system check --operator
+          config='{"contexts":{"local":{"endpoint":'$svcip',"token":"default","platform":"kubernetes","adapters":["name":"meshery-istio","location":"10000"],"channel":"stable","version":"latest"}},"current-context":"local","tokens":[{"location":"auth.json","name":"default"}]}'
+              echo $config  > ~/.meshery/config.yam
+          mesheryctl mesh deploy meshery-istio
+      # - name: System Checks
+      #   run: mesheryctl system check
 
       - name: Build MeshSync Docker image
         run: |
@@ -128,35 +129,29 @@ jobs:
           kubectl patch -n meshery deployment meshery-meshsync -p '{"spec":{"template":{"spec":{"containers":[{"name":"meshsync","imagePullPolicy":"IfNotPresent", "image":"meshery-meshsync:test"}]}}}}'
           kubectl scale --replicas=1 deployment ${DEPLOYMENT_NAME} -n meshery
           sleep 5
-
           kubectl describe deployment -n $NAMESPACE ${DEPLOYMENT_NAME}
           kubectl get pods -A
           # Deploy pod
           kubectl run nginx-pod --image=nginx --labels=app=web,tier=frontend,purpose=meshsync-test
-          kubectl get pods -A        
-          sleep 120
-          kubectl get pods -A        
-
+          mesheryctl pattern apply --file https://meshery.layer5.io/api/content/patterns/9527442a-7072-4c98-a187-1b9ce1b0001c
+          sleep 60
+          kubectl get pods -A
+          mesheryctl system  logs meshery
+          mesheryctl system  logs meshsync
           CLUSTER_ID=$(kubectl get ns kube-system -o jsonpath='{.metadata.uid}')
           echo $CLUSTER_ID
           podname=$(kubectl get pods -n meshery | grep meshsync | tr -s ' ' | cut -d " " -f 1)
           kubectl logs pod/$podname -n meshery
-
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
           echo "this is $svcip"
-          SECONDS=0
-          end=$((SECONDS+300))
-          while [ $SECONDS -lt $end ]; do
-            result=$(curl --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
-            --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
-            --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}" | jq '.resources[].metadata.labels[] | select(.key == "purpose" and .value == "meshsync-test")')
-
-            # Check if the variable is empty (no match found)
-            if [ -n "$result" ]; then
+          result=$(curl --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
+          --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
+          --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}" | jq '.resources[].metadata.labels[] | select(.key == "purpose" and .value == "meshsync-test")')
+          # Check if the variable is empty (no match found)
+          if [ -z "$result" ]; then
+            exit 1
+          else
+              # Process the variable content if a match is found
               echo "Match found: $result"
-              break           
-            fi
-          done
+          fi
         shell: bash
-
-      
