@@ -28,12 +28,6 @@ jobs:
           kubernetes version: ${{matrix.k8s_version}}
           driver: docker
 
-      # - name: Run minikube tunnel
-      #   run: | 
-      #     echo 'Running minikube tunnel'
-      #     minikube tunnel $> /dev/null &
-      #   shell: bash
-
       - name: Checkout Code
         uses: actions/checkout@master
 
@@ -94,9 +88,10 @@ jobs:
           config='{"contexts":{"local":{"endpoint":'$svcip',"token":"default","platform":"kubernetes","adapters":["name":"meshery-istio","location":"10000"],"channel":"stable","version":"latest"}},"current-context":"local","tokens":[{"location":"auth.json","name":"default"}]}'
               echo $config  > ~/.meshery/config.yam
           mesheryctl mesh deploy meshery-istio
-      # - name: System Checks
-      #   run: mesheryctl system check
-
+      - name: System Checks
+        run: | 
+          mesheryctl system check --preflight
+          mesheryctl system check --operator
       - name: Build MeshSync Docker image
         run: |
           docker build -t meshery-meshsync:test .
