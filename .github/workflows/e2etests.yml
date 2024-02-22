@@ -119,16 +119,14 @@ jobs:
           NAMESPACE="meshery"
           ## Update the deployment with the new image and pull policy
           kubectl scale --replicas=0 deployment ${DEPLOYMENT_NAME} -n meshery
-          sleep 5
+          kubectl wait --for=condition=complete deployment/${DEPLOYMENT_NAME} -n $NAMESPACE
           kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${NEW_IMAGE_VERSION} -n $NAMESPACE
           kubectl patch -n meshery deployment meshery-meshsync -p '{"spec":{"template":{"spec":{"containers":[{"name":"meshsync","imagePullPolicy":"IfNotPresent", "image":"meshery-meshsync:test"}]}}}}'
           kubectl scale --replicas=1 deployment ${DEPLOYMENT_NAME} -n meshery
-          sleep 5
-          kubectl describe deployment -n $NAMESPACE ${DEPLOYMENT_NAME}
+          kubectl wait --for=condition=available deployment/${DEPLOYMENT_NAME} -n $NAMESPACE 
           kubectl get pods -A
           # Deploy pod
           kubectl run nginx-pod --image=nginx --labels=app=web,tier=frontend,purpose=meshsync-test
-          mesheryctl pattern apply --file https://meshery.layer5.io/api/content/patterns/9527442a-7072-4c98-a187-1b9ce1b0001c
           kubectl get pods -A
           mesheryctl system  logs meshery
           mesheryctl system  logs meshsync
