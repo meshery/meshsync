@@ -96,8 +96,8 @@ jobs:
         run: |
           docker build -t meshery-meshsync:test .
           minikube cache add meshery-meshsync:test
-       # Checking meshery server logs
-      - name: Check Meshery pod logs
+       # Ensure Meshery Components are running.
+      - name: Check Meshery Components
         run: |
          SECONDS=0
          end=$((SECONDS+300))
@@ -108,7 +108,6 @@ jobs:
                break
              fi
          done
-         mesheryctl system  logs meshery
       - name: Replace MeshSync 
         run: |
           sleep 60
