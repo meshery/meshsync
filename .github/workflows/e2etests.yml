@@ -151,4 +151,10 @@ jobs:
               break           
             fi
           done
+
+          # Check if the loop completed its iterations without finding a match
+          if [ -z "$result" ]; then
+              echo "Error: MeshSync unable to discover resources."
+              exit 1
+          fi
         shell: bash
