@@ -122,11 +122,13 @@ jobs:
           kubectl patch -n meshery deployment meshery-meshsync -p '{"spec":{"template":{"spec":{"containers":[{"name":"meshsync","imagePullPolicy":"IfNotPresent", "image":"meshery-meshsync:test"}]}}}}'
           kubectl scale --replicas=1 deployment ${DEPLOYMENT_NAME} -n meshery
           kubectl rollout status deployment ${DEPLOYMENT_NAME} -n $NAMESPACE
-          kubectl get pods -A
           # Deploy pod
           kubectl run nginx-pod --image=nginx --labels=app=web,tier=frontend,purpose=meshsync-test
-          kubectl get pods -A
+
+          # Check Meshery logs
           mesheryctl system  logs meshery
+
+          # Check MeshSync logs
           mesheryctl system  logs meshsync
           CLUSTER_ID=$(kubectl get ns kube-system -o jsonpath='{.metadata.uid}')
           echo $CLUSTER_ID
@@ -135,7 +137,7 @@ jobs:
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
           echo "this is $svcip"
           SECONDS=0
-          end=$((SECONDS+420))
+          end=$((SECONDS+300))
           while [ $SECONDS -lt $end ]; do
             result=$(curl -s --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
             --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
