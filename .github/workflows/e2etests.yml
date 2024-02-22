@@ -123,7 +123,7 @@ jobs:
           kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${NEW_IMAGE_VERSION} -n $NAMESPACE
           kubectl patch -n meshery deployment meshery-meshsync -p '{"spec":{"template":{"spec":{"containers":[{"name":"meshsync","imagePullPolicy":"IfNotPresent", "image":"meshery-meshsync:test"}]}}}}'
           kubectl scale --replicas=1 deployment ${DEPLOYMENT_NAME} -n meshery
-          kubectl wait --for=condition=available deployment/${DEPLOYMENT_NAME} -n $NAMESPACE 
+          kubectl wait --for=condition=successful deployment/${DEPLOYMENT_NAME} -n $NAMESPACE 
           kubectl get pods -A
           # Deploy pod
           kubectl run nginx-pod --image=nginx --labels=app=web,tier=frontend,purpose=meshsync-test
