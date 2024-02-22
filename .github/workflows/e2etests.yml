@@ -63,8 +63,7 @@ jobs:
       - name: Start Meshery Server using mesheryctl
         run: |
           curl -L https://meshery.io/install | ADAPTERS=meshery-istio PLATFORM=kubernetes bash -  
-          # mesheryctl system config minikube
-          sleep 60
+                    
       - name: Run minikube tunnel
         run: | 
           echo 'Running minikube tunnel'
@@ -110,7 +109,6 @@ jobs:
          done
       - name: Replace MeshSync 
         run: |
-          # sleep 60
           # # Set your deployment name, container name, new image version, and new image pull policy
           DEPLOYMENT_NAME="meshery-meshsync"
           CONTAINER_NAME="meshsync"
