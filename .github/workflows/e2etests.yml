@@ -99,15 +99,6 @@ jobs:
        # Ensure Meshery Components are running.
       - name: Check Meshery Components
         run: |
-          #  SECONDS=0
-          #  end=$((SECONDS+300))
-          #  while [ $SECONDS -lt $end ]; do
-          #      status=$(mesheryctl system  status -v | sed -n 2p | sed -e "s/[[:space:]]\+/ /g" |  cut -d " " -f 3)
-          #      if [ "$status" = "Running" ];then
-          #         echo "status: $status"
-          #        break
-          #      fi
-          #  done
           kubectl rollout status deployment -n meshery
       - name: Replace MeshSync 
         run: |
