@@ -63,7 +63,7 @@ jobs:
       - name: Start Meshery Server using mesheryctl
         run: |
           curl -L https://meshery.io/install | ADAPTERS=meshery-istio PLATFORM=kubernetes bash -  
-          # mesheryctl system config minikube
+          # wait for Meshery constituent parts to become operational
           kubectl wait --for=condition=Ready pod --all --all-namespaces --timeout=300s
       - name: Run minikube tunnel
         run: | 
@@ -99,18 +99,18 @@ jobs:
        # Ensure Meshery Components are running.
       - name: Check Meshery Components
         run: |
-         SECONDS=0
-         end=$((SECONDS+300))
-         while [ $SECONDS -lt $end ]; do
-             status=$(mesheryctl system  status -v | sed -n 2p | sed -e "s/[[:space:]]\+/ /g" |  cut -d " " -f 3)
-             if [ "$status" = "Running" ];then
-                echo "status: $status"
-               break
-             fi
-         done
+          #  SECONDS=0
+          #  end=$((SECONDS+300))
+          #  while [ $SECONDS -lt $end ]; do
+          #      status=$(mesheryctl system  status -v | sed -n 2p | sed -e "s/[[:space:]]\+/ /g" |  cut -d " " -f 3)
+          #      if [ "$status" = "Running" ];then
+          #         echo "status: $status"
+          #        break
+          #      fi
+          #  done
+          kubectl rollout status deployment -n meshery
       - name: Replace MeshSync 
         run: |
-          # sleep 60
           # # Set your deployment name, container name, new image version, and new image pull policy
           DEPLOYMENT_NAME="meshery-meshsync"
           CONTAINER_NAME="meshsync"
