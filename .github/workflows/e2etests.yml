@@ -61,7 +61,7 @@ jobs:
       # Start Meshery Server (Assuming that this step will create the meshery namespace)
       - name: Start Meshery Server using mesheryctl
         run: |
-          curl -L https://meshery.io/install | ADAPTERS=meshery-istio PLATFORM=kubernetes bash -  
+          curl -L https://meshery.io/install | PLATFORM=kubernetes bash -  
           # wait for Meshery constituent parts to become operational
           kubectl wait --for=condition=Ready pod --all --all-namespaces --timeout=300s
       - name: Run minikube tunnel
