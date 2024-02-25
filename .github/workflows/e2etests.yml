@@ -171,6 +171,7 @@ jobs:
             if [ "$SECONDS" -eq 30 ]; then
               kubectl delete pod -n meshery $podname
               podname=$(kubectl get pods -n meshery | grep meshsync | tr -s ' ' | cut -d " " -f 1)
+              kubectl wait --for=condition=Ready pod --all --all-namespaces --timeout=300s
             fi
           done
           # Check if the loop completed its iterations without finding a match
