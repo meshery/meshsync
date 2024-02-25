@@ -9,7 +9,7 @@ on: [push]
     #     - "*"
 jobs:
   image-build:
-    name:  Common Jobs
+    name:  Image Build Job
     runs-on: ubuntu-22.04
 
     steps: 
@@ -24,6 +24,7 @@ jobs:
   e2e-test:
     name: End to End
     runs-on: ubuntu-22.04
+    needs: image-build
     strategy: 
       fail-fast: false
       matrix:
