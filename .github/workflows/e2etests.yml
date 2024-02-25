@@ -168,6 +168,9 @@ jobs:
               echo "Match found: $result"
               break           
             fi
+            if [ "$SECONDS" -eq 30 ]; then
+              kubectl delete pod -n meshery $podname
+            fi
           done
           # Check if the loop completed its iterations without finding a match
           if [ -z "$result" ]; then
