@@ -143,6 +143,7 @@ jobs:
           kubectl scale --replicas=1 deployment ${DEPLOYMENT_NAME} -n meshery
           kubectl rollout status deployment ${DEPLOYMENT_NAME} -n $NAMESPACE
           kubectl get pods -A
+          kubectl wait --for=condition=Ready pod --all --all-namespaces --timeout=300s
           # Deploy pod
           kubectl run nginx-pod --image=nginx --labels=app=web,tier=frontend,purpose=meshsync-test
           kubectl wait --for=condition=Ready pod --all --all-namespaces --timeout=300s
@@ -157,8 +158,7 @@ jobs:
           echo "this is $svcip"
           SECONDS=0
           end=$((SECONDS+300))
-          while [ $SECONDS -lt $end ]; do
-            echo $podname
+          while [ $SECONDS -lt $end ]; do            
             echo $(kubectl logs pod/$podname -n meshery)
             result=$(curl -s --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
             --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
