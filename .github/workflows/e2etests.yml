@@ -122,7 +122,7 @@ jobs:
         run: |
           docker load --input /tmp/meshery-meshsync.tar
           docker image ls -a
-          minikube cache add meshery-meshsync:test
+          minkube image load meshery-meshsync:test
        # Ensure Meshery Components are running.
       - name: Check Meshery Components
         run: |
@@ -170,6 +170,7 @@ jobs:
             fi
             if [ "$SECONDS" -eq 30 ]; then
               kubectl delete pod -n meshery $podname
+              podname=$(kubectl get pods -n meshery | grep meshsync | tr -s ' ' | cut -d " " -f 1)
             fi
           done
           # Check if the loop completed its iterations without finding a match
