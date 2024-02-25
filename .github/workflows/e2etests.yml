@@ -122,7 +122,7 @@ jobs:
         run: |
           docker load --input /tmp/meshery-meshsync.tar
           docker image ls -a
-          minkube image load meshery-meshsync:test
+          minikube image load meshery-meshsync:test
        # Ensure Meshery Components are running.
       - name: Check Meshery Components
         run: |
