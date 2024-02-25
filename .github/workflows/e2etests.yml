@@ -7,7 +7,20 @@ on: [push]
     # pull_request:
     #   branches:
     #     - "*"
-jobs: 
+jobs:
+  image-build:
+    name:  Common Jobs
+    runs-on: ubuntu-22.04
+
+    steps: 
+      - name: Checkout Code
+        uses: actions/checkout@master
+      - name: Build MeshSync Docker image
+        run: |
+          docker build -t meshery-meshsync:test .
+      - name: Save Docker image
+        run: docker save meshery-meshsync:test > meshery-meshsync.tar
+      
   e2e-test:
     name: End to End
     runs-on: ubuntu-22.04
@@ -91,9 +104,9 @@ jobs:
         run: | 
           mesheryctl system check --preflight
           mesheryctl system check --operator
-      - name: Build MeshSync Docker image
+      - name: Load MeshSync Docker image
         run: |
-          docker build -t meshery-meshsync:test .
+          docker load -i image-build/meshery-meshsync.tar
           minikube cache add meshery-meshsync:test
        # Ensure Meshery Components are running.
       - name: Check Meshery Components
