@@ -12,15 +12,23 @@ jobs:
     name:  Image Build Job
     runs-on: ubuntu-22.04
 
-    steps: 
-      - name: Checkout Code
-        uses: actions/checkout@master
-      - name: Build MeshSync Docker image
-        run: |
-          docker build -t meshery-meshsync:test .
-      - name: Save Docker image
-        run: docker save meshery-meshsync:test > meshery-meshsync.tar
-      
+    steps:       
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and export
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          tags: meshery-meshsync:test
+          outputs: type=docker,dest=/tmp/meshery-meshsync.tar
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: meshery-meshsync
+          path: /tmp/meshery-meshsync.tar
+
   e2e-test:
     name: End to End
     runs-on: ubuntu-22.04
@@ -105,9 +113,15 @@ jobs:
         run: | 
           mesheryctl system check --preflight
           mesheryctl system check --operator
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: meshery-meshsync
+          path: /tmp
       - name: Load MeshSync Docker image
         run: |
-          docker load -i image-build/meshery-meshsync.tar
+          docker load --input /tmp/meshery-meshsync.tar
+          docker image ls -a
           minikube cache add meshery-meshsync:test
        # Ensure Meshery Components are running.
       - name: Check Meshery Components
@@ -145,7 +159,7 @@ jobs:
           end=$((SECONDS+300))
           while [ $SECONDS -lt $end ]; do
             echo $podname
-            echo kubectl logs pod/$podname -n meshery
+            echo $(kubectl logs pod/$podname -n meshery)
             result=$(curl -s --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
             --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
             --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}" | jq '.resources[].metadata.labels[] | select(.key == "purpose" and .value == "meshsync-test")')
