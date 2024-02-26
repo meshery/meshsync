@@ -149,14 +149,14 @@ jobs:
           mesheryctl system  logs meshsync
           CLUSTER_ID=$(kubectl get ns kube-system -o jsonpath='{.metadata.uid}')
           echo $CLUSTER_ID
-          podname=$(kubectl get pods -n meshery | grep meshery | tr -s ' ' | cut -d " " -f 1)
           kubectl logs pod/$podname -n meshery
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
           echo "this is $svcip"
           SECONDS=0
           end=$((SECONDS+300))
-          while [ $SECONDS -lt $end ]; do            
-            echo $(kubectl logs pod/$podname -n meshery)
+          while [ $SECONDS -lt $end ]; do 
+            mesheryctl system  logs meshery
+           
             result=$(curl -s --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
             --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
             --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}" | jq '.resources[].metadata.labels[] | select(.key == "purpose" and .value == "meshsync-test")')
