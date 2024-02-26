@@ -149,7 +149,6 @@ jobs:
           mesheryctl system  logs meshsync
           CLUSTER_ID=$(kubectl get ns kube-system -o jsonpath='{.metadata.uid}')
           echo $CLUSTER_ID
-          kubectl logs pod/$podname -n meshery
           svcip="http://$(kubectl get svc -n meshery | grep "meshery " | tr -s ' ' | cut -d " " -f 3):9081"
           echo "this is $svcip"
           SECONDS=0
