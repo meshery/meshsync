@@ -49,9 +49,6 @@ jobs:
           kubernetes version: ${{matrix.k8s_version}}
           driver: docker
 
-      - name: Checkout Code
-        uses: actions/checkout@master
-
       - name: Retrieve kubeconfig
         run: |
           echo "Before flattening"
