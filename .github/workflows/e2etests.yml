@@ -157,6 +157,8 @@ jobs:
             result=$(curl -s --location "${svcip}/api/system/meshsync/resources?kind=Pod&spec=true&annotations=true&labels=true&clusterIds=%5B\"${CLUSTER_ID}\"%5D&page=0&pagesize=25&search=&order=&sort=desc" \
             --header "meshery-token: ${{ secrets.PROVIDER_TOKEN }}" \
             --header "Cookie: meshery-provider=Meshery; token=${{ secrets.PROVIDER_TOKEN }}" | jq '.resources[].metadata.labels[] | select(.key == "purpose" and .value == "meshsync-test")')
+            broker=$(kubectl get pods -n meshery | grep meshsync | tr -s ' ' | cut -d " " -f 1)
+            kubectl logs $broker -n $NAMESPACE
             # Check if the variable is empty (no match found)
             if [ -n "$result" ]; then
               echo "Match found: $result"
