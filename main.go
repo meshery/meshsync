@@ -16,6 +16,7 @@ import (
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/meshsync"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -33,7 +34,8 @@ func main() {
 
 	// Initialize Logger instance
 	log, err := logger.New(serviceName, logger.Options{
-		Format: logger.SyslogLogFormat,
+		Format:   logger.SyslogLogFormat,
+		LogLevel: int(logrus.InfoLevel),
 	})
 	if err != nil {
 		fmt.Println(err)

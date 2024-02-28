@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/layer5io/meshery-operator/pkg/client"
 	"github.com/layer5io/meshkit/utils"
@@ -168,7 +169,7 @@ func PopulateConfigs(configMap corev1.ConfigMap) (*MeshsyncConfig, error) {
 func PatchCRVersion(config *rest.Config) error {
 	meshsyncClient, err := client.New(config)
 	if err != nil {
-		return err
+		return ErrInitConfig(fmt.Errorf("unable to update MeshSync configuration"))
 	}
 
 	patchedResource := map[string]interface{}{
@@ -178,11 +179,11 @@ func PatchCRVersion(config *rest.Config) error {
 	}
 	byt, err := utils.Marshal(patchedResource)
 	if err != nil {
-		return err
+		return ErrInitConfig(fmt.Errorf("unable to update MeshSync configuration"))
 	}
 	_, err = meshsyncClient.CoreV1Alpha1().MeshSyncs("meshery").Patch(context.TODO(), crName, types.MergePatchType, []byte(byt), metav1.PatchOptions{})
 	if err != nil {
-		return err
+		return ErrInitConfig(fmt.Errorf("unable to update MeshSync configuration"))
 	}
 	return nil
 }
