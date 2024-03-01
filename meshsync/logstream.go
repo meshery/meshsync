@@ -62,16 +62,21 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 		return
 	}
 
-	defer resp.Close()
+	go func() {
+		<-h.channelPool[id].(channels.StructChannel)
+		h.Log.Info("Closing", id)
+		delete(h.channelPool, id)
+		resp.Close()
+	}()
 
 	for {
 		buf := make([]byte, 2000)
 		numBytes, err := resp.Read(buf)
-		if numBytes == 0 {
-			continue
-		}
 		if err == io.EOF {
 			break
+		}
+		if numBytes == 0 {
+			continue
 		}
 		if err != nil {
 			h.Log.Error(ErrCopyBuffer(err))
@@ -94,7 +99,4 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 		}
 	}
 
-	<-h.channelPool[id].(channels.StructChannel)
-	h.Log.Info("Closing", id)
-	delete(h.channelPool, id)
 }

@@ -15,6 +15,7 @@ require (
 	github.com/layer5io/meshery-operator v0.7.0
 	github.com/layer5io/meshkit v0.7.10
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.18.2
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/net v0.20.0
@@ -140,7 +141,6 @@ require (
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
