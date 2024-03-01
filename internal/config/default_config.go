@@ -24,22 +24,27 @@ var (
 			{
 				Name:      "configmaps.v1.",
 				PublishTo: "meshery.meshsync.core",
+				Events:    DefaultEvents,
 			},
 			{
 				Name:      "nodes.v1.",
 				PublishTo: "meshery.meshsync.core",
+				Events:    DefaultEvents,
 			},
 			{
 				Name:      "secrets.v1.",
 				PublishTo: "meshery.meshsync.core",
+				Events:    DefaultEvents,
 			},
 			{
 				Name:      "persistentvolumes.v1.",
 				PublishTo: "meshery.meshsync.core",
+				Events:    DefaultEvents,
 			},
 			{
 				Name:      "persistentvolumeclaims.v1.",
 				PublishTo: "meshery.meshsync.core",
+				Events:    DefaultEvents,
 			},
 		},
 		LocalResourceKey: []PipelineConfig{
@@ -134,5 +139,5 @@ var (
 		},
 	}
 
-	DefaultEvents = []string{"ADD", "UPDATE", "DELETE"}
+	DefaultEvents = []string{"ADDED", "MODIFIED", "DELETED"}
 )
