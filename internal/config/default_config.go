@@ -1,7 +1,13 @@
 package config
 
 import (
+	"fmt"
+	"strings"
 	"time"
+
+	"golang.org/x/exp/slices"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
 )
 
 var (
@@ -14,107 +20,7 @@ var (
 
 	DefaultPublishingSubject = "meshery.meshsync.core"
 
-	Pipelines = map[string]PipelineConfigs{
-		GlobalResourceKey: []PipelineConfig{
-			// Core Resources
-			{
-				Name:      "namespaces.v1.",
-				PublishTo: DefaultPublishingSubject,
-			},
-			{
-				Name:      "configmaps.v1.",
-				PublishTo: "meshery.meshsync.core",
-			},
-			{
-				Name:      "nodes.v1.",
-				PublishTo: "meshery.meshsync.core",
-			},
-			{
-				Name:      "secrets.v1.",
-				PublishTo: "meshery.meshsync.core",
-			},
-			{
-				Name:      "persistentvolumes.v1.",
-				PublishTo: "meshery.meshsync.core",
-			},
-			{
-				Name:      "persistentvolumeclaims.v1.",
-				PublishTo: "meshery.meshsync.core",
-			},
-		},
-		LocalResourceKey: []PipelineConfig{
-			// Core Resources
-			{
-				Name:      "replicasets.v1.apps",
-				PublishTo: DefaultPublishingSubject,
-			},
-			{
-				Name:      "pods.v1.",
-				PublishTo: DefaultPublishingSubject,
-			},
-			{
-				Name:      "services.v1.",
-				PublishTo: DefaultPublishingSubject,
-			},
-			{
-				Name:      "deployments.v1.apps",
-				PublishTo: DefaultPublishingSubject,
-			},
-			{
-				Name:      "statefulsets.v1.apps",
-				PublishTo: DefaultPublishingSubject,
-			},
-			{
-				Name:      "daemonsets.v1.apps",
-				PublishTo: DefaultPublishingSubject,
-			},
-			//Added Ingress support
-			{
-				Name:      "ingresses.v1.networking.k8s.io",
-				PublishTo: DefaultPublishingSubject,
-			},
-			// Added endpoint support
-			{
-				Name:      "endpoints.v1.",
-				PublishTo: DefaultPublishingSubject,
-			},
-			//Added endpointslice support
-			{
-				Name:      "endpointslices.v1.discovery.k8s.io",
-				PublishTo: DefaultPublishingSubject,
-			},
-			// Added cronJob support
-			{
-				Name:      "cronjobs.v1.batch",
-				PublishTo: DefaultPublishingSubject,
-			},
-			//Added ReplicationController support
-			{
-				Name:      "replicationcontrollers.v1.",
-				PublishTo: DefaultPublishingSubject,
-			},
-			//Added storageClass support
-			{
-				Name:      "storageclasses.v1.storage.k8s.io",
-				PublishTo: DefaultPublishingSubject,
-			},
-			//Added ClusterRole support
-			{
-				Name:      "clusterroles.v1.rbac.authorization.k8s.io",
-				PublishTo: DefaultPublishingSubject,
-			},
-			//Added VolumeAttachment support
-			{
-				Name:      "volumeattachments.v1.storage.k8s.io",
-				PublishTo: DefaultPublishingSubject,
-			},
-			//Added apiservice support
-			{
-				Name:      "apiservices.v1.apiregistration.k8s.io",
-				PublishTo: DefaultPublishingSubject,
-			},
-		},
-	}
+	Pipelines = map[string]PipelineConfigs{}
 
 	Listeners = map[string]ListenerConfig{
 		LogStream: {
@@ -134,5 +40,66 @@ var (
 		},
 	}
 
-	DefaultEvents = []string{"ADD", "UPDATE", "DELETE"}
+	DefaultEvents     = []string{"ADD", "UPDATE", "DELETE"}
+	ExemptedResources = []string{"selfsubjectrulesreviews", "localsubjectaccessreviews", "bindings", "selfsubjectaccessreviews", "subjectaccessreviews", "tokenreviews", "componentstatuses", "flowschemas", "prioritylevelconfigurations"}
 )
+
+func PopulateDefaultResources(discoveryClient discovery.DiscoveryInterface) error {
+	// Get all resources in the cluster
+	clusterResources, namespacedResources, err := getAllResources(discoveryClient)
+	if err != nil {
+		fmt.Printf("Error getting all resources: %v\n", err)
+		return ErrInitConfig(err)
+	}
+	var localResources []PipelineConfig
+
+	for _, v := range namespacedResources {
+		localResources = append(localResources, PipelineConfig{Name: v, Events: DefaultEvents, PublishTo: "meshery.meshsync.core"})
+	}
+	Pipelines[LocalResourceKey] = localResources
+
+	var globalResources []PipelineConfig
+
+	for _, v := range clusterResources {
+		globalResources = append(globalResources, PipelineConfig{Name: v, Events: DefaultEvents, PublishTo: "meshery.meshsync.core"})
+	}
+	Pipelines[GlobalResourceKey] = globalResources
+
+	return nil
+}
+func getAllResources(discoveryClient discovery.DiscoveryInterface) ([]string, []string, error) {
+
+	_, groupList, err := discoveryClient.ServerGroupsAndResources()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var clusterResources []string
+	var namespacedResources []string
+
+	for _, group := range groupList {
+		for _, resource := range group.APIResources {
+			if strings.Contains(resource.Name, "/") {
+				continue
+			}
+			groupVersion, _ := schema.ParseGroupVersion(group.GroupVersion)
+			gvk := groupVersion.WithKind(resource.Kind)
+			// gvk now contains the GroupVersionKind for the resource
+			resStr := fmt.Sprintf("%s.%s.%s", resource.Name, gvk.Version, gvk.Group)
+
+			// skip excempted resources
+			if idx := slices.IndexFunc(ExemptedResources, func(c string) bool { return c == resource.Name }); idx != -1 {
+				continue
+			}
+
+			//determine scope of the resource
+			if resource.Namespaced {
+				namespacedResources = append(namespacedResources, resStr)
+			} else {
+				clusterResources = append(clusterResources, resStr)
+			}
+		}
+	}
+
+	return clusterResources, namespacedResources, nil
+}
