@@ -13,7 +13,7 @@ import (
 
 var (
 	Kind         string = "MeshSync"
-	APIVersion   string = "meshery.layer5.io/v1alpha1"
+	APIVersion   string = "meshery.layer5.io/v1beta1"
 	URL          string = "https://layer5.io"
 	fakeDyClient *fake.FakeDynamicClient
 	ctx          = context.Background()

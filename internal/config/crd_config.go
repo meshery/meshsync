@@ -19,7 +19,7 @@ import (
 var (
 	namespace = "meshery"           // Namespace for the Custom Resource
 	crName    = "meshery-meshsync"  // Name of the custom resource
-	version   = "v1alpha1"          // Version of the Custom Resource
+	version   = "v1beta1"          // Version of the Custom Resource
 	group     = "meshery.layer5.io" //Group for the Custom Resource
 	resource  = "meshsyncs"         //Name of the Resource
 )
@@ -181,7 +181,7 @@ func PatchCRVersion(config *rest.Config) error {
 	if err != nil {
 		return ErrInitConfig(fmt.Errorf("unable to update MeshSync configuration"))
 	}
-	_, err = meshsyncClient.CoreV1Alpha1().MeshSyncs("meshery").Patch(context.TODO(), crName, types.MergePatchType, []byte(byt), metav1.PatchOptions{})
+	_, err = meshsyncClient.Corev1Beta1().MeshSyncs("meshery").Patch(context.TODO(), crName, types.MergePatchType, []byte(byt), metav1.PatchOptions{})
 	if err != nil {
 		return ErrInitConfig(fmt.Errorf("unable to update MeshSync configuration"))
 	}
