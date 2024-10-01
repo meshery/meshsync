@@ -19,7 +19,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
 	golang.org/x/net v0.23.0
-	gorm.io/gorm v1.25.7
+	gorm.io/gorm v1.25.12
 	k8s.io/api v0.29.3
 	k8s.io/apimachinery v0.29.3
 	k8s.io/client-go v0.29.3
