@@ -7,8 +7,8 @@ import (
 	"github.com/buger/jsonparser"
 	"github.com/google/uuid"
 	"github.com/layer5io/meshkit/broker"
+	"github.com/layer5io/meshkit/orchestration"
 	"github.com/layer5io/meshkit/utils"
-	"github.com/layer5io/meshsync/internal/config"
 	iutils "github.com/layer5io/meshsync/pkg/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -28,7 +28,7 @@ func ParseList(object unstructured.Unstructured, eventType broker.EventType) Kub
 			Value: string(value),
 		})
 
-		if string(key) == config.PatternResourceIDLabelKey {
+		if string(key) == orchestration.ResourceSourceDesignIdLabelKey {
 			id, _ := uuid.FromBytes(value)
 			result.PatternResource = &id
 		}

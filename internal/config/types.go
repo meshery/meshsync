@@ -3,20 +3,18 @@ package config
 import "golang.org/x/exp/slices"
 
 const (
-	ServerKey                 = "server-config"
-	PipelineNameKey           = "meshsync-pipeline"
-	ResourcesKey              = "resources"
-	GlobalResourceKey         = "global"
-	LocalResourceKey          = "local"
-	ListenersKey              = "listeners"
-	LogStreamsKey             = "log-streams"
-	PatternResourceIDLabelKey = "resource.pattern.meshery.io/id"
-
-	BrokerURL     = "broker-url"
-	RequestStream = "request-stream"
-	LogStream     = "log-stream"
-	ExecShell     = "exec-shell"
-	InformerStore = "informer-store"
+	ServerKey         = "server-config"
+	PipelineNameKey   = "meshsync-pipeline"
+	ResourcesKey      = "resources"
+	GlobalResourceKey = "global"
+	LocalResourceKey  = "local"
+	ListenersKey      = "listeners"
+	LogStreamsKey     = "log-streams"
+	BrokerURL         = "broker-url"
+	RequestStream     = "request-stream"
+	LogStream         = "log-stream"
+	ExecShell         = "exec-shell"
+	InformerStore     = "informer-store"
 )
 
 type PipelineConfigs []PipelineConfig
