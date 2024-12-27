@@ -5,9 +5,9 @@ replace (
 	vbom.ml/util => github.com/fvbommel/util v0.0.0-20180919145318-efcd4e0f9787
 )
 
-go 1.21
+go 1.23
 
-toolchain go1.21.1
+toolchain go1.23.4
 
 require (
 	github.com/buger/jsonparser v1.1.1
