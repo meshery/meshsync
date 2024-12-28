@@ -3,6 +3,7 @@ package meshsync
 import (
 	"fmt"
 	"time"
+	"encoding/json"
 
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
@@ -98,14 +99,14 @@ func (h *Handler) ListenToRequests() {
 
 			// TODO: Add this to the broker pkg
 		case "informer-store":
-			d, err := utils.Marshal(request.Request.Payload)
+			d, err := json.Marshal(request.Request.Payload)
 			// TODO: Update broker pkg in Meshkit to include Reply types
 			var payload struct{ Reply string }
 			if err != nil {
 				h.Log.Error(err)
 				continue
 			}
-			err = utils.Unmarshal(d, &payload)
+			err = json.Unmarshal(d, &payload)
 			if err != nil {
 				h.Log.Error(err)
 				continue
@@ -188,13 +189,13 @@ func (h *Handler) WatchCRDs() {
 	for event := range crdWatcher.ResultChan() {
 
 		crd := &kubernetes.CRDItem{}
-		byt, err := utils.Marshal(event.Object)
+		byt, err := json.Marshal(event.Object)
 		if err != nil {
 			h.Log.Error(err)
 			continue
 		}
 
-		err = utils.Unmarshal(byt, crd)
+		err = json.Unmarshal(byt, crd)
 		if err != nil {
 			h.Log.Error(err)
 			continue

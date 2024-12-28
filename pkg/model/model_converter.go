@@ -2,13 +2,13 @@ package model
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 
 	"github.com/buger/jsonparser"
 	"github.com/google/uuid"
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/orchestration"
-	"github.com/layer5io/meshkit/utils"
 	iutils "github.com/layer5io/meshsync/pkg/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -16,7 +16,7 @@ import (
 func ParseList(object unstructured.Unstructured, eventType broker.EventType) KubernetesResource {
 	data, _ := object.MarshalJSON()
 	result := KubernetesResource{}
-	_ = utils.Unmarshal(string(data), &result)
+	_ = json.Unmarshal(data, &result)
 
 	processorInstance := GetProcessorInstance(result.Kind)
 	// ObjectMeta internal models
