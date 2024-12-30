@@ -21,6 +21,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/layer5io/meshkit/broker"
@@ -46,7 +47,7 @@ func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig)
 		return err
 	}
 
-	err = utils.Unmarshal(d, &reqs)
+	err = json.Unmarshal([]byte(d), &reqs)
 	if err != nil {
 		return err
 	}

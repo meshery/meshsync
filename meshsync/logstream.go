@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"encoding/json"
 
 	"github.com/layer5io/meshkit/broker"
-	"github.com/layer5io/meshkit/utils"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
@@ -15,12 +15,12 @@ import (
 
 func (h *Handler) processLogRequest(obj interface{}, cfg config.ListenerConfig) error {
 	reqs := make(model.LogRequests)
-	d, err := utils.Marshal(obj)
+	d, err := json.Marshal(obj)
 	if err != nil {
 		return err
 	}
 
-	err = utils.Unmarshal(d, &reqs)
+	err = json.Unmarshal(d, &reqs)
 	if err != nil {
 		return err
 	}

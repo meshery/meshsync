@@ -83,3 +83,6 @@ coverage:
 ## Runs unit tests
 test: check 
 	go test -failfast --short ./... -race 
+## Lint check Golang
+lint:
+	golangci-lint run ./...

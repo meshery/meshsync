@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
-
+	"encoding/json"
+	
 	"github.com/layer5io/meshkit/broker"
-	"github.com/layer5io/meshkit/utils"
 	"github.com/layer5io/meshkit/utils/kubernetes"
 	v1 "k8s.io/api/core/v1"
 )
@@ -21,7 +21,7 @@ func (s *K8SService) Process(data []byte, k8sresource *KubernetesResource, evtyp
 
 	k8sservice := &v1.Service{}
 
-	err := utils.Unmarshal(string(data), k8sservice)
+	err := json.Unmarshal(data, k8sservice)
 	if err != nil {
 		return err
 	}
