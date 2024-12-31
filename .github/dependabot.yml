@@ -9,7 +9,6 @@ updates:
   - pr/dependencies
   - kind/chore
   reviewers:
-  - MUzairS15
   ignore:
   - dependency-name: k8s.io/api
     versions:
