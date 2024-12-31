@@ -53,7 +53,8 @@ linters:
 
 run:
   enable-cache: true
-  skip-dirs:
+issues:
+  exclude-dirs:
     - vendor
     - bundle
     - config
