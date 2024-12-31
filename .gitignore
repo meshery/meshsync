@@ -22,3 +22,5 @@
 .vscode/
 cover.html
 .DS_Store
+
+bin/meshsync
