@@ -16,8 +16,9 @@ linters-settings:
       - prealloc
   govet:
     enabled: true
-    check-shadowing: true
     tests: true
+  shadow:
+    enabled: true
   golint:
     enabled: true
     min-confidence: 0.8
