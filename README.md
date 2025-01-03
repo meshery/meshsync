@@ -34,7 +34,7 @@ See [MeshSync in Meshery Docs](https://docs.meshery.io/concepts/architecture/mes
 ## Join the Community!
 
 <a name="contributing"></a><a name="community"></a>
-Our projects are community-built and welcome collaboration. 👍 Be sure to see the <a href="https://docs.google.com/document/d/17OPtDE_rdnPQxmk2Kauhm3GwXF1R5dZ3Cj8qZLKdo5E/edit">Layer5 Community Welcome Guide</a> for a tour of resources available to you and jump into our <a href="http://slack.layer5.io">Slack</a>!
+Our projects are community-built and welcome collaboration. 👍 Be sure to jump into our <a href="http://slack.layer5.io">Slack</a> and to see the <a href="https://layer5.io/community/handbook/repository-overview">project overview by repository</a> for a breakdown of projects by technology.
 
 <p style="clear:both;">
 <a href ="https://layer5.io/community/meshmates"><img alt="MeshMates" src=".github\readme\images\layer5-community-sign.png" style="margin-right:10px; margin-bottom:7px;" width="28%" align="left" /></a>
@@ -44,7 +44,7 @@ Our projects are community-built and welcome collaboration. 👍 Be sure to see 
 <p>MeshMates are experienced Layer5 community members, who will help you learn your way around, discover live projects and expand your community network. 
 Become a <b>Meshtee</b> today!</p>
 
-Find out more on the <a href="https://layer5.io/community">Layer5 community</a>. <br />
+Find out more about the <a href="https://layer5.io/community/meshmates">MeshMates</a> program. <br />
 <br /><br /><br /><br />
 </p>
 
@@ -64,10 +64,10 @@ Find out more on the <a href="https://layer5.io/community">Layer5 community</a>.
 <p>
 ✔️ <em><strong>Join</strong></em> any or all of the weekly meetings on <a href="https://calendar.google.com/calendar/b/1?cid=bGF5ZXI1LmlvX2VoMmFhOWRwZjFnNDBlbHZvYzc2MmpucGhzQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20">community calendar</a>.<br />
 ✔️ <em><strong>Watch</strong></em> community <a href="https://www.youtube.com/playlist?list=PL3A-A6hPO2IMPPqVjuzgqNU5xwnFFn3n0">meeting recordings</a>.<br />
-✔️ <em><strong>Access</strong></em> the <a href="https://drive.google.com/drive/u/4/folders/0ABH8aabN4WAKUk9PVA">Community Drive</a> by completing a community <a href="https://layer5.io/newcomer">Member Form</a>.<br />
+✔️ <em><strong>Access</strong></em> community resources by submitting a <a href="https://layer5.io/newcomer">Member Form</a>.<br />
 ✔️ <em><strong>Discuss</strong></em> in the <a href="https://discuss.layer5.io">Community Forum</a>.<br />
 </p>
 <p align="center">
-<i>Not sure where to start?</i> Grab an open issue with the <a href="https://github.com/issues?q=is%3Aopen+is%3Aissue+archived%3Afalse+org%3Alayer5io+org%3Ameshery+org%3Aservice-mesh-performance+org%3Aservice-mesh-patterns+label%3A%22help+wanted%22+">help-wanted label</a>.
+<i>Not sure where to start?</i> Grab an open issue with the <a href="https://github.com/issues?q=is%3Aopen+is%3Aissue+archived%3Afalse+org%3Alayer5io+org%3Alayer5labs+org%3Ameshery+org%3Aservice-mesh-performance+org%3Aservice-mesh-patterns+label%3A%22help+wanted%22+">help-wanted label</a>.
 </p>
 
