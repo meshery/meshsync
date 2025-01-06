@@ -105,11 +105,6 @@ func main() {
 		connectivityTest(cfg.GetKey(config.BrokerURL), log)
 	}
 
-	if config.OutputMode == "file" {
-		log.Info("Output mode is file")
-		return
-	}
-
 	// Initialize Broker instance
 	br, err := nats.New(nats.Options{
 		URLS:           []string{cfg.GetKey(config.BrokerURL)},
