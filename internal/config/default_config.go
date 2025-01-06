@@ -173,26 +173,100 @@ var (
 				Name:	  "podtemplate.v1.",
 				PublishTo: DefaultPublishingSubject,
 			},
-			//Added  support
+			//Added poddistruptionbudget support
+			{
+				Name:	  "poddisruptionbudget.v1.policy",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added priorityclass support
+			{
+				Name:	  "priorityclass.v1.scheduling.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added resourceclaim support
+			{
+				Name:	  "resourceclaim.v1alpha2.resource.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added resourceclaimtemplate support
+			{
+				Name:	  "resourceclaimtemplate.v1alpha2.resource.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added resourceclass support
+			{
+				Name:	  "resourceclass.v1alpha2.resource.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added ValidatingWebhookConfiguration support
+			{
+				Name:	  "validatingwebhookconfiguration.v1.admissionregistration.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added ValidatingAdmissionPolicy support
+			{
+				Name:	  "validatingadmissionpolicy.v1beta1.admissionregistration.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added ValidatingAdmissionPolicyBinding support
+			{
+				Name:	  "validatingadmissionpolicybinding.v1beta1.admissionregistration.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},			//Added  support
 			{
 				Name:	  "",
 				PublishTo: DefaultPublishingSubject,
 			},
-			//Added  support
-			{
-				Name:	  "",
-				PublishTo: DefaultPublishingSubject,
-			},
-			//Added  support
-			{
-				Name:	  "",
-				PublishTo: DefaultPublishingSubject,
-			},
-			//Added  support
-			{
-				Name:	  "",
-				PublishTo: DefaultPublishingSubject,
-			},
+
 
 
 
