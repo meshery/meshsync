@@ -73,6 +73,11 @@ var (
 				Name:      "ingresses.v1.networking.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
+			//Added 
+			{
+				Name:      "ingressclass.v1.networking.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
 			// Added endpoint support
 			{
 				Name:      "endpoints.v1.",
@@ -81,6 +86,21 @@ var (
 			//Added endpointslice support
 			{
 				Name:      "endpointslices.v1.discovery.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added container support
+			{
+				Name:	  "container.v1.core",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added job  support
+			{
+				Name:	  "job.v1.batch",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added service APIs support
+			{
+				Name:	  "service.apis",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added cronJob support
