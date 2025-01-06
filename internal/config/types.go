@@ -1,6 +1,10 @@
 package config
 
-import "golang.org/x/exp/slices"
+import (
+	"flag"
+
+	"golang.org/x/exp/slices"
+)
 
 const (
 	ServerKey         = "server-config"
@@ -17,6 +21,15 @@ const (
 	InformerStore     = "informer-store"
 )
 
+// Command line flag to determine the output mode
+var (
+	OutputMode string
+)
+
+func init() {
+	flag.StringVar(&OutputMode, "output", "nats", "Output mode: 'file' or 'nats'")
+	flag.Parse()
+}
 type PipelineConfigs []PipelineConfig
 
 func (p PipelineConfigs) Add(pc PipelineConfig) PipelineConfigs {
