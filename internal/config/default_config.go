@@ -239,6 +239,56 @@ var (
 				Name:	  "flowschema.v1.flowcontrol.apiserver.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},			
+			//Added IPAddress support
+			{
+				Name:	  "ipaddress.v1alpha1.networking.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},			
+			//Added Lease support
+			{
+				Name:	  "lease.v1.coordination.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},			
+			//Added LocalSubjectAccessReview support
+			{
+				Name:	  "localsubjectaccessreview.v1.authorization.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},			
+			//Added Node support
+			{
+				Name:	  "node.v1.",
+				PublishTo: DefaultPublishingSubject,
+			},			
+			//Added NetworkPolicy support
+			{
+				Name:	  "networkpolicy.v1.networking.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},			
+			//Added PriorityLevelConfiguration support
+			{
+				Name:	  "prioritylevelconfiguration.v1.flowcontrol.apiserver.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},			
+			//Added resourcequota support
+			{
+				Name:	  "resourcequota.v1.",
+				PublishTo: DefaultPublishingSubject,
+			},			
+			//Added Role support
+			{
+				Name:	  "role.v1.rbac.authorization.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},			
+			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},
 			//Added  support
 			{
 				Name:	  "",
@@ -251,33 +301,7 @@ var (
 			{
 				Name:	  "",
 				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
-			{
-				Name:	  "",
-				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
-			{
-				Name:	  "",
-				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
-			{
-				Name:	  "",
-				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
-			{
-				Name:	  "",
-				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
-			{
-				Name:	  "",
-				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
-			{
-				Name:	  "",
-				PublishTo: DefaultPublishingSubject,
 			},
-
-
 
 
 
