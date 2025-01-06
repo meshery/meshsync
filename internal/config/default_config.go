@@ -103,6 +103,115 @@ var (
 				Name:	  "service.apis",
 				PublishTo: DefaultPublishingSubject,
 			},
+			//Added  csidriver support
+			{
+				Name:	  "csidriver.v1.storage.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added csinode  support
+			{
+				Name:	  "csinode.v1.storage.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added  csistoragecapacity support
+			{
+				Name:	  "csistoragecapacity.v1.storage.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added volume support
+			{
+				Name:	  "volume.v1.",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added volumeattributesclass support
+			{
+				Name:	  "volumeattributesclass.v1alpha1.storage.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added clustertrustbundle support
+			{
+				Name:	  "clustertrustbundle.v1alpha1.certificates.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added  controllerversion support
+			{
+				Name:	  "controllerrevision.v1.apps",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added customresourcedefinition support
+			{
+				Name:	  "customresourcedefinition.v1.apiextensions.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added  event support
+			{
+				Name:	  "event.v1.events.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added limitrange support
+			{
+				Name:	  "limitrange.v1.",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added horizontalpodautoscaler support
+			{
+				Name:	  "horizontalpodautoscaler.v2.autoscaling",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added mutatingwebhookconfiguration support
+			{
+				Name:	  "mutatingwebhookconfiguration.v1.admissionregistration.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added podschedulingcontext support
+			{
+				Name:	  "podschedulingcontext.v1alpha2.resource.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added podtemplate support
+			{
+				Name:	  "podtemplate.v1.",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added  support
+			{
+				Name:	  "",
+				PublishTo: DefaultPublishingSubject,
+			},
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 			// Added cronJob support
 			{
 				Name:      "cronjobs.v1.batch",
