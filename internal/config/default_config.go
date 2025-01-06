@@ -279,47 +279,61 @@ var (
 				Name:	  "role.v1.rbac.authorization.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},			
-			//Added  support
+			//Added RoleBinding support
 			{
-				Name:	  "",
+				Name:	  "rolebinding.v1.rbac.authorization.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
-			//Added  support
+			//Added runtimeclass support
 			{
-				Name:	  "",
+				Name:	  "runtimeclass.v1.node.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
-			//Added  support
+			//Added SelfSubjectAccessReview support
 			{
-				Name:	  "",
+				Name:	  "selfsubjectaccessreview.v1.authorization.k8s.io",
 				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
+			},			
+			//Added SelfSubjectReview support
 			{
-				Name:	  "",
+				Name:	  "selfsubjectreview.v1.authentication.k8s.io",
 				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
+			},			
+			//Added selfsubjectrulesreview support
 			{
-				Name:	  "",
+				Name:	  "selfsubjectrulesreview.v1.authorization.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+			//Added ServiceAccount support
+			{
+				Name:	  "serviceaccount.v1.",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added ServiceCIDR support
+			{
+				Name:	  "servicecidr.v1alpha1.networking.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added StorageVersion support
+			{
+				Name:	  "storageversion.v1alpha1.internal.apiserver.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added subjectaccessreview support
+			{
+				Name:	  "subjectaccessreview.v1.authorization.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added TokenRequest support
+			{
+				Name:	  "tokenrequest.v1.authentication.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
+			//Added TokenReview support
+			{
+				Name:	  "tokenreview.v1.authentication.k8s.io",
+				PublishTo: DefaultPublishingSubject,
+			},
 			// Added cronJob support
 			{
 				Name:      "cronjobs.v1.batch",
