@@ -197,39 +197,49 @@ var (
 			{
 				Name:	  "resourceclass.v1alpha2.resource.k8s.io",
 				PublishTo: DefaultPublishingSubject,
-			},			//Added ValidatingWebhookConfiguration support
+			},			
+			//Added ValidatingWebhookConfiguration support
 			{
 				Name:	  "validatingwebhookconfiguration.v1.admissionregistration.k8s.io",
 				PublishTo: DefaultPublishingSubject,
-			},			//Added ValidatingAdmissionPolicy support
+			},			
+			//Added ValidatingAdmissionPolicy support
 			{
 				Name:	  "validatingadmissionpolicy.v1beta1.admissionregistration.k8s.io",
 				PublishTo: DefaultPublishingSubject,
-			},			//Added ValidatingAdmissionPolicyBinding support
+			},			
+			//Added ValidatingAdmissionPolicyBinding support
 			{
 				Name:	  "validatingadmissionpolicybinding.v1beta1.admissionregistration.k8s.io",
 				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
+			},			
+			//Added  binding support
 			{
-				Name:	  "",
+				Name:	  "binding.v1.",
 				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
+			},			
+			//Added certificatesigningrequest support
 			{
-				Name:	  "",
+				Name:	  "certificatesigningrequest.v1.certificates.k8s.io",
 				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
+			},		
+				
+			//Added clusterrolebinding support
 			{
-				Name:	  "",
+				Name:	  "clusterrolebinding.v1.rbac.authorization.k8s.io",
 				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
+			},			
+			//Added componentstatus support
 			{
-				Name:	  "",
+				Name:	  "componentstatus.v1.",
 				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
+			},			
+			//Added flowschema support
 			{
-				Name:	  "",
+				Name:	  "flowschema.v1.flowcontrol.apiserver.k8s.io",
 				PublishTo: DefaultPublishingSubject,
-			},			//Added  support
+			},			
+			//Added  support
 			{
 				Name:	  "",
 				PublishTo: DefaultPublishingSubject,
