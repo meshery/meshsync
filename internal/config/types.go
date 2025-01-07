@@ -28,6 +28,9 @@ var (
 
 func init() {
 	flag.StringVar(&OutputMode, "output", "nats", "Output mode: 'file' or 'nats'")
+	  
+	// Parse the command=line flags to get the output mode
+	flag.Parse()
 }
 type PipelineConfigs []PipelineConfig
 

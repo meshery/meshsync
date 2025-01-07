@@ -102,45 +102,52 @@ func main() {
 
 	// check if output mode is nats
 	if config.OutputMode == "nats" {
+
+		log.Info("NATS output mode selected")
+
 		connectivityTest(cfg.GetKey(config.BrokerURL), log)
+		
+		// Initialize Broker instance
+		br, err := nats.New(nats.Options{
+			URLS:           []string{cfg.GetKey(config.BrokerURL)},
+			ConnectionName: "meshsync",
+			Username:       "",
+			Password:       "",
+			ReconnectWait:  2 * time.Second,
+			MaxReconnect:   60,
+		})
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
+		
+		chPool := channels.NewChannelPool()
+		meshsyncHandler, err := meshsync.New(cfg, log, br, chPool)
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
+		
+		go meshsyncHandler.WatchCRDs()
+		
+		go meshsyncHandler.Run()
+		go meshsyncHandler.ListenToRequests()
+		
+		log.Info("Server started")
+		// Handle graceful shutdown
+		signal.Notify(chPool[channels.OS].(channels.OSChannel), syscall.SIGTERM, os.Interrupt)
+		select {
+		case <-chPool[channels.OS].(channels.OSChannel):
+			close(chPool[channels.Stop].(channels.StopChannel))
+			log.Info("Shutting down")
+		case <-chPool[channels.Stop].(channels.StopChannel):
+			close(chPool[channels.Stop].(channels.StopChannel))
+			log.Info("Shutting down")
+		}
 	}
 
-	// Initialize Broker instance
-	br, err := nats.New(nats.Options{
-		URLS:           []string{cfg.GetKey(config.BrokerURL)},
-		ConnectionName: "meshsync",
-		Username:       "",
-		Password:       "",
-		ReconnectWait:  2 * time.Second,
-		MaxReconnect:   60,
-	})
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
-	}
-
-	chPool := channels.NewChannelPool()
-	meshsyncHandler, err := meshsync.New(cfg, log, br, chPool)
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
-	}
-
-	go meshsyncHandler.WatchCRDs()
-
-	go meshsyncHandler.Run()
-	go meshsyncHandler.ListenToRequests()
-
-	log.Info("Server started")
-	// Handle graceful shutdown
-	signal.Notify(chPool[channels.OS].(channels.OSChannel), syscall.SIGTERM, os.Interrupt)
-	select {
-	case <-chPool[channels.OS].(channels.OSChannel):
-		close(chPool[channels.Stop].(channels.StopChannel))
-		log.Info("Shutting down")
-	case <-chPool[channels.Stop].(channels.StopChannel):
-		close(chPool[channels.Stop].(channels.StopChannel))
-		log.Info("Shutting down")
+	if config.OutputMode == "file" {
+		log.Info("File output mode is not implemented yet")
 	}
 }
 

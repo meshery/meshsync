@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"time"
 	"os"
-	"flag"
 
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
@@ -73,8 +72,6 @@ func (h *Handler) UpdateInformer() error {
 
 func (h *Handler) ListenToRequests() {
 	
-		// Parse the command=line flags to get the output mode
-		flag.Parse()
 		
 
 	listenerConfigs := make(map[string]config.ListenerConfig, 10)
