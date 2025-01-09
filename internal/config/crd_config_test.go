@@ -99,18 +99,22 @@ func TestBlackListResources(t *testing.T) {
 
 	expectedBlackList := []string{"namespaces.v1.", "pods.v1."}
 	if !reflect.DeepEqual(meshsyncConfig.BlackList, expectedBlackList) {
-		t.Error("WhiteListed resources not equal")
+		t.Error("BlackListed resources not equal")
 	}
 
 	// now we assertain the global and local pipelines have been correctly configured
 	// excempted global pipelines: namespaces
 	// excempted local pipelines: pods, replicasets
 
-	if len(meshsyncConfig.Pipelines["global"]) != 5 {
-		t.Error("global pipelines not well configured expected 5")
+	// counting expected pipelines after blacklist
+	expectedGlobalCount := len(meshsyncConfig.Pipelines["global"]) - 1 	//excluding namespaces
+	expectedLocalCount := len(meshsyncConfig.Pipelines["local"]) - 2 	//excluding pods, replicasets
+
+	if len(meshsyncConfig.Pipelines["global"]) != expectedGlobalCount {
+		t.Errorf("global pipelines not well configured expected %d", expectedGlobalCount)
 	}
 
-	if len(meshsyncConfig.Pipelines["local"]) != 14 {
-		t.Error("global pipelines not well configured expected 15")
+	if len(meshsyncConfig.Pipelines["local"]) != expectedLocalCount {
+		t.Errorf("local pipelines not well configured expected %d", expectedLocalCount)
 	}
 }
