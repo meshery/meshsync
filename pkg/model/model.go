@@ -14,6 +14,7 @@ type KubernetesResource struct {
 	ID                     string                        `json:"id" gorm:"primarykey"`
 	APIVersion             string                        `json:"apiVersion" gorm:"index"`
 	Kind                   string                        `json:"kind" gorm:"index"`
+	Model                  string                        `json:"model" gorm:"index"`
 	KubernetesResourceMeta *KubernetesResourceObjectMeta `json:"metadata" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Spec                   *KubernetesResourceSpec       `json:"spec,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	Status                 *KubernetesResourceStatus     `json:"status,omitempty" gorm:"foreignkey:ID;references:id;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
