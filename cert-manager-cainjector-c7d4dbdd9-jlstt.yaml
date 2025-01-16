@@ -1,0 +1,139 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2024-04-01T04:29:32Z"
+  generateName: cert-manager-cainjector-c7d4dbdd9-
+  labels:
+    app: cainjector
+    app.kubernetes.io/component: cainjector
+    app.kubernetes.io/instance: cert-manager
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: cainjector
+    app.kubernetes.io/version: v1.14.4
+    helm.sh/chart: cert-manager-v1.14.4
+    pod-template-hash: c7d4dbdd9
+  name: cert-manager-cainjector-c7d4dbdd9-jlstt
+  namespace: cert-manager
+  ownerReferences:
+  - apiVersion: apps/v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ReplicaSet
+    name: cert-manager-cainjector-c7d4dbdd9
+    uid: 4ad5f4b4-6ddc-4bad-8208-418435b3b8d7
+  resourceVersion: "4476"
+  uid: b905aeb8-3633-4ca9-b350-df3a87cdd60e
+spec:
+  containers:
+  - args:
+    - --v=2
+    - --leader-election-namespace=kube-system
+    env:
+    - name: POD_NAMESPACE
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.namespace
+    image: quay.io/jetstack/cert-manager-cainjector:v1.14.4
+    imagePullPolicy: IfNotPresent
+    name: cert-manager-cainjector
+    resources: {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      readOnlyRootFilesystem: true
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: kube-api-access-sktmn
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: false
+  nodeName: c3-medium-x86-03-meshery
+  nodeSelector:
+    kubernetes.io/os: linux
+  preemptionPolicy: PreemptLowerPriority
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  serviceAccount: cert-manager-cainjector
+  serviceAccountName: cert-manager-cainjector
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: kube-api-access-sktmn
+    projected:
+      defaultMode: 420
+      sources:
+      - serviceAccountToken:
+          expirationSeconds: 3607
+          path: token
+      - configMap:
+          items:
+          - key: ca.crt
+            path: ca.crt
+          name: kube-root-ca.crt
+      - downwardAPI:
+          items:
+          - fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+            path: namespace
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2024-04-01T04:29:34Z"
+    status: "True"
+    type: PodReadyToStartContainers
+  - lastProbeTime: null
+    lastTransitionTime: "2024-04-01T04:29:32Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2024-04-01T04:29:34Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2024-04-01T04:29:34Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2024-04-01T04:29:32Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: containerd://1c7b0a11d4c38a0fce9c3abf2b69358eae486bf383344a18b730db6bf5e135a4
+    image: quay.io/jetstack/cert-manager-cainjector:v1.14.4
+    imageID: quay.io/jetstack/cert-manager-cainjector@sha256:30286297e5b4b71a86759d297a8109c6a1649fdc68d28f618d87edf12a2da417
+    lastState: {}
+    name: cert-manager-cainjector
+    ready: true
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2024-04-01T04:29:33Z"
+  hostIP: 139.178.83.85
+  hostIPs:
+  - ip: 139.178.83.85
+  phase: Running
+  podIP: 192.168.0.14
+  podIPs:
+  - ip: 192.168.0.14
+  qosClass: BestEffort
+  startTime: "2024-04-01T04:29:32Z"
