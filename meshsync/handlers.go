@@ -1,15 +1,18 @@
 package meshsync
 
 import (
-	"fmt"
-	"time"
 	"encoding/json"
+	"flag"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
 	"github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
-	"github.com/layer5io/meshsync/internal/config"
+	config "github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
 	"golang.org/x/net/context"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -69,6 +72,10 @@ func (h *Handler) UpdateInformer() error {
 }
 
 func (h *Handler) ListenToRequests() {
+
+	// Parse the command-line flags to get the output mode
+	flag.Parse()
+
 	listenerConfigs := make(map[string]config.ListenerConfig, 10)
 	err := h.Config.GetObject(config.ListenersKey, &listenerConfigs)
 	if err != nil {
@@ -97,10 +104,8 @@ func (h *Handler) ListenToRequests() {
 				continue
 			}
 
-			// TODO: Add this to the broker pkg
 		case "informer-store":
 			d, err := json.Marshal(request.Request.Payload)
-			// TODO: Update broker pkg in Meshkit to include Reply types
 			var payload struct{ Reply string }
 			if err != nil {
 				h.Log.Error(err)
@@ -113,16 +118,27 @@ func (h *Handler) ListenToRequests() {
 			}
 			replySubject := payload.Reply
 			storeObjects := h.listStoreObjects()
-			splitSlices := splitIntoMultipleSlices(storeObjects, 5) //  performance of NATS is bound to degrade if huge messages are sent
+			splitSlices := splitIntoMultipleSlices(storeObjects, 5)
 
-			h.Log.Info("Publishing the data from informer stores to the subject: ", replySubject)
-			for _, val := range splitSlices {
-				err = h.Broker.Publish(replySubject, &broker.Message{
-					Object: val,
-				})
-				if err != nil {
-					h.Log.Error(err)
-					continue
+			if config.OutputMode == "file" {
+				h.Log.Info("Writing the data from informer stores to the file")
+				for _, val := range splitSlices {
+					err = writeToFile(replySubject, val) // Call the new function to write to file
+					if err != nil {
+						h.Log.Error(err)
+						continue
+					}
+				}
+			} else {
+				h.Log.Info("Publishing the data from informer stores to the subject: ", replySubject)
+				for _, val := range splitSlices {
+					err = h.Broker.Publish(replySubject, &broker.Message{
+						Object: val,
+					})
+					if err != nil {
+						h.Log.Error(err)
+						continue
+					}
 				}
 			}
 
@@ -144,16 +160,39 @@ func (h *Handler) ListenToRequests() {
 				continue
 			}
 		case "meshsync-meta":
-			h.Log.Info("Publishing MeshSync metadata to the subject")
-			err := h.Broker.Publish("meshsync-meta", &broker.Message{
-				Object: config.Server["version"],
-			})
-			if err != nil {
-				h.Log.Error(err)
-				continue
+			if config.OutputMode == "file" {
+				h.Log.Info("Writing MeshSync metadata to the file")
+				err := writeToFile("meshsync-meta", config.Server["version"]) // Call the new function to write to file
+				if err != nil {
+					h.Log.Error(err)
+					continue
+				}
+			} else {
+				h.Log.Info("Publishing MeshSync metadata to the subject")
+				err := h.Broker.Publish("meshsync-meta", &broker.Message{
+					Object: config.Server["version"],
+				})
+				if err != nil {
+					h.Log.Error(err)
+					continue
+				}
 			}
 		}
 	}
+}
+
+// Function to write data to a file
+func writeToFile(filename string, data interface{}) error {
+	filePath := filepath.Join("data", filename+".json") // Define the file path and name
+	file, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	enc := json.NewEncoder(file)
+	enc.SetIndent("", "  ")
+	return enc.Encode(data)
 }
 
 func (h *Handler) listStoreObjects() []model.KubernetesResource {
