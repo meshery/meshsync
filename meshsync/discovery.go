@@ -25,6 +25,7 @@ func (h *Handler) startDiscovery(pipelineCh chan struct{}) {
 	err := h.Config.GetObject(config.ResourcesKey, &pipelineConfigs)
 	if err != nil {
 		h.Log.Error(ErrGetObject(err))
+		return
 	}
 
 	h.Log.Info("Pipeline started")

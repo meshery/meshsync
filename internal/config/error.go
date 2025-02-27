@@ -9,5 +9,5 @@ const (
 )
 
 func ErrInitConfig(err error) error {
-	return errors.New(ErrInitConfigCode, errors.Alert, []string{"Error while config init", err.Error()}, []string{}, []string{}, []string{})
+	return errors.New(ErrInitConfigCode, errors.Alert, []string{"Error while initializing MeshSync configuration. ", err.Error()}, []string{"Missing or outdated CRD. "}, []string{"Missing or outdated CRD."}, []string{"Confirm that meshsyncs custom resource is present in the cluster."})
 }

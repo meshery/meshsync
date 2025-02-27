@@ -13,8 +13,8 @@ import (
 
 var (
 	Kind         string = "MeshSync"
-	APIVersion   string = "meshery.layer5.io/v1alpha1"
-	URL          string = "https://layer5.io"
+	APIVersion   string = "meshery.io/v1alpha1"
+	URL          string = "https://meshery.io"
 	fakeDyClient *fake.FakeDynamicClient
 	ctx          = context.Background()
 )
@@ -107,8 +107,8 @@ func TestBlackListResources(t *testing.T) {
 	// excempted local pipelines: pods, replicasets
 
 	// counting expected pipelines after blacklist
-	expectedGlobalCount := len(meshsyncConfig.Pipelines["global"]) - 1 	//excluding namespaces
-	expectedLocalCount := len(meshsyncConfig.Pipelines["local"]) - 2 	//excluding pods, replicasets
+	expectedGlobalCount := len(meshsyncConfig.Pipelines["global"]) - 1 //excluding namespaces
+	expectedLocalCount := len(meshsyncConfig.Pipelines["local"]) - 2   //excluding pods, replicasets
 
 	if len(meshsyncConfig.Pipelines["global"]) != expectedGlobalCount {
 		t.Errorf("global pipelines not well configured expected %d", expectedGlobalCount)
