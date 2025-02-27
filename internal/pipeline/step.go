@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"fmt"
+
 	broker "github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/logger"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
@@ -32,6 +34,13 @@ func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.Dynami
 // Exec - step interface
 func (ri *RegisterInformer) Exec(request *pipeline.Request) *pipeline.Result {
 	gvr, _ := schema.ParseResourceArg(ri.config.Name)
+	if gvr == nil {
+		return &pipeline.Result{
+			Error: internalconfig.ErrInitConfig(fmt.Errorf("error parsing resource arg, gvr not found")),
+			Data:  nil,
+		}
+	}
+
 	iclient := ri.informer.ForResource(*gvr)
 
 	ri.registerHandlers(iclient.Informer())
