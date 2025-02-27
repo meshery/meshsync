@@ -13,7 +13,7 @@ func New(provider string) (config.Handler, error) {
 		err     error
 	)
 	opts := configprovider.Options{
-		FilePath: utils.GetHome(),
+		FilePath: utils.GetHome() + "/.meshery",
 		FileType: "yaml",
 		FileName: "meshsync_config",
 	}

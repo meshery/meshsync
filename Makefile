@@ -60,6 +60,12 @@ run: nats
 	go$(v) mod tidy; \
 	DEBUG=true GOPROXY=direct GOSUMDB=off go run main.go
 
+.PHONY: file
+## output to a YAML file
+file:
+	go mod tidy; \
+	DEBUG=true GOPROXY=direct GOSUMDB=off go run . -output file
+
 .PHONY: check
 ## Lint check Meshsync.
 check:
