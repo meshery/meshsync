@@ -2,11 +2,11 @@ package model
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strings"
-	"encoding/json"
-	
+
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils/kubernetes"
 	v1 "k8s.io/api/core/v1"

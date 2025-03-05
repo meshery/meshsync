@@ -98,7 +98,7 @@ func main() {
 		log.Error(err)
 		os.Exit(1)
 	}
-	//Skip/Comment the below connectivity test in local environment
+	// Skip/Comment the below connectivity test in local environment
 	connectivityTest(cfg.GetKey(config.BrokerURL), log)
 	// Initialize Broker instance
 	br, err := nats.New(nats.Options{
