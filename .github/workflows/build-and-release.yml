@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: Build check
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Check out code
       uses: actions/checkout@main
@@ -23,7 +23,7 @@ jobs:
     - run: GOPROXY=direct GOSUMDB=off GO111MODULE=on go build -o meshery-meshsync . 
   docker:
     name: Docker build and push
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - name: Check out code
       uses: actions/checkout@main
