@@ -10,6 +10,7 @@ import (
 	"golang.org/x/exp/slices"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -24,6 +25,30 @@ var (
 	resource  = "meshsyncs"        //Name of the Resource
 )
 
+// ValidateMeshsyncCRD validates the MeshSync CRD structure and required fields
+func ValidateMeshsyncCRD(crd map[string]interface{}) error {
+	// Validate spec exists
+	spec, exists := crd["spec"].(map[string]interface{})
+	if !exists {
+		return ErrInitConfig(errors.New("invalid CRD: spec field is missing"))
+	}
+
+	// Validate watch-list exists in spec
+	_, exists = spec["watch-list"]
+	if !exists {
+		return ErrInitConfig(errors.New("invalid CRD: watch-list field is missing in spec"))
+	}
+
+	// Validate version exists in spec
+	_, exists = spec["version"]
+	if !exists {
+		return ErrInitConfig(errors.New("invalid CRD: version field is missing in spec"))
+	}
+	
+	return nil
+}
+
+
 func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) {
 	// initialize the group version resource to access the custom resource
 	gvr := schema.GroupVersionResource{Version: version, Group: group, Resource: resource}
@@ -37,6 +62,11 @@ func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) 
 
 	if crd == nil {
 		return nil, ErrInitConfig(errors.New("Custom Resource is nil"))
+	}
+
+	// Validate CRD structure
+	if err := ValidateMeshsyncCRD(crd.Object); err != nil {
+		return nil, err
 	}
 
 	spec := crd.Object["spec"]
@@ -187,3 +217,68 @@ func PatchCRVersion(config *rest.Config) error {
 	}
 	return nil
 }
+
+// InitializeDefaultConfig creates a default configuration if none exists
+func InitializeDefaultConfig(dyClient dynamic.Interface) error {
+	gvr := schema.GroupVersionResource{Version: version, Group: group, Resource: resource}
+	
+	// Check if CR already exists
+	_, err := dyClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), crName, metav1.GetOptions{})
+	if err == nil {
+		// CR already exists, no initialization needed
+		return nil
+	}
+	
+	// Create default configuration
+	defaultCR := map[string]interface{}{
+		"apiVersion": fmt.Sprintf("%s/%s", group, version),
+		"kind": "MeshSync",
+		"metadata": map[string]interface{}{
+			"name": crName,
+			"namespace": namespace,
+		},
+		"spec": map[string]interface{}{
+			"version": Server["version"],
+			"watch-list": GenerateDefaultWatchList(),
+		},
+	}
+	
+	// Convert to unstructured
+	obj, err := utils.Marshal(defaultCR)
+	if err != nil {
+		return ErrInitConfig(fmt.Errorf("failed to marshal default config: %w", err))
+	}
+	
+	var unstructuredObj map[string]interface{}
+	if err := utils.Unmarshal(string(obj), &unstructuredObj); err != nil {
+		return ErrInitConfig(fmt.Errorf("failed to unmarshal default config: %w", err))
+	}
+	
+	// Create the CR
+	_, err = dyClient.Resource(gvr).Namespace(namespace).Create(
+		context.TODO(),
+		&unstructured.Unstructured{Object: unstructuredObj},
+		metav1.CreateOptions{},
+	)
+	if err != nil {
+		return ErrInitConfig(fmt.Errorf("failed to create default CR: %w", err))
+	}
+	
+	return nil
+}
+
+// GenerateDefaultWatchList creates a default watch list configuration
+func GenerateDefaultWatchList() map[string]interface{} {
+	return map[string]interface{}{
+		"apiVersion": "v1",
+		"kind": "ConfigMap",
+		"data": map[string]string{
+			"include-namespaces": "default,kube-system,meshery",
+			"exclude-namespaces": "",
+			"default-resources": "true",
+			"include-resources": "",
+			"exclude-resources": "",
+		},
+	}
+}
+

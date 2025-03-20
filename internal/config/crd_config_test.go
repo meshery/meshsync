@@ -8,6 +8,8 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/fake"
 )
 
@@ -116,5 +118,91 @@ func TestBlackListResources(t *testing.T) {
 
 	if len(meshsyncConfig.Pipelines["local"]) != expectedLocalCount {
 		t.Errorf("local pipelines not well configured expected %d", expectedLocalCount)
+	}
+}
+
+func TestValidateMeshsyncCRD(t *testing.T) {
+	tests := []struct {
+		name    string
+		crd     map[string]interface{}
+		wantErr bool
+	}{
+		{
+			name: "valid CRD",
+			crd: map[string]interface{}{
+				"spec": map[string]interface{}{
+					"version":    "v1",
+					"watch-list": map[string]interface{}{},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing spec",
+			crd: map[string]interface{}{
+				"metadata": map[string]interface{}{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing watch-list",
+			crd: map[string]interface{}{
+				"spec": map[string]interface{}{
+					"version": "v1",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing version",
+			crd: map[string]interface{}{
+				"spec": map[string]interface{}{
+					"watch-list": map[string]interface{}{},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateMeshsyncCRD(tt.crd)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateMeshsyncCRD() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestInitializeDefaultConfig(t *testing.T) {
+	// Create a scheme and add the necessary types
+	scheme := runtime.NewScheme()
+	
+	// Create a fake dynamic client with the scheme
+	fakeDyClient := fake.NewSimpleDynamicClient(scheme)
+	
+	// Test initialization
+	err := InitializeDefaultConfig(fakeDyClient)
+	if err != nil {
+		t.Errorf("InitializeDefaultConfig() error = %v", err)
+	}
+	
+	// Verify that the CR was created
+	gvr := schema.GroupVersionResource{Version: version, Group: group, Resource: resource}
+	crd, err := fakeDyClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), crName, metav1.GetOptions{})
+	if err != nil {
+		t.Errorf("Failed to get created CR: %v", err)
+	}
+	
+	// Validate the created CR
+	err = ValidateMeshsyncCRD(crd.Object)
+	if err != nil {
+		t.Errorf("Created CR failed validation: %v", err)
+	}
+	
+	// Test idempotence (should not error when CR already exists)
+	err = InitializeDefaultConfig(fakeDyClient)
+	if err != nil {
+		t.Errorf("InitializeDefaultConfig() error on second call = %v", err)
 	}
 }
