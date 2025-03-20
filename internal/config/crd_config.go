@@ -61,7 +61,7 @@ func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) 
 	}
 
 	if crd == nil {
-		return nil, ErrInitConfig(errors.New("Custom Resource is nil"))
+		return nil, ErrInitConfig(errors.New("custom Resource is nil"))
 	}
 
 	// Validate CRD structure
@@ -72,11 +72,11 @@ func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) 
 	spec := crd.Object["spec"]
 	specMap, ok := spec.(map[string]interface{})
 	if !ok {
-		return nil, ErrInitConfig(errors.New("Unable to convert spec to map"))
+		return nil, ErrInitConfig(errors.New("unable to convert spec to map"))
 	}
 	configObj := specMap["watch-list"]
 	if configObj == nil {
-		return nil, ErrInitConfig(errors.New("Custom Resource does not have Meshsync Configs"))
+		return nil, ErrInitConfig(errors.New("custom Resource does not have Meshsync Configs"))
 	}
 	configStr, err := utils.Marshal(configObj)
 	if err != nil {
@@ -123,12 +123,12 @@ func PopulateConfigs(configMap corev1.ConfigMap) (*MeshsyncConfig, error) {
 
 	// ensure that atleast one of whitelist or blacklist has been supplied
 	if len(meshsyncConfig.BlackList) == 0 && len(meshsyncConfig.WhiteList) == 0 {
-		return nil, ErrInitConfig(errors.New("Both whitelisted and blacklisted resources missing"))
+		return nil, ErrInitConfig(errors.New("both whitelisted and blacklisted resources missing"))
 	}
 
 	// ensure that only one of whitelist or blacklist has been supplied
 	if len(meshsyncConfig.BlackList) != 0 && len(meshsyncConfig.WhiteList) != 0 {
-		return nil, ErrInitConfig(errors.New("Both whitelisted and blacklisted resources not currently supported"))
+		return nil, ErrInitConfig(errors.New("both whitelisted and blacklisted resources not currently supported"))
 	}
 
 	// Handle global resources

@@ -109,15 +109,38 @@ func TestBlackListResources(t *testing.T) {
 	// excempted local pipelines: pods, replicasets
 
 	// counting expected pipelines after blacklist
-	expectedGlobalCount := len(meshsyncConfig.Pipelines["global"]) - 1 //excluding namespaces
-	expectedLocalCount := len(meshsyncConfig.Pipelines["local"]) - 2   //excluding pods, replicasets
+	expectedGlobalCount := len(Pipelines[GlobalResourceKey]) - 1 // excluding namespaces
+	expectedLocalCount := len(Pipelines[LocalResourceKey]) - 2  // excluding pods, replicasets
+
+	// Count how many items are actually excluded by the blacklist
+	blacklistedGlobalCount := 0
+	blacklistedLocalCount := 0
+
+	for _, item := range meshsyncConfig.BlackList {
+		for _, pipeline := range Pipelines[GlobalResourceKey] {
+			if pipeline.Name == item {
+				blacklistedGlobalCount++
+			}
+		}
+		for _, pipeline := range Pipelines[LocalResourceKey] {
+			if pipeline.Name == item {
+				blacklistedLocalCount++
+			}
+		}
+	}
+
+	// Adjust expectations based on what was actually blacklisted
+	expectedGlobalCount = len(Pipelines[GlobalResourceKey]) - blacklistedGlobalCount
+	expectedLocalCount = len(Pipelines[LocalResourceKey]) - blacklistedLocalCount
 
 	if len(meshsyncConfig.Pipelines["global"]) != expectedGlobalCount {
-		t.Errorf("global pipelines not well configured expected %d", expectedGlobalCount)
+		t.Errorf("global pipelines not well configured expected %d got %d", 
+			expectedGlobalCount, len(meshsyncConfig.Pipelines["global"]))
 	}
 
 	if len(meshsyncConfig.Pipelines["local"]) != expectedLocalCount {
-		t.Errorf("local pipelines not well configured expected %d", expectedLocalCount)
+		t.Errorf("local pipelines not well configured expected %d got %d", 
+			expectedLocalCount, len(meshsyncConfig.Pipelines["local"]))
 	}
 }
 
