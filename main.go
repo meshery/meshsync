@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -9,12 +11,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/broker/nats"
 	configprovider "github.com/layer5io/meshkit/config/provider"
 	"github.com/layer5io/meshkit/logger"
 	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
+	"github.com/layer5io/meshsync/internal/file"
 	"github.com/layer5io/meshsync/meshsync"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -27,6 +31,24 @@ var (
 	commitsha    = "Not Set"
 	pingEndpoint = ":8222/connz"
 )
+
+func init() {
+	flag.StringVar(
+		&config.OutputMode,
+		"output",
+		config.OutputModeNats,
+		fmt.Sprintf("Output mode: '%s' or '%s'", config.OutputModeNats, config.OutputModeFile),
+	)
+	flag.StringVar(
+		&config.OutputFileName,
+		"outputFile",
+		"",
+		"Output file path (deault: meshery-cluster-snapshot-YYYYMMDD-00.json in the current directory)",
+	)
+
+	// Parse the command=line flags to get the output mode
+	flag.Parse()
+}
 
 func main() {
 	viper.SetDefault("BUILD", version)
@@ -98,24 +120,45 @@ func main() {
 		log.Error(err)
 		os.Exit(1)
 	}
-	//Skip/Comment the below connectivity test in local environment
-	connectivityTest(cfg.GetKey(config.BrokerURL), log)
-	// Initialize Broker instance
-	br, err := nats.New(nats.Options{
-		URLS:           []string{cfg.GetKey(config.BrokerURL)},
-		ConnectionName: "meshsync",
-		Username:       "",
-		Password:       "",
-		ReconnectWait:  2 * time.Second,
-		MaxReconnect:   60,
-	})
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+
+	var br broker.Handler
+	if config.OutputMode == config.OutputModeNats {
+		//Skip/Comment the below connectivity test in local environment
+		connectivityTest(cfg.GetKey(config.BrokerURL), log)
+		// Initialize Broker instance
+		broker, err := nats.New(nats.Options{
+			URLS:           []string{cfg.GetKey(config.BrokerURL)},
+			ConnectionName: "meshsync",
+			Username:       "",
+			Password:       "",
+			ReconnectWait:  2 * time.Second,
+			MaxReconnect:   60,
+		})
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
+		br = broker
+	}
+
+	// fw stands for file writer
+	var fw io.Writer
+	if config.OutputMode == config.OutputModeFile {
+		fileHandler, err := file.NewBufferedWriter(config.OutputFileName)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fw = fileHandler
+		defer fileHandler.Close()
+		defer func() {
+			_, err := fileHandler.FlushBuffer()
+			log.Error(err)
+		}()
 	}
 
 	chPool := channels.NewChannelPool()
-	meshsyncHandler, err := meshsync.New(cfg, log, br, chPool)
+	meshsyncHandler, err := meshsync.New(cfg, log, br, fw, chPool)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)

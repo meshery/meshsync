@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
+	"encoding/json"
+
 	"github.com/layer5io/meshkit/broker"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
@@ -78,14 +80,29 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 	if !slices.Contains(ri.config.Events, string(evtype)) {
 		return nil
 	}
-	err := ri.broker.Publish(config.PublishTo, &broker.Message{
-		ObjectType: broker.MeshSync,
-		EventType:  evtype,
-		Object:     model.ParseList(*obj, evtype),
-	})
-	if err != nil {
-		ri.log.Error(ErrPublish(config.Name, err))
-		return err
+	k8sResource := model.ParseList(*obj, evtype)
+	if internalconfig.OutputMode == internalconfig.OutputModeNats {
+		err := ri.broker.Publish(config.PublishTo, &broker.Message{
+			ObjectType: broker.MeshSync,
+			EventType:  evtype,
+			Object:     k8sResource,
+		})
+		if err != nil {
+			ri.log.Error(ErrPublish(config.Name, err))
+			return err
+		}
+	}
+	if internalconfig.OutputMode == internalconfig.OutputModeFile {
+		data, err := json.Marshal(k8sResource)
+		if err != nil {
+			ri.log.Error(ErrWriteFile(config.Name, err))
+			return err
+		}
+		_, err = ri.fileWriter.Write(data)
+		if err != nil {
+			ri.log.Error(ErrWriteFile(config.Name, err))
+			return err
+		}
 	}
 
 	return nil

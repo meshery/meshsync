@@ -1,6 +1,8 @@
 package config
 
-import "golang.org/x/exp/slices"
+import (
+	"golang.org/x/exp/slices"
+)
 
 const (
 	ServerKey         = "server-config"
@@ -15,6 +17,14 @@ const (
 	LogStream         = "log-stream"
 	ExecShell         = "exec-shell"
 	InformerStore     = "informer-store"
+	OutputModeNats    = "nats"
+	OutputModeFile    = "file"
+)
+
+// Command line flag to determine the output mode
+var (
+	OutputMode     string
+	OutputFileName string
 )
 
 type PipelineConfigs []PipelineConfig

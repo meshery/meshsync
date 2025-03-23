@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"fmt"
+	"io"
 
 	broker "github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/logger"
@@ -15,18 +16,20 @@ import (
 
 type RegisterInformer struct {
 	pipeline.StepContext
-	log      logger.Handler
-	informer dynamicinformer.DynamicSharedInformerFactory
-	config   internalconfig.PipelineConfig
-	broker   broker.Handler
+	log        logger.Handler
+	informer   dynamicinformer.DynamicSharedInformerFactory
+	config     internalconfig.PipelineConfig
+	broker     broker.Handler
+	fileWriter io.Writer
 }
 
-func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, config internalconfig.PipelineConfig, brkr broker.Handler) *RegisterInformer {
+func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, config internalconfig.PipelineConfig, brkr broker.Handler, fw io.Writer) *RegisterInformer {
 	return &RegisterInformer{
-		log:      log,
-		informer: informer,
-		config:   config,
-		broker:   brkr,
+		log:        log,
+		informer:   informer,
+		config:     config,
+		broker:     brkr,
+		fileWriter: fw,
 	}
 }
 
