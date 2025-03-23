@@ -1,11 +1,10 @@
 package pipeline
 
 import (
-	"io"
-
 	broker "github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/logger"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
+	"github.com/layer5io/meshsync/internal/file"
 	"github.com/myntra/pipeline"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 )
@@ -31,7 +30,7 @@ var (
 	}
 )
 
-func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, broker broker.Handler, fileWriter io.Writer, plConfigs map[string]internalconfig.PipelineConfigs, stopChan chan struct{}) *pipeline.Pipeline {
+func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, broker broker.Handler, fileWriter file.Writer, plConfigs map[string]internalconfig.PipelineConfigs, stopChan chan struct{}) *pipeline.Pipeline {
 	// Global discovery
 	gdstage := GlobalDiscoveryStage
 	configs := plConfigs[gdstage.Name]

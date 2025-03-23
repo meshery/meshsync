@@ -1,13 +1,12 @@
 package meshsync
 
 import (
-	"io"
-
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/config"
 	"github.com/layer5io/meshkit/logger"
 	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
+	"github.com/layer5io/meshsync/internal/file"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -23,7 +22,7 @@ type Handler struct {
 	Config     config.Handler
 	Log        logger.Handler
 	Broker     broker.Handler
-	FileWriter io.Writer // handles output into file instead of broker when config.OutputMode == config.OutputModeFile
+	FileWriter file.Writer // handles output into file instead of broker when config.OutputMode == config.OutputModeFile
 
 	restConfig   rest.Config
 	informer     dynamicinformer.DynamicSharedInformerFactory
@@ -53,7 +52,7 @@ func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
 	}, nil
 }
 
-func New(config config.Handler, log logger.Handler, br broker.Handler, fw io.Writer, pool map[string]channels.GenericChannel) (*Handler, error) {
+func New(config config.Handler, log logger.Handler, br broker.Handler, fw file.Writer, pool map[string]channels.GenericChannel) (*Handler, error) {
 	// Initialize Kubeconfig
 	kubeClient, err := mesherykube.New(nil)
 	if err != nil {

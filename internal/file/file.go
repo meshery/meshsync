@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func generateUniqueFileNameForSnapshot(format string) (string, error) {
+func GenerateUniqueFileNameForSnapshot(format string) (string, error) {
 	// Get the current date and time
 	currentTime := time.Now()
 

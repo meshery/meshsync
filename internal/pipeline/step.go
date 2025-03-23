@@ -2,11 +2,11 @@ package pipeline
 
 import (
 	"fmt"
-	"io"
 
 	broker "github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/logger"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
+	"github.com/layer5io/meshsync/internal/file"
 	"github.com/myntra/pipeline"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,10 +20,10 @@ type RegisterInformer struct {
 	informer   dynamicinformer.DynamicSharedInformerFactory
 	config     internalconfig.PipelineConfig
 	broker     broker.Handler
-	fileWriter io.Writer
+	fileWriter file.Writer
 }
 
-func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, config internalconfig.PipelineConfig, brkr broker.Handler, fw io.Writer) *RegisterInformer {
+func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, config internalconfig.PipelineConfig, brkr broker.Handler, fw file.Writer) *RegisterInformer {
 	return &RegisterInformer{
 		log:        log,
 		informer:   informer,

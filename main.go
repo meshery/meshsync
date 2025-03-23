@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -142,19 +141,23 @@ func main() {
 	}
 
 	// fw stands for file writer
-	var fw io.Writer
+	var fw file.Writer
 	if config.OutputMode == config.OutputModeFile {
-		fileHandler, err := file.NewBufferedWriter(config.OutputFileName)
+		filename := config.OutputFileName
+		if filename == "" {
+			fname, err := file.GenerateUniqueFileNameForSnapshot("yaml")
+			if err != nil {
+
+			}
+			filename = fname
+		}
+		fileWriter, err := file.NewYAMLWriter(filename)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		fw = fileHandler
-		defer fileHandler.Close()
-		defer func() {
-			_, err := fileHandler.FlushBuffer()
-			log.Error(err)
-		}()
+		fw = fileWriter
+		defer fileWriter.Close()
 	}
 
 	chPool := channels.NewChannelPool()
