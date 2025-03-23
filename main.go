@@ -43,7 +43,7 @@ func init() {
 		&config.OutputFileName,
 		"outputFile",
 		"",
-		"Output file path (deault: meshery-cluster-snapshot-YYYYMMDD-00.json in the current directory)",
+		"Output file path (deault: meshery-cluster-snapshot-YYYYMMDD-00.yaml in the current directory)",
 	)
 
 	// Parse the command=line flags to get the output mode

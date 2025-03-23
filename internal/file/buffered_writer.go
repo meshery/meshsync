@@ -23,7 +23,7 @@ func NewBufferedWriter(outputFileName string) (*bufferedWriter, error) {
 	if outputFileName != "" {
 		filename = outputFileName
 	} else {
-		fname, err := generateUniqueFileNameForSnapshot("json")
+		fname, err := generateUniqueFileNameForSnapshot("yaml")
 		if err != nil {
 			return nil, err
 		}
@@ -56,15 +56,22 @@ func (h *bufferedWriter) Write(data []byte) (int, error) {
 	h.buffer = append(h.buffer, data)
 	// but also write in a partial file
 	h.writerPart.Write(data)
+	// for yaml
+	h.writerPart.Write([]byte{'-', '-', '-'})
 	// at least add a new line
 	h.writerPart.Write([]byte{'\n'})
 	return len(data), nil
 }
 
 // TODO
-// this assumes the marshaling is in json
+// this assumes the marshaling is in particular format
 // revisit
 func (h *bufferedWriter) FlushBuffer() (int, error) {
+	// return h.flushBufferJSON()
+	return h.flushBufferYAML()
+}
+
+func (h *bufferedWriter) flushBufferJSON() (int, error) {
 	data := []byte{'['}
 	for i, item := range h.buffer {
 		data = append(data, item...)
@@ -79,7 +86,22 @@ func (h *bufferedWriter) FlushBuffer() (int, error) {
 	}
 
 	return n, nil
+}
 
+func (h *bufferedWriter) flushBufferYAML() (int, error) {
+	n := 0
+
+	delimiter := []byte{'-', '-', '-', '\n'}
+
+	for _, data := range h.buffer {
+		n0, err := h.writer.Write(append(data, delimiter...))
+		if err != nil {
+			return n, err
+		}
+		n += n0
+	}
+
+	return n, nil
 }
 
 func (h *bufferedWriter) Close() error {

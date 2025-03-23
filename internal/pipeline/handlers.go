@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"strconv"
 
-	"encoding/json"
-
 	"github.com/layer5io/meshkit/broker"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
 	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/tools/cache"
+	"sigs.k8s.io/yaml"
 )
 
 func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
@@ -93,11 +92,14 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 		}
 	}
 	if internalconfig.OutputMode == internalconfig.OutputModeFile {
-		data, err := json.Marshal(k8sResource)
+		// TODO move marshalling logic to file writer
+		// data, err := json.Marshal(k8sResource)
+		data, err := yaml.Marshal(k8sResource)
 		if err != nil {
 			ri.log.Error(ErrWriteFile(config.Name, err))
 			return err
 		}
+		// data, err := yaml.Marshal(k8sResource)
 		_, err = ri.fileWriter.Write(data)
 		if err != nil {
 			ri.log.Error(ErrWriteFile(config.Name, err))
