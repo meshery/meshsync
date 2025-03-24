@@ -42,11 +42,32 @@ func init() {
 		&config.OutputFileName,
 		"outputFile",
 		"",
-		"Output file path (deault: meshery-cluster-snapshot-YYYYMMDD-00.yaml in the current directory)",
+		"Output file path (default: meshery-cluster-snapshot-YYYYMMDD-00.yaml in the current directory)",
 	)
-
+	flag.StringVar(
+		&config.OutputNamespace,
+		"outputNamespace",
+		"",
+		"namespace for which limit output to file",
+	)
+	var outputResourcesString string
+	flag.StringVar(
+		&outputResourcesString,
+		"outputResources",
+		"",
+		"resources for which limit output to file, coma separated list of k8s resources, f.e. pod,deployment,service",
+	)
 	// Parse the command=line flags to get the output mode
 	flag.Parse()
+
+	config.OutputResourcesSet = make(map[string]bool)
+	if outputResourcesString != "" {
+		config.OutputOnlySpecifiedResources = true
+		outputResourcesList := strings.Split(outputResourcesString, ",")
+		for _, item := range outputResourcesList {
+			config.OutputResourcesSet[strings.ToLower(item)] = true
+		}
+	}
 }
 
 func main() {

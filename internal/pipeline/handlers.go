@@ -3,6 +3,7 @@ package pipeline
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/layer5io/meshkit/broker"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
@@ -79,6 +80,26 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 		return nil
 	}
 	k8sResource := model.ParseList(*obj, evtype)
+
+	mustSkip := false
+
+	if internalconfig.OutputNamespace != "" &&
+		obj.GetNamespace() != internalconfig.OutputNamespace {
+		mustSkip = true
+	}
+
+	if internalconfig.OutputOnlySpecifiedResources &&
+		!internalconfig.OutputResourcesSet[strings.ToLower(k8sResource.Kind)] {
+		mustSkip = true
+	}
+
+	if mustSkip {
+		// skip this resource
+		ri.log.Info("Skipping resource: ", obj.GetName(), "/", obj.GetNamespace(), " of kind: ", k8sResource.Kind)
+		return nil
+
+	}
+
 	if internalconfig.OutputMode == internalconfig.OutputModeNats {
 		err := ri.broker.Publish(config.PublishTo, &broker.Message{
 			ObjectType: broker.MeshSync,

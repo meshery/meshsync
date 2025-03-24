@@ -23,8 +23,11 @@ const (
 
 // Command line flag to determine the output mode
 var (
-	OutputMode     string
-	OutputFileName string
+	OutputMode                   string
+	OutputFileName               string
+	OutputNamespace              string
+	OutputResourcesSet           map[string]bool
+	OutputOnlySpecifiedResources bool
 )
 
 type PipelineConfigs []PipelineConfig
