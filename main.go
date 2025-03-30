@@ -91,8 +91,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	// get configs from meshsync crd if available
-	crdConfigs, err := config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
+	var crdConfigs *config.MeshsyncConfig
+
+	if config.OutputMode == config.OutputModeNats {
+		// get configs from meshsync crd if available
+		crdConfigs, err = config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
+	}
+	if config.OutputMode == config.OutputModeFile {
+		// get configs from local variable
+		crdConfigs, err = config.GetMeshsyncCRDConfigsLocal()
+	}
 	if err != nil {
 		// no configs found from meshsync CRD log warning
 		log.Warn(err)

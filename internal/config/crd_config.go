@@ -69,6 +69,18 @@ func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) 
 	return meshsyncConfig, nil
 }
 
+func GetMeshsyncCRDConfigsLocal() (*MeshsyncConfig, error) {
+	// populate the required configs
+	meshsyncConfig, err := PopulateConfigs(LocalMeshsyncConfigMap)
+
+	if err != nil {
+		// // this hides actual error message
+		// return nil, ErrInitConfig(err)
+		return nil, err
+	}
+	return meshsyncConfig, nil
+}
+
 // PopulateConfigs compares the default configs and the whitelist and blacklist
 func PopulateConfigs(configMap corev1.ConfigMap) (*MeshsyncConfig, error) {
 	meshsyncConfig := &MeshsyncConfig{}
