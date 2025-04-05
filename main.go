@@ -18,6 +18,7 @@ import (
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/internal/file"
+	"github.com/layer5io/meshsync/internal/output"
 	"github.com/layer5io/meshsync/meshsync"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -120,6 +121,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	outputProcessor := output.NewProcessor()
 	var br broker.Handler
 	if config.OutputMode == config.OutputModeNats {
 		//Skip/Comment the below connectivity test in local environment
@@ -138,10 +140,13 @@ func main() {
 			os.Exit(1)
 		}
 		br = broker
+		outputProcessor.SetStrategy(
+			output.NewNatsStrategy(
+				br,
+			),
+		)
 	}
 
-	// fw stands for file writer
-	var fw file.Writer
 	if config.OutputMode == config.OutputModeFile {
 		filename := config.OutputFileName
 		if filename == "" {
@@ -151,17 +156,21 @@ func main() {
 			}
 			filename = fname
 		}
-		fileWriter, err := file.NewYAMLWriter(filename)
+		fw, err := file.NewYAMLWriter(filename)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		fw = fileWriter
-		defer fileWriter.Close()
+		defer fw.Close()
+		outputProcessor.SetStrategy(
+			output.NewFileStrategy(
+				fw,
+			),
+		)
 	}
 
 	chPool := channels.NewChannelPool()
-	meshsyncHandler, err := meshsync.New(cfg, log, br, fw, chPool)
+	meshsyncHandler, err := meshsync.New(cfg, log, br, outputProcessor, chPool)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)

@@ -6,7 +6,7 @@ import (
 	"github.com/layer5io/meshkit/logger"
 	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
-	"github.com/layer5io/meshsync/internal/file"
+	"github.com/layer5io/meshsync/internal/output"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -19,16 +19,16 @@ import (
 // Handler contains all handlers, channels, clients, and other parameters for an adapter.
 // Use type embedding in a specific adapter to extend it.
 type Handler struct {
-	Config     config.Handler
-	Log        logger.Handler
-	Broker     broker.Handler
-	FileWriter file.Writer // handles output into file instead of broker when config.OutputMode == config.OutputModeFile
+	Config config.Handler
+	Log    logger.Handler
+	Broker broker.Handler
 
-	restConfig   rest.Config
-	informer     dynamicinformer.DynamicSharedInformerFactory
-	staticClient *kubernetes.Clientset
-	channelPool  map[string]channels.GenericChannel
-	stores       map[string]cache.Store
+	restConfig      rest.Config
+	informer        dynamicinformer.DynamicSharedInformerFactory
+	staticClient    *kubernetes.Clientset
+	channelPool     map[string]channels.GenericChannel
+	stores          map[string]cache.Store
+	outputProcessor output.Strategy
 }
 
 func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
@@ -52,7 +52,7 @@ func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
 	}, nil
 }
 
-func New(config config.Handler, log logger.Handler, br broker.Handler, fw file.Writer, pool map[string]channels.GenericChannel) (*Handler, error) {
+func New(config config.Handler, log logger.Handler, br broker.Handler, os output.Strategy, pool map[string]channels.GenericChannel) (*Handler, error) {
 	// Initialize Kubeconfig
 	kubeClient, err := mesherykube.New(nil)
 	if err != nil {
@@ -66,14 +66,14 @@ func New(config config.Handler, log logger.Handler, br broker.Handler, fw file.W
 	informer := GetDynamicInformer(config, kubeClient.DynamicKubeClient, listOptionsFunc)
 
 	return &Handler{
-		Config:       config,
-		Log:          log,
-		Broker:       br,
-		FileWriter:   fw,
-		informer:     informer,
-		restConfig:   kubeClient.RestConfig,
-		staticClient: kubeClient.KubeClient,
-		channelPool:  pool,
+		Config:          config,
+		Log:             log,
+		Broker:          br,
+		outputProcessor: os,
+		informer:        informer,
+		restConfig:      kubeClient.RestConfig,
+		staticClient:    kubeClient.KubeClient,
+		channelPool:     pool,
 	}, nil
 }
 

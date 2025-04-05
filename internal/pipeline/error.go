@@ -9,7 +9,7 @@ const (
 	ErrPublishCode       = "1002"
 	ErrDynamicClientCode = "1003"
 	ErrCacheSyncCode     = "1014"
-	ErrWriteFileCode     = "1015"
+	ErrWriteOutputCode   = "1015"
 )
 
 func ErrDynamicClient(name string, err error) error {
@@ -28,6 +28,6 @@ func ErrCacheSync(name string, err error) error {
 	return errors.New(ErrCacheSyncCode, errors.Alert, []string{"Error while syncing the informer store for: " + name, err.Error()}, []string{}, []string{}, []string{})
 }
 
-func ErrWriteFile(name string, err error) error {
-	return errors.New(ErrWriteFileCode, errors.Alert, []string{"Error while writing to file for: " + name, err.Error()}, []string{}, []string{}, []string{})
+func ErrWriteOutput(name string, err error) error {
+	return errors.New(ErrWriteOutputCode, errors.Alert, []string{"Error while writing output for: " + name, err.Error()}, []string{}, []string{}, []string{})
 }

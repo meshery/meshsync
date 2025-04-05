@@ -1,10 +1,9 @@
 package pipeline
 
 import (
-	broker "github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/logger"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
-	"github.com/layer5io/meshsync/internal/file"
+	"github.com/layer5io/meshsync/internal/output"
 	"github.com/myntra/pipeline"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 )
@@ -30,19 +29,19 @@ var (
 	}
 )
 
-func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, broker broker.Handler, fileWriter file.Writer, plConfigs map[string]internalconfig.PipelineConfigs, stopChan chan struct{}) *pipeline.Pipeline {
+func New(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, os output.Strategy, plConfigs map[string]internalconfig.PipelineConfigs, stopChan chan struct{}) *pipeline.Pipeline {
 	// Global discovery
 	gdstage := GlobalDiscoveryStage
 	configs := plConfigs[gdstage.Name]
 	for _, config := range configs {
-		gdstage.AddStep(newRegisterInformerStep(log, informer, config, broker, fileWriter)) // Register the informers for different resources
+		gdstage.AddStep(newRegisterInformerStep(log, informer, config, os)) // Register the informers for different resources
 	}
 
 	// Local discovery
 	ldstage := LocalDiscoveryStage
 	configs = plConfigs[ldstage.Name]
 	for _, config := range configs {
-		ldstage.AddStep(newRegisterInformerStep(log, informer, config, broker, fileWriter)) // Register the informers for different resources
+		ldstage.AddStep(newRegisterInformerStep(log, informer, config, os)) // Register the informers for different resources
 	}
 
 	// Start informers
