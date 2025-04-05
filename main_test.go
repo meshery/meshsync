@@ -19,7 +19,7 @@ func init() {
 }
 
 /**
- * this test requires k8s cluster and nats streaming
+ * this test requires k8s cluster (with installed CRDs: broker, meshsync) and nats streaming
  * could be a good idea to put a test into ci workflow:
  * - start a kind cluster and nats container
  * - check that the messages are received in nats
