@@ -86,3 +86,9 @@ test: check
 ## Lint check Golang
 lint:
 	golangci-lint run ./...
+## Runs integration tests
+integration-test:
+	docker compose up -d
+	sleep 4
+	RUN_INTEGRATION_TESTS=true go test -v -count=1 .
+	docker compose down
