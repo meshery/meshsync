@@ -86,3 +86,17 @@ test: check
 ## Lint check Golang
 lint:
 	golangci-lint run ./...
+## Runs integration tests
+## it does not start kind for now, only nats
+## hence to successful run you need a k8s cluster, which meshsync could access
+## also docker compose exposes nats on default ports to host, so they must be free before run
+integration-test:
+	docker compose up -d
+	sleep 4
+	RUN_INTEGRATION_TESTS=true
+	go test -v -count=1 -run Integration .
+	docker compose down
+
+## Separate task to clean up after integration test if integration test failed
+integration-test-cleanup:
+	docker compose down

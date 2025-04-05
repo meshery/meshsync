@@ -13,7 +13,8 @@ func New(provider string) (config.Handler, error) {
 		err     error
 	)
 	opts := configprovider.Options{
-		FilePath: utils.GetHome(),
+		// TODO do we need this always or only when running from binary?
+		FilePath: utils.GetHome() + "/.meshery",
 		FileType: "yaml",
 		FileName: "meshsync_config",
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,12 +10,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/broker/nats"
 	configprovider "github.com/layer5io/meshkit/config/provider"
 	"github.com/layer5io/meshkit/logger"
 	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
+	"github.com/layer5io/meshsync/internal/file"
+	"github.com/layer5io/meshsync/internal/output"
 	"github.com/layer5io/meshsync/meshsync"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -28,7 +32,17 @@ var (
 	pingEndpoint = ":8222/connz"
 )
 
+func init() {
+	// this function is also executed in tests
+	// having flag.Parse() leads to an error
+	// flag provided but not defined: -test.testlogfile
+	// because go defined custom flags during tests run
+	// moved flags to parseFlags() and call in main()
+
+}
+
 func main() {
+	parseFlags()
 	viper.SetDefault("BUILD", version)
 	viper.SetDefault("COMMITSHA", commitsha)
 
@@ -49,8 +63,16 @@ func main() {
 		os.Exit(1)
 	}
 
-	// get configs from meshsync crd if available
-	crdConfigs, err := config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
+	var crdConfigs *config.MeshsyncConfig
+
+	if config.OutputMode == config.OutputModeNats {
+		// get configs from meshsync crd if available
+		crdConfigs, err = config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
+	}
+	if config.OutputMode == config.OutputModeFile {
+		// get configs from local variable
+		crdConfigs, err = config.GetMeshsyncCRDConfigsLocal()
+	}
 	if err != nil {
 		// no configs found from meshsync CRD log warning
 		log.Warn(err)
@@ -98,24 +120,57 @@ func main() {
 		log.Error(err)
 		os.Exit(1)
 	}
-	//Skip/Comment the below connectivity test in local environment
-	connectivityTest(cfg.GetKey(config.BrokerURL), log)
-	// Initialize Broker instance
-	br, err := nats.New(nats.Options{
-		URLS:           []string{cfg.GetKey(config.BrokerURL)},
-		ConnectionName: "meshsync",
-		Username:       "",
-		Password:       "",
-		ReconnectWait:  2 * time.Second,
-		MaxReconnect:   60,
-	})
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+
+	outputProcessor := output.NewProcessor()
+	var br broker.Handler
+	if config.OutputMode == config.OutputModeNats {
+		//Skip/Comment the below connectivity test in local environment
+		connectivityTest(cfg.GetKey(config.BrokerURL), log)
+		// Initialize Broker instance
+		broker, err := nats.New(nats.Options{
+			URLS:           []string{cfg.GetKey(config.BrokerURL)},
+			ConnectionName: "meshsync",
+			Username:       "",
+			Password:       "",
+			ReconnectWait:  2 * time.Second,
+			MaxReconnect:   60,
+		})
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
+		br = broker
+		outputProcessor.SetStrategy(
+			output.NewNatsStrategy(
+				br,
+			),
+		)
+	}
+
+	if config.OutputMode == config.OutputModeFile {
+		filename := config.OutputFileName
+		if filename == "" {
+			fname, err := file.GenerateUniqueFileNameForSnapshot("yaml")
+			if err != nil {
+
+			}
+			filename = fname
+		}
+		fw, err := file.NewYAMLWriter(filename)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer fw.Close()
+		outputProcessor.SetStrategy(
+			output.NewFileStrategy(
+				fw,
+			),
+		)
 	}
 
 	chPool := channels.NewChannelPool()
-	meshsyncHandler, err := meshsync.New(cfg, log, br, chPool)
+	meshsyncHandler, err := meshsync.New(cfg, log, br, outputProcessor, chPool)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
@@ -159,5 +214,44 @@ func connectivityTest(url string, log logger.Handler) {
 		}
 		log.Info("could not receive OK response from broker: "+pingURL, " retrying...")
 		time.Sleep(1 * time.Second)
+	}
+}
+
+func parseFlags() {
+	flag.StringVar(
+		&config.OutputMode,
+		"output",
+		config.OutputModeNats,
+		fmt.Sprintf("Output mode: '%s' or '%s'", config.OutputModeNats, config.OutputModeFile),
+	)
+	flag.StringVar(
+		&config.OutputFileName,
+		"outputFile",
+		"",
+		"Output file path (default: meshery-cluster-snapshot-YYYYMMDD-00.yaml in the current directory)",
+	)
+	flag.StringVar(
+		&config.OutputNamespace,
+		"outputNamespace",
+		"",
+		"namespace for which limit output to file",
+	)
+	var outputResourcesString string
+	flag.StringVar(
+		&outputResourcesString,
+		"outputResources",
+		"",
+		"resources for which limit output to file, coma separated list of k8s resources, f.e. pod,deployment,service",
+	)
+	// Parse the command=line flags to get the output mode
+	flag.Parse()
+
+	config.OutputResourcesSet = make(map[string]bool)
+	if outputResourcesString != "" {
+		config.OutputOnlySpecifiedResources = true
+		outputResourcesList := strings.Split(outputResourcesString, ",")
+		for _, item := range outputResourcesList {
+			config.OutputResourcesSet[strings.ToLower(item)] = true
+		}
 	}
 }

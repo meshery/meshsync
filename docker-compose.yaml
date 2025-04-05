@@ -1,0 +1,15 @@
+version: '3.8'
+
+# this docker compose is solely for local run with main_test.go
+services:
+  nats:
+    image: nats:2.11-alpine3.21
+    container_name: nats
+    ports:
+      - "4222:4222"   # client connections
+      - "8222:8222"   # HTTP monitoring (optional)
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8222/varz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
