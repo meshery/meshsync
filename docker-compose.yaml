@@ -3,7 +3,7 @@ version: '3.8'
 # this docker compose is solely for local run with main_test.go
 services:
   nats:
-    image: nats:2.8.2-alpine3.15
+    image: nats:2.11-alpine3.21
     container_name: nats
     ports:
       - "4222:4222"   # client connections
