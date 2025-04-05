@@ -28,6 +28,7 @@ func init() {
  * ---
  * TODO:
  * - add starting kind cluster to docker compose
+ * - run all test in container to avoid port exposure to host
  */
 func TestWithNatsIntegration(t *testing.T) {
 	if !runIntegrationTest {
