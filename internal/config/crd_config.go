@@ -71,7 +71,7 @@ func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) 
 
 func GetMeshsyncCRDConfigsLocal() (*MeshsyncConfig, error) {
 	// populate the required configs
-	meshsyncConfig, err := PopulateConfigs(LocalMeshsyncConfigMap)
+	meshsyncConfig, err := PopulateConfigsFromMap(LocalMeshsyncConfig)
 
 	if err != nil {
 		// // this hides actual error message
@@ -83,20 +83,24 @@ func GetMeshsyncCRDConfigsLocal() (*MeshsyncConfig, error) {
 
 // PopulateConfigs compares the default configs and the whitelist and blacklist
 func PopulateConfigs(configMap corev1.ConfigMap) (*MeshsyncConfig, error) {
+	return PopulateConfigsFromMap(configMap.Data)
+}
+
+func PopulateConfigsFromMap(data map[string]string) (*MeshsyncConfig, error) {
 	meshsyncConfig := &MeshsyncConfig{}
 
-	if _, ok := configMap.Data["blacklist"]; ok {
-		if len(configMap.Data["blacklist"]) > 0 {
-			err := utils.Unmarshal(configMap.Data["blacklist"], &meshsyncConfig.BlackList)
+	if _, ok := data["blacklist"]; ok {
+		if len(data["blacklist"]) > 0 {
+			err := utils.Unmarshal(data["blacklist"], &meshsyncConfig.BlackList)
 			if err != nil {
 				return nil, ErrInitConfig(err)
 			}
 		}
 	}
 
-	if _, ok := configMap.Data["whitelist"]; ok {
-		if len(configMap.Data["whitelist"]) > 0 {
-			err := utils.Unmarshal(configMap.Data["whitelist"], &meshsyncConfig.WhiteList)
+	if _, ok := data["whitelist"]; ok {
+		if len(data["whitelist"]) > 0 {
+			err := utils.Unmarshal(data["whitelist"], &meshsyncConfig.WhiteList)
 			if err != nil {
 				return nil, ErrInitConfig(err)
 			}
