@@ -96,3 +96,7 @@ integration-test:
 	RUN_INTEGRATION_TESTS=true
 	go test -v -count=1 -run Integration .
 	docker compose down
+
+## Separate task to clean up after integration test if integration test failed
+integration-test-cleanup:
+	docker compose down
