@@ -32,45 +32,16 @@ var (
 )
 
 func init() {
-	flag.StringVar(
-		&config.OutputMode,
-		"output",
-		config.OutputModeNats,
-		fmt.Sprintf("Output mode: '%s' or '%s'", config.OutputModeNats, config.OutputModeFile),
-	)
-	flag.StringVar(
-		&config.OutputFileName,
-		"outputFile",
-		"",
-		"Output file path (default: meshery-cluster-snapshot-YYYYMMDD-00.yaml in the current directory)",
-	)
-	flag.StringVar(
-		&config.OutputNamespace,
-		"outputNamespace",
-		"",
-		"namespace for which limit output to file",
-	)
-	var outputResourcesString string
-	flag.StringVar(
-		&outputResourcesString,
-		"outputResources",
-		"",
-		"resources for which limit output to file, coma separated list of k8s resources, f.e. pod,deployment,service",
-	)
-	// Parse the command=line flags to get the output mode
-	flag.Parse()
+	// this function is also executed in tests
+	// having flag.Parse() leads to an error
+	// flag provided but not defined: -test.testlogfile
+	// because go defined custom flags during tests run
+	// moved flags to parseFlags() and call in main()
 
-	config.OutputResourcesSet = make(map[string]bool)
-	if outputResourcesString != "" {
-		config.OutputOnlySpecifiedResources = true
-		outputResourcesList := strings.Split(outputResourcesString, ",")
-		for _, item := range outputResourcesList {
-			config.OutputResourcesSet[strings.ToLower(item)] = true
-		}
-	}
 }
 
 func main() {
+	parseFlags()
 	viper.SetDefault("BUILD", version)
 	viper.SetDefault("COMMITSHA", commitsha)
 
@@ -234,5 +205,44 @@ func connectivityTest(url string, log logger.Handler) {
 		}
 		log.Info("could not receive OK response from broker: "+pingURL, " retrying...")
 		time.Sleep(1 * time.Second)
+	}
+}
+
+func parseFlags() {
+	flag.StringVar(
+		&config.OutputMode,
+		"output",
+		config.OutputModeNats,
+		fmt.Sprintf("Output mode: '%s' or '%s'", config.OutputModeNats, config.OutputModeFile),
+	)
+	flag.StringVar(
+		&config.OutputFileName,
+		"outputFile",
+		"",
+		"Output file path (default: meshery-cluster-snapshot-YYYYMMDD-00.yaml in the current directory)",
+	)
+	flag.StringVar(
+		&config.OutputNamespace,
+		"outputNamespace",
+		"",
+		"namespace for which limit output to file",
+	)
+	var outputResourcesString string
+	flag.StringVar(
+		&outputResourcesString,
+		"outputResources",
+		"",
+		"resources for which limit output to file, coma separated list of k8s resources, f.e. pod,deployment,service",
+	)
+	// Parse the command=line flags to get the output mode
+	flag.Parse()
+
+	config.OutputResourcesSet = make(map[string]bool)
+	if outputResourcesString != "" {
+		config.OutputOnlySpecifiedResources = true
+		outputResourcesList := strings.Split(outputResourcesString, ",")
+		for _, item := range outputResourcesList {
+			config.OutputResourcesSet[strings.ToLower(item)] = true
+		}
 	}
 }
