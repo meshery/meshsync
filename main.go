@@ -199,7 +199,13 @@ func main() {
 	go meshsyncHandler.WatchCRDs()
 
 	go meshsyncHandler.Run()
-	go meshsyncHandler.ListenToRequests()
+	if config.OutputMode == config.OutputModeNats {
+		// even so the config param name is OutputMode
+		// it is not only output but also input
+		// in that case if  OutputMode is not OutputModeNats
+		// there is no nats at all, so we do not subscribe to any topic
+		go meshsyncHandler.ListenToRequests()
+	}
 
 	if config.StopAfterSeconds > -1 {
 		go func(stopCh channels.StopChannel) {

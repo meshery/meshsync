@@ -69,13 +69,6 @@ func (h *Handler) UpdateInformer() error {
 }
 
 func (h *Handler) ListenToRequests() {
-	if config.OutputMode != config.OutputModeNats {
-		// even so the config param name is OutputMode
-		// it is not only output but also input
-		// in that case if  OutputMode is not OutputModeNats
-		// there is no nats at all, so we do not subscribe to any topic
-		return
-	}
 	listenerConfigs := make(map[string]config.ListenerConfig, 10)
 	err := h.Config.GetObject(config.ListenersKey, &listenerConfigs)
 	if err != nil {
