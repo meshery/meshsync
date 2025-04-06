@@ -46,6 +46,13 @@ func main() {
 	viper.SetDefault("BUILD", version)
 	viper.SetDefault("COMMITSHA", commitsha)
 
+	// if output mode is file -> do not try to use meshsync CRD.
+	// TODO
+	// theoretically CRDs could be present even in file output mode
+	// circle around the opportunity to check if CRD is present in the cluster,
+	// and only skip them in file output mode if it is not present.
+	skipCRDFlag := config.OutputMode == config.OutputModeFile
+
 	// Initialize Logger instance
 	log, err := logger.New(serviceName, logger.Options{
 		Format:   logger.SyslogLogFormat,
@@ -65,13 +72,12 @@ func main() {
 
 	var crdConfigs *config.MeshsyncConfig
 
-	if config.OutputMode == config.OutputModeNats {
-		// get configs from meshsync crd if available
-		crdConfigs, err = config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
-	}
-	if config.OutputMode == config.OutputModeFile {
+	if skipCRDFlag {
 		// get configs from local variable
 		crdConfigs, err = config.GetMeshsyncCRDConfigsLocal()
+	} else {
+		// get configs from meshsync crd if available
+		crdConfigs, err = config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
 	}
 	if err != nil {
 		// no configs found from meshsync CRD log warning
