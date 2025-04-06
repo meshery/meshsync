@@ -10,6 +10,7 @@ import (
 	"golang.org/x/exp/slices"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
@@ -25,11 +26,8 @@ var (
 )
 
 func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) {
-	// initialize the group version resource to access the custom resource
-	gvr := schema.GroupVersionResource{Version: version, Group: group, Resource: resource}
-
 	// make a call to get the custom resource
-	crd, err := dyClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), crName, metav1.GetOptions{})
+	crd, err := GetMeshsyncCRD(dyClient)
 
 	if err != nil {
 		return nil, ErrInitConfig(err)
@@ -67,6 +65,12 @@ func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) 
 		return nil, ErrInitConfig(err)
 	}
 	return meshsyncConfig, nil
+}
+
+func GetMeshsyncCRD(dyClient dynamic.Interface) (*unstructured.Unstructured, error) {
+	// initialize the group version resource to access the custom resource
+	gvr := schema.GroupVersionResource{Version: version, Group: group, Resource: resource}
+	return dyClient.Resource(gvr).Namespace(namespace).Get(context.TODO(), crName, metav1.GetOptions{})
 }
 
 func GetMeshsyncCRDConfigsLocal() (*MeshsyncConfig, error) {

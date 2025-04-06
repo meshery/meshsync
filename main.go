@@ -46,13 +46,6 @@ func main() {
 	viper.SetDefault("BUILD", version)
 	viper.SetDefault("COMMITSHA", commitsha)
 
-	// if output mode is file -> do not try to use meshsync CRD.
-	// TODO
-	// theoretically CRDs could be present even in file output mode
-	// circle around the opportunity to check if CRD is present in the cluster,
-	// and only skip them in file output mode if it is not present.
-	skipCRDFlag := config.OutputMode == config.OutputModeFile
-
 	// Initialize Logger instance
 	log, err := logger.New(serviceName, logger.Options{
 		Format:   logger.SyslogLogFormat,
@@ -70,14 +63,32 @@ func main() {
 		os.Exit(1)
 	}
 
+	useCRDFlag := true
+	if config.OutputMode == config.OutputModeFile {
+		// if output mode is file -> generally it is not expected to have CRD present in cluster.
+		// theoretically CRDs could be present even in file output mode.
+		// hence check if CRD is present in the cluster,
+		// and only skip them in file output mode if it is not present.
+		crd, err := config.GetMeshsyncCRD(kubeClient.DynamicKubeClient)
+		if crd != nil && err == nil {
+			// this is rare, but valid case
+			log.Info("running in file output mode and meshsync CRD is present in the cluster")
+		} else {
+			useCRDFlag = false
+			// this is the most common case, file mode and no CRD
+			log.Info("running in file output mode and no meshsync CRD is present in the cluster (expected behaviour)")
+		}
+	}
+
 	var crdConfigs *config.MeshsyncConfig
 
-	if skipCRDFlag {
-		// get configs from local variable
-		crdConfigs, err = config.GetMeshsyncCRDConfigsLocal()
-	} else {
+	if useCRDFlag {
 		// get configs from meshsync crd if available
 		crdConfigs, err = config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
+	} else {
+		// get configs from local variable
+		crdConfigs, err = config.GetMeshsyncCRDConfigsLocal()
+
 	}
 	if err != nil {
 		// no configs found from meshsync CRD log warning
@@ -97,7 +108,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !skipCRDFlag {
+	if useCRDFlag {
 		// this patch only make sense when CRD is present in cluster
 		err = config.PatchCRVersion(&kubeClient.RestConfig)
 		if err != nil {
