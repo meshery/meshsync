@@ -26,6 +26,7 @@ var (
 	OutputMode                   string
 	OutputFileName               string
 	OutputNamespace              string
+	StopAfterSeconds             int
 	OutputResourcesSet           map[string]bool
 	OutputOnlySpecifiedResources bool
 )

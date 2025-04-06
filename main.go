@@ -181,6 +181,15 @@ func main() {
 	go meshsyncHandler.Run()
 	go meshsyncHandler.ListenToRequests()
 
+	if config.StopAfterSeconds > -1 {
+		go func(stopCh channels.StopChannel) {
+			<-time.After(time.Second * time.Duration(config.StopAfterSeconds))
+			log.Infof("Stopping after %d seconds", config.StopAfterSeconds)
+			stopCh <- struct{}{}
+			// close(stopCh)
+		}(chPool[channels.Stop].(channels.StopChannel))
+	}
+
 	log.Info("Server started")
 	// Handle graceful shutdown
 	signal.Notify(chPool[channels.OS].(channels.OSChannel), syscall.SIGTERM, os.Interrupt)
@@ -189,7 +198,12 @@ func main() {
 		close(chPool[channels.Stop].(channels.StopChannel))
 		log.Info("Shutting down")
 	case <-chPool[channels.Stop].(channels.StopChannel):
-		close(chPool[channels.Stop].(channels.StopChannel))
+		// // NOTE:
+		// // does not make sense to close the StopChannel here,
+		// // as the general approach with stop channel to close it rather then put smth in it,
+		// // and hence next close will create panic if stop channel is already closed
+		// // so commented this out:
+		// close(chPool[channels.Stop].(channels.StopChannel))
 		log.Info("Shutting down")
 	}
 }
@@ -243,6 +257,13 @@ func parseFlags() {
 		"",
 		"resources for which limit output to file, coma separated list of k8s resources, f.e. pod,deployment,service",
 	)
+	flag.IntVar(
+		&config.StopAfterSeconds,
+		"stopAfterSeconds",
+		-1,
+		"stop meshsync execution after specified amount of seconds",
+	)
+
 	// Parse the command=line flags to get the output mode
 	flag.Parse()
 
