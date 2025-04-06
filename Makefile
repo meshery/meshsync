@@ -87,9 +87,9 @@ test: check
 lint:
 	golangci-lint run ./...
 ## Runs integration tests
-## it does not start kind for now, only nats
-## hence to successful run you need a k8s cluster, which meshsync could access
-## also docker compose exposes nats on default ports to host, so they must be free before run
+## it does not start kind (neither install CRD), only starts nats
+## hence to successful run you need a k8s cluster (with installed meshsync CRD);
+## docker compose exposes nats on default ports to host, so they must be available
 integration-test:
 	docker compose up -d
 	sleep 4
