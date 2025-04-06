@@ -97,9 +97,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = config.PatchCRVersion(&kubeClient.RestConfig)
-	if err != nil {
-		log.Warn(err)
+	if !skipCRDFlag {
+		// this patch only make sense when CRD is present in cluster
+		err = config.PatchCRVersion(&kubeClient.RestConfig)
+		if err != nil {
+			log.Warn(err)
+		}
 	}
 
 	// pass configs from crd to default configs
