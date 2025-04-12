@@ -42,7 +42,7 @@ jobs:
         with:
           cluster_name: "kind-cluster"
       - name: Create k8s meshery namespace
-        run: kubectl create namespace my-namespace
+        run: kubectl create namespace meshery
       - name: Apply k8s resources
         run: |
           kubectl apply -f ./integration-test-yamls/crds.yaml
