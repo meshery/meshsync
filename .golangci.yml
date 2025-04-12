@@ -29,12 +29,26 @@ linters:
     - goconst
     - gocritic
     - govet
-    - golint
     - unused
     - cyclop
-    - scopelint
-  disable:
-    - testpackage
+  
+  settings:
+    gocritic:
+      enable-all: true
+      disabled-checks:
+        # # didn't find related check 
+        # - parallelize
+        - nestingReduce
+        - hugeParam
+        # # didn't find related check
+        # - hugeStruct
+        # # didn't find related check
+        # - nestParam
+        # # didn't find related check
+        # - prealloc
+    govet:
+      enable:
+        - tests
 
 # issues:
 #   exclude-dirs:
