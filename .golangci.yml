@@ -2,14 +2,17 @@ linters-settings:
   cyclop:
     package-average: 7
   gocritic:
-    enabled: true
-    disable:
-      - parallelize
-      - nesting
+    disabled-checks:
+      # # didn't find
+      # - parallelize
+      - nestingReduce
       - hugeParam
-      - hugeStruct
-      - nestParam
-      - prealloc
+      # # didn't find
+      # - hugeStruct
+      # # didn't find
+      # - nestParam
+      # # didn't find
+      # - prealloc
   govet:
     enable:
       - shadow
@@ -35,11 +38,11 @@ linters:
     - unused
     - cyclop
 
-# issues:
-#   exclude-dirs:
-#     - vendor
-#     - bundle
-#     - config
-#     - hack
-#     - helpers
-#     - img
+issues:
+  exclude-dirs:
+    - vendor
+    - bundle
+    - config
+    - hack
+    - helpers
+    - img
