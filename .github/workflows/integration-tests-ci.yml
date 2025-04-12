@@ -41,7 +41,9 @@ jobs:
         uses: helm/kind-action@v1.10.0
         with:
           cluster_name: "kind-cluster"
-      - name: Apply Kubernetes resources
+      - name: Create k8s meshery namespace
+        run: kubectl create namespace my-namespace
+      - name: Apply k8s resources
         run: |
           kubectl apply -f ./integration-test-yamls/crds.yaml
           kubectl --namespace meshery apply -f ./integration-test-yamls/meshsync.yaml
