@@ -1,4 +1,4 @@
-name: Golang Unit and Integration Tests
+name: Integration Tests
 on:
   push:
     branches:
@@ -41,6 +41,10 @@ jobs:
         uses: helm/kind-action@v1.10.0
         with:
           cluster_name: "kind-cluster"
+      - name: Apply Kubernetes resources
+        run: |
+          kubectl apply -f ./integration-test-yamls/crds.yaml
+          kubectl --namespace meshery apply -f ./integration-test-yamls/meshsync.yaml
       - name: Run integration tests
         run: |
           make integration-test
