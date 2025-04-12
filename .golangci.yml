@@ -1,24 +1,27 @@
-# linters-settings:
-#   gocritic:
-#     enabled: true
-#     disable:
-#       - parallelize
-#       - nesting
-#       - hugeParam
-#       - hugeStruct
-#       - nestParam
-#       - prealloc
-#   govet:
-#     enabled: true
-#     tests: true
-#   shadow:
-#     enabled: true
-#   golint:
-#     enabled: true
-#     min-confidence: 0.8
-#   scopelint:
-#     enabled: true
-#     tests: true
+linters-settings:
+  cyclop:
+    package-average: 7
+  gocritic:
+    enabled: true
+    disable:
+      - parallelize
+      - nesting
+      - hugeParam
+      - hugeStruct
+      - nestParam
+      - prealloc
+  govet:
+    enable:
+      - shadow
+      - tests
+  # # Deprecated
+  # golint:
+  #   enabled: true
+  #   min-confidence: 0.8
+  # # Deprecated
+  # scopelint:
+  #   enabled: true
+  #   tests: true
 
 # Configuration for golangci-lint that is suitable for a Kubernetes operator project built with Golang
 linters:
@@ -31,24 +34,6 @@ linters:
     - govet
     - unused
     - cyclop
-  
-  settings:
-    gocritic:
-      enable-all: true
-      disabled-checks:
-        # # didn't find related check 
-        # - parallelize
-        - nestingReduce
-        - hugeParam
-        # # didn't find related check
-        # - hugeStruct
-        # # didn't find related check
-        # - nestParam
-        # # didn't find related check
-        # - prealloc
-    govet:
-      enable:
-        - tests
 
 # issues:
 #   exclude-dirs:
