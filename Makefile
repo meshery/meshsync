@@ -91,7 +91,7 @@ lint:
 ## hence to successful run you need a k8s cluster (with installed meshsync CRD);
 ## docker compose exposes nats on default ports to host, so they must be available
 integration-test:
-	docker compose up -d
+	docker compose up -d || exit 1
 	sleep 4
 	RUN_INTEGRATION_TESTS=true go test -v -count=1 -run Integration .
 	docker compose down
