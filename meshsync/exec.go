@@ -16,12 +16,12 @@ package meshsync
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 	"time"
-	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/layer5io/meshkit/broker"
