@@ -6,12 +6,18 @@ on:
     paths:
       - "**.go"
       - "**.golden"
+      - "Makefile"
+      - "docker-compose.yaml"
+      - ".github/workflows/integration-tests-ci.yml"
   pull_request:
     branches:
       - "master"
     paths:
       - "**.go"
       - "**.golden"
+      - "Makefile"
+      - "docker-compose.yaml"
+      - ".github/workflows/integration-tests-ci.yml"
   workflow_dispatch:
     inputs:
       logLevel:
