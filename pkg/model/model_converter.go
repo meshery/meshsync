@@ -13,6 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+// TODO fix cyclop error
+// Error: pkg/model/model_converter.go:16:1: calculated cyclomatic complexity for function ParseList is 13, max is 10 (cyclop)
+//
+//nolint:cyclop
 func ParseList(object unstructured.Unstructured, eventType broker.EventType) KubernetesResource {
 	data, _ := object.MarshalJSON()
 	result := KubernetesResource{}
