@@ -94,7 +94,7 @@ func TestBlackListResources(t *testing.T) {
 	}
 
 	if len(meshsyncConfig.BlackList) == 0 {
-		t.Errorf("BlackListed resources not correctly deserialized")
+		t.Errorf("Blacklisted resources not correctly deserialized")
 	}
 
 	expectedBlackList := []string{"namespaces.v1.", "replicasets.v1.apps", "pods.v1."}
