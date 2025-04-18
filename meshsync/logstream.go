@@ -2,9 +2,9 @@ package meshsync
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
-	"encoding/json"
 
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshsync/internal/channels"

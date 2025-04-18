@@ -82,7 +82,7 @@ func TestBlackListResources(t *testing.T) {
 			Namespace: "default",
 		},
 		Data: map[string]string{
-			"blacklist": "[\"namespaces.v1.\",\"pods.v1.\"]",
+			"blacklist": "[\"namespaces.v1.\",\"replicasets.v1.apps\",\"pods.v1.\"]",
 			"whitelist": "",
 		},
 	}
@@ -94,10 +94,10 @@ func TestBlackListResources(t *testing.T) {
 	}
 
 	if len(meshsyncConfig.BlackList) == 0 {
-		t.Errorf("WhiteListed resources")
+		t.Errorf("Blacklisted resources not correctly deserialized")
 	}
 
-	expectedBlackList := []string{"namespaces.v1.", "pods.v1."}
+	expectedBlackList := []string{"namespaces.v1.", "replicasets.v1.apps", "pods.v1."}
 	if !reflect.DeepEqual(meshsyncConfig.BlackList, expectedBlackList) {
 		t.Error("BlackListed resources not equal")
 	}
@@ -107,8 +107,8 @@ func TestBlackListResources(t *testing.T) {
 	// excempted local pipelines: pods, replicasets
 
 	// counting expected pipelines after blacklist
-	expectedGlobalCount := len(meshsyncConfig.Pipelines["global"]) - 1 //excluding namespaces
-	expectedLocalCount := len(meshsyncConfig.Pipelines["local"]) - 2   //excluding pods, replicasets
+	expectedGlobalCount := len(Pipelines[GlobalResourceKey]) - 1 //excluding namespaces
+	expectedLocalCount := len(Pipelines[LocalResourceKey]) - 2   //excluding pods, replicasets
 
 	if len(meshsyncConfig.Pipelines["global"]) != expectedGlobalCount {
 		t.Errorf("global pipelines not well configured expected %d", expectedGlobalCount)

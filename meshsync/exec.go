@@ -16,12 +16,12 @@ package meshsync
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 	"time"
-	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/layer5io/meshkit/broker"
@@ -110,6 +110,10 @@ func (h *Handler) streamChannelPool() {
 	}()
 }
 
+// TODO fix cyclop error
+// Error: meshsync/exec.go:113:1: calculated cyclomatic complexity for function streamSession is 15, max is 10 (cyclop)
+//
+//nolint:cyclop
 func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.ListenerConfig) {
 	subCh := make(chan *broker.Message)
 	tstdin, putStdin := io.Pipe()

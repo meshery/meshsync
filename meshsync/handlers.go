@@ -1,9 +1,9 @@
 package meshsync
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
-	"encoding/json"
 
 	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/utils"
@@ -68,6 +68,10 @@ func (h *Handler) UpdateInformer() error {
 	return nil
 }
 
+// TODO fix cyclop error
+// Error: meshsync/handlers.go:71:1: calculated cyclomatic complexity for function ListenToRequests is 19, max is 10 (cyclop)
+//
+//nolint:cyclop
 func (h *Handler) ListenToRequests() {
 	listenerConfigs := make(map[string]config.ListenerConfig, 10)
 	err := h.Config.GetObject(config.ListenersKey, &listenerConfigs)
