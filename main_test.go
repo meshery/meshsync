@@ -45,10 +45,13 @@ func TestWithNatsIntegration(t *testing.T) {
 	}
 	count := 0
 
-	go func() {
-		out := make(chan *broker.Message)
-		br.SubscribeWithChannel(testMeshsyncTopic, "", out)
+	out := make(chan *broker.Message)
+	err = br.SubscribeWithChannel(testMeshsyncTopic, "", out)
+	if err != nil {
+		t.Fatalf("error subscribing to topic: %v", err)
+	}
 
+	go func() {
 		for range out {
 			count++
 		}
