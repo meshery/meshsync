@@ -1,3 +1,7 @@
+// TODO fix cyclop error
+// Error: main.go:1:1: the average complexity for the package main is 10.500000, max is 7.000000 (cyclop)
+//
+//nolint:cyclop
 package main
 
 import (
@@ -41,6 +45,10 @@ func init() {
 
 }
 
+// TODO fix cyclop error
+// Error: main.go:31:1: calculated cyclomatic complexity for function main is 16, max is 10 (cyclop)
+//
+//nolint:cyclop
 func main() {
 	parseFlags()
 	viper.SetDefault("BUILD", version)

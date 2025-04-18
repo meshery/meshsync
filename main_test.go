@@ -23,12 +23,15 @@ func init() {
  * could be a good idea to put a test into ci workflow:
  * - start a kind cluster and nats container
  * - check that the messages are received in nats
+ * this test requires k8s cluster (with installed CRDs: meshsync) and nats streaming
  * --
  * use docker compose to start nats
  * ---
  * TODO:
  * - add starting kind cluster to docker compose
  * - run all test in container to avoid port exposure to host
+ * - (maybe) add starting kind cluster to docker compose (this is not necessary anymore, as kind cluster is created in co workflow step, could be useful only for local run);
+ * - (maybe) run all test in container to avoid port exposure to host (this also could be useful only for local run to avoid port collision with host machine)
  */
 func TestWithNatsIntegration(t *testing.T) {
 	if !runIntegrationTest {
@@ -48,10 +51,13 @@ func TestWithNatsIntegration(t *testing.T) {
 	}
 	count := 0
 
-	go func() {
-		out := make(chan *broker.Message)
-		br.SubscribeWithChannel(testMeshsyncTopic, "", out)
+	out := make(chan *broker.Message)
+	err = br.SubscribeWithChannel(testMeshsyncTopic, "", out)
+	if err != nil {
+		t.Fatalf("error subscribing to topic: %v", err)
+	}
 
+	go func() {
 		for range out {
 			count++
 		}
