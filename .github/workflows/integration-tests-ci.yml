@@ -43,6 +43,9 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3 
+      - name: Create .meshery folder
+        run: |
+          mkdir $HOME/.meshery
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1.10.0
         with:
