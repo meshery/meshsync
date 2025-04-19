@@ -17,6 +17,11 @@
 include install/Makefile.core.mk
 include install/Makefile.show-help.mk
 
+CURRENT_DIR:=$(shell pwd)
+MESHSYNC_BINARY_TARGET_RELATIVE:=bin/meshsync
+MESHSYNC_BINARY_TARGET_ABSOLUTE:=$(CURRENT_DIR)/$(MESHSYNC_BINARY_TARGET_RELATIVE)
+INTEGRATION_TESTS_DIR:=$(CURRENT_DIR)/integration-tests
+
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
 else
@@ -50,9 +55,9 @@ nats:
 # Local Builds
 #-----------------------------------------------------------------------------
 .PHONY: build
-## Build Meshsync binary to ./bin folder
+## Build Meshsync binary to $(MESHSYNC_BINARY_TARGET_RELATIVE)
 build:
-	go build -o bin/meshsync main.go
+	go build -o $(MESHSYNC_BINARY_TARGET_RELATIVE) main.go
 
 .PHONY: run-check
 ## Runs local instance of Meshsync: can be used during local development
@@ -86,12 +91,15 @@ test: check
 ## Lint check Golang
 lint:
 	golangci-lint run ./...
+
 ## Runs integration tests
 ## it does not start kind (neither install CRD), only starts nats
 ## hence to successful run you need a k8s cluster (with installed meshsync CRD);
 ## docker compose exposes nats on default ports to host, so they must be available
-integration-test:
-	docker compose up -d || exit 1
+integration-tests: build
+	docker compose -f $(INTEGRATION_TESTS_DIR)/docker-compose.yaml up -d || exit 1
 	sleep 4
-	RUN_INTEGRATION_TESTS=true go test -v -count=1 -run Integration .
-	docker compose down
+	RUN_INTEGRATION_TESTS=true \
+	MESHSYNC_BINARY_PATH=$(MESHSYNC_BINARY_TARGET_ABSOLUTE) \
+	go test -v -count=1 -run Integration $(INTEGRATION_TESTS_DIR)
+	docker compose -f $(INTEGRATION_TESTS_DIR)/docker-compose.yaml down
