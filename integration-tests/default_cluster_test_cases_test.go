@@ -104,11 +104,70 @@ var defaultClusterTestCasesData []defaultClusterTestCaseStruct = []defaultCluste
 						)
 					}
 				}
-				// TODO some more meaningful check
 				assert.True(t, count["pod"] > 0, "must receive kind pod messages from queue")
 				assert.True(t, count["replicaset"] > 0, "must receive kind replicaset messages from queue")
 				if len(otherKeys) > 0 {
-					t.Fatalf("received not allowed keys %s", strings.Join(otherKeys, ","))
+					t.Fatalf("received not allowed kind keys %s", strings.Join(otherKeys, ","))
+				}
+			}
+
+		},
+	},
+	{
+		name: "receive from nats only resources from specified namespace",
+		meshsyncCMDArgs: []string{
+			"--stopAfterSeconds",
+			"8",
+			"--outputNamespace",
+			"agile-otter",
+		},
+		natsMessageHandler: func(
+			t *testing.T,
+			out chan *broker.Message,
+			resultData map[string]any,
+		) {
+			resourcesPerNamespaceCount := make(map[string]int)
+			resultData["count"] = resourcesPerNamespaceCount
+			errCh := make(chan error)
+			go func(errCh0 chan<- error) {
+				for message := range out {
+					k8sResource, err := unmarshalObject(message.Object)
+					if err != nil {
+						errCh0 <- fmt.Errorf(
+							"error convering message.Object to model.KubernetesResource for %T",
+							message.Object,
+						)
+						return
+					}
+					resourcesPerNamespaceCount[strings.ToLower(k8sResource.KubernetesResourceMeta.Namespace)]++
+					resultData["count"] = resourcesPerNamespaceCount
+				}
+			}(errCh)
+
+			err := <-errCh
+			if err != nil {
+				t.Fatal(err)
+			}
+		},
+		finalHandler: func(t *testing.T, resultData map[string]any) {
+			count, ok := resultData["count"].(map[string]int)
+			assert.True(t, ok, "must get count from result map")
+			if ok {
+				allowedKeys := map[string]bool{"agile-otter": true}
+				otherKeys := make([]string, 0)
+				for k, v := range count {
+					t.Logf("received %d messages for namespace %s", v, k)
+					if !allowedKeys[k] {
+						otherKeys = append(
+							otherKeys,
+							fmt.Sprintf("[%s = %v]", k, v),
+						)
+					}
+				}
+				assert.True(t, count["agile-otter"] > 0, "must receive messages from resources in agile-otter namespace")
+
+				if len(otherKeys) > 0 {
+					t.Fatalf("received not allowed namespace keys %s", strings.Join(otherKeys, ","))
 				}
 			}
 

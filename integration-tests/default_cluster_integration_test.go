@@ -14,25 +14,33 @@ import (
 
 var runIntegrationTest bool
 var meshsyncBinaryPath string
+var showMeshsyncOutput bool
 var testMeshsyncTopic = "meshery.meshsync.core"
 var testMeshsyncNatsURL = "localhost:4222"
 
 func init() {
 	runIntegrationTest = os.Getenv("RUN_INTEGRATION_TESTS") == "true"
 	meshsyncBinaryPath = os.Getenv("MESHSYNC_BINARY_PATH")
+	showMeshsyncOutput = os.Getenv("SHOW_MESHSYNC_OUTPUT") == "true"
 }
 
 /**
- * this test requires k8s cluster (with installed CRDs: meshsync) and nats streaming;
+ * to run locally this test requires
+ * - k8s cluster with
+ * 		- installed CRDs: meshsync (integration-tests/meshsync.yaml);
+ *		- custom namespace: agile-otter;
+ *		- test deployment: nginx (integration-tests/test-deployment.yaml) installed into custom namespace agile-otter;
+ * - nats streaming (integration-tests/docker-compose.yaml);
+ * --
+ * check .github/workflows/integration-tests-ci.yml for exact cluster set up;
  * --
  * use docker compose to start nats;
- * ---
+ * --
+ * TODO unify above to one script, same for local and github workflow, docker compose or smth;
+ * --
  * this test runs all test cases on the same k8s cluster, but with different input params for meshsync;
  * if you need a specific cluster setup you (probably) need to write a separate test,
  * or fit in the current cluster set up without failing existing tests;
- * --
- * check .github/workflows/integration-tests-ci.yml
- * for exact cluster set up;
  * --
  * test flow of every test case is as follow:
  * - subscribe to nats (each test case has a separate queue group, so it receives every message);
@@ -94,7 +102,13 @@ func runWithNatsDefaultK8SClusterTestCase(
 
 		// Step 3: run the meshsync command
 		cmd := exec.Command(meshsyncBinaryPath, tc.meshsyncCMDArgs...)
-		cmd.Stdout = os.Stdout
+		// does not make sense to output meshsync to stdout,
+		// too many logs, hard to catch output from tests
+		if showMeshsyncOutput {
+			cmd.Stdout = os.Stdout
+		} else {
+			cmd.Stdout = nil
+		}
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = os.Stdin
 		if err := cmd.Start(); err != nil {
