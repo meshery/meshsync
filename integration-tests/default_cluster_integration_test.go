@@ -31,6 +31,9 @@ func init() {
  * if you need a specific cluster setup you (probably) need to write a separate test,
  * or fit in the current cluster set up without failing existing tests;
  * --
+ * check .github/workflows/integration-tests-ci.yml
+ * for exact cluster set up;
+ * --
  * test flow of every test case is as follow:
  * - subscribe to nats (each test case has a separate queue group, so it receives every message);
  * - run meshsync binary;
