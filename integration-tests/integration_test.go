@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"testing"
 	"time"
 
@@ -11,11 +12,13 @@ import (
 )
 
 var runIntegrationTest bool
+var meshsyncBinaryPath string
 var testMeshsyncTopic = "meshery.meshsync.core"
 var testMeshsyncNatsURL = "localhost:4222"
 
 func init() {
 	runIntegrationTest = os.Getenv("RUN_INTEGRATION_TESTS") == "true"
+	meshsyncBinaryPath = os.Getenv("MESHSYNC_BINARY_PATH")
 }
 
 /**
@@ -64,9 +67,22 @@ func TestWithNatsIntegration(t *testing.T) {
 	}()
 
 	os.Setenv("BROKER_URL", testMeshsyncNatsURL)
-	go main()
 
-	<-time.After(time.Second * 8)
+	// Create the command
+	args := []string{"--stopAfterSeconds", "8"}
+	cmd := exec.Command(meshsyncBinaryPath, args...)
+
+	// Set the output to be the same as the current process
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	// Run it
+	err = cmd.Run()
+	if err != nil {
+		t.Fatalf("error running binary: %v", err)
+	}
+
 	// TODO some more meaningful check
 	assert.True(t, count > 0)
 
