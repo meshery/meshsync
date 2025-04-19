@@ -20,6 +20,7 @@ include install/Makefile.show-help.mk
 CURRENT_DIR:=$(shell pwd)
 MESHSYNC_BINARY_TARGET_RELATIVE:=bin/meshsync
 MESHSYNC_BINARY_TARGET_ABSOLUTE:=$(CURRENT_DIR)/$(MESHSYNC_BINARY_TARGET_RELATIVE)
+INTEGRATION_TESTS_DIR:=$(CURRENT_DIR)/integration-tests
 
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -95,7 +96,6 @@ lint:
 ## it does not start kind (neither install CRD), only starts nats
 ## hence to successful run you need a k8s cluster (with installed meshsync CRD);
 ## docker compose exposes nats on default ports to host, so they must be available
-INTEGRATION_TESTS_DIR:=$(CURRENT_DIR)/integration-tests
 integration-tests: build
 	docker compose -f $(INTEGRATION_TESTS_DIR)/docker-compose.yaml up -d || exit 1
 	sleep 4
