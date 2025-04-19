@@ -57,7 +57,10 @@ jobs:
         run: |
           kubectl apply -f https://raw.githubusercontent.com/meshery/meshery/refs/heads/master/install/kubernetes/helm/meshery-operator/crds/crds.yaml
           kubectl --namespace meshery apply -f ./integration-tests/meshsync.yaml
+      # TODO: should we install some resources for test purpose, f.e. nginx deployment?
+      - name: Output cluster resources
+        run: kubectl get all
       - name: Run integration tests
         run: |
-          make integration-testss
+          make integration-tests
     
