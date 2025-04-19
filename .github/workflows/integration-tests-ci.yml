@@ -62,7 +62,17 @@ jobs:
           kubectl create namespace agile-otter
           kubectl --namespace agile-otter apply -f ./integration-tests/test-deployment.yaml
       - name: Output cluster resources
-        run: kubectl get all
+        run: |
+          kubectl --namespace default get deployment
+          kubectl --namespace default get rs
+          kubectl --namespace default get po
+          kubectl --namespace default get service
+          kubectl --namespace default get configmap
+          kubectl --namespace agile-otter get deployment
+          kubectl --namespace agile-otter get rs
+          kubectl --namespace agile-otter get po
+          kubectl --namespace agile-otter get service
+          kubectl --namespace agile-otter get configmap
       - name: Run integration tests
         run: |
           make integration-tests
