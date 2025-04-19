@@ -96,7 +96,7 @@ lint:
 ## hence to successful run you need a k8s cluster (with installed meshsync CRD);
 ## docker compose exposes nats on default ports to host, so they must be available
 INTEGRATION_TESTS_DIR:=$(CURRENT_DIR)/integration-tests
-integration-test: build
+integration-tests: build
 	docker compose -f $(INTEGRATION_TESTS_DIR)/docker-compose.yaml up -d || exit 1
 	sleep 4
 	RUN_INTEGRATION_TESTS=true \
