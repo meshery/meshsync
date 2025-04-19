@@ -53,11 +53,14 @@ jobs:
           cluster_name: "kind-cluster"
       - name: Create k8s meshery namespace
         run: kubectl create namespace meshery
-      - name: Apply k8s resources
+      - name: Apply meshery k8s resources
         run: |
           kubectl apply -f https://raw.githubusercontent.com/meshery/meshery/refs/heads/master/install/kubernetes/helm/meshery-operator/crds/crds.yaml
           kubectl --namespace meshery apply -f ./integration-tests/meshsync.yaml
-      # TODO: should we install some resources for test purpose, f.e. nginx deployment?
+      - name: Apply test k8s resources (nginx deployment)
+        run: |
+          kubectl create namespace agile-otter
+          kubectl --namespace agile-otter apply -f ./integration-tests/test-deployment.yaml
       - name: Output cluster resources
         run: kubectl get all
       - name: Run integration tests
