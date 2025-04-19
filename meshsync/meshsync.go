@@ -6,6 +6,7 @@ import (
 	"github.com/layer5io/meshkit/logger"
 	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
+	"github.com/layer5io/meshsync/internal/output"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
@@ -21,11 +22,12 @@ type Handler struct {
 	Log    logger.Handler
 	Broker broker.Handler
 
-	restConfig   rest.Config
-	informer     dynamicinformer.DynamicSharedInformerFactory
-	staticClient *kubernetes.Clientset
-	channelPool  map[string]channels.GenericChannel
-	stores       map[string]cache.Store
+	restConfig      rest.Config
+	informer        dynamicinformer.DynamicSharedInformerFactory
+	staticClient    *kubernetes.Clientset
+	channelPool     map[string]channels.GenericChannel
+	stores          map[string]cache.Store
+	outputProcessor output.Strategy
 }
 
 func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
@@ -49,7 +51,7 @@ func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
 	}, nil
 }
 
-func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[string]channels.GenericChannel) (*Handler, error) {
+func New(config config.Handler, log logger.Handler, br broker.Handler, os output.Strategy, pool map[string]channels.GenericChannel) (*Handler, error) {
 	// Initialize Kubeconfig
 	kubeClient, err := mesherykube.New(nil)
 	if err != nil {
@@ -63,13 +65,14 @@ func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[
 	informer := GetDynamicInformer(config, kubeClient.DynamicKubeClient, listOptionsFunc)
 
 	return &Handler{
-		Config:       config,
-		Log:          log,
-		Broker:       br,
-		informer:     informer,
-		restConfig:   kubeClient.RestConfig,
-		staticClient: kubeClient.KubeClient,
-		channelPool:  pool,
+		Config:          config,
+		Log:             log,
+		Broker:          br,
+		outputProcessor: os,
+		informer:        informer,
+		restConfig:      kubeClient.RestConfig,
+		staticClient:    kubeClient.KubeClient,
+		channelPool:     pool,
 	}, nil
 }
 

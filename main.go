@@ -5,6 +5,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -13,12 +14,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/layer5io/meshkit/broker"
 	"github.com/layer5io/meshkit/broker/nats"
 	configprovider "github.com/layer5io/meshkit/config/provider"
 	"github.com/layer5io/meshkit/logger"
 	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/config"
+	"github.com/layer5io/meshsync/internal/file"
+	"github.com/layer5io/meshsync/internal/output"
 	"github.com/layer5io/meshsync/meshsync"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -32,11 +36,21 @@ var (
 	pingEndpoint = ":8222/connz"
 )
 
+func init() {
+	// this function is also executed in tests
+	// having flag.Parse() leads to an error
+	// flag provided but not defined: -test.testlogfile
+	// because go defined custom flags during tests run
+	// moved flags to parseFlags() and call in main()
+
+}
+
 // TODO fix cyclop error
 // Error: main.go:31:1: calculated cyclomatic complexity for function main is 16, max is 10 (cyclop)
 //
 //nolint:cyclop
 func main() {
+	parseFlags()
 	viper.SetDefault("BUILD", version)
 	viper.SetDefault("COMMITSHA", commitsha)
 
@@ -57,8 +71,33 @@ func main() {
 		os.Exit(1)
 	}
 
-	// get configs from meshsync crd if available
-	crdConfigs, err := config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
+	useCRDFlag := true
+	if config.OutputMode == config.OutputModeFile {
+		// if output mode is file -> generally it is not expected to have CRD present in cluster.
+		// theoretically CRDs could be present even in file output mode.
+		// hence check if CRD is present in the cluster,
+		// and only skip them in file output mode if it is not present.
+		crd, err := config.GetMeshsyncCRD(kubeClient.DynamicKubeClient)
+		if crd != nil && err == nil {
+			// this is rare, but valid case
+			log.Info("running in file output mode and meshsync CRD is present in the cluster")
+		} else {
+			useCRDFlag = false
+			// this is the most common case, file mode and no CRD
+			log.Info("running in file output mode and no meshsync CRD is present in the cluster (expected behaviour)")
+		}
+	}
+
+	var crdConfigs *config.MeshsyncConfig
+
+	if useCRDFlag {
+		// get configs from meshsync crd if available
+		crdConfigs, err = config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
+	} else {
+		// get configs from local variable
+		crdConfigs, err = config.GetMeshsyncCRDConfigsLocal()
+
+	}
 	if err != nil {
 		// no configs found from meshsync CRD log warning
 		log.Warn(err)
@@ -77,9 +116,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = config.PatchCRVersion(&kubeClient.RestConfig)
-	if err != nil {
-		log.Warn(err)
+	if useCRDFlag {
+		// this patch only make sense when CRD is present in cluster
+		err = config.PatchCRVersion(&kubeClient.RestConfig)
+		if err != nil {
+			log.Warn(err)
+		}
 	}
 
 	// pass configs from crd to default configs
@@ -106,24 +148,57 @@ func main() {
 		log.Error(err)
 		os.Exit(1)
 	}
-	// Skip/Comment the below connectivity test in local environment
-	connectivityTest(cfg.GetKey(config.BrokerURL), log)
-	// Initialize Broker instance
-	br, err := nats.New(nats.Options{
-		URLS:           []string{cfg.GetKey(config.BrokerURL)},
-		ConnectionName: "meshsync",
-		Username:       "",
-		Password:       "",
-		ReconnectWait:  2 * time.Second,
-		MaxReconnect:   60,
-	})
-	if err != nil {
-		log.Error(err)
-		os.Exit(1)
+
+	outputProcessor := output.NewProcessor()
+	var br broker.Handler
+	if config.OutputMode == config.OutputModeNats {
+		//Skip/Comment the below connectivity test in local environment
+		connectivityTest(cfg.GetKey(config.BrokerURL), log)
+		// Initialize Broker instance
+		broker, err := nats.New(nats.Options{
+			URLS:           []string{cfg.GetKey(config.BrokerURL)},
+			ConnectionName: "meshsync",
+			Username:       "",
+			Password:       "",
+			ReconnectWait:  2 * time.Second,
+			MaxReconnect:   60,
+		})
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
+		br = broker
+		outputProcessor.SetStrategy(
+			output.NewNatsStrategy(
+				br,
+			),
+		)
+	}
+
+	if config.OutputMode == config.OutputModeFile {
+		filename := config.OutputFileName
+		if filename == "" {
+			fname, err := file.GenerateUniqueFileNameForSnapshot("yaml")
+			if err != nil {
+
+			}
+			filename = fname
+		}
+		fw, err := file.NewYAMLWriter(filename)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		defer fw.Close()
+		outputProcessor.SetStrategy(
+			output.NewFileStrategy(
+				fw,
+			),
+		)
 	}
 
 	chPool := channels.NewChannelPool()
-	meshsyncHandler, err := meshsync.New(cfg, log, br, chPool)
+	meshsyncHandler, err := meshsync.New(cfg, log, br, outputProcessor, chPool)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
@@ -132,7 +207,22 @@ func main() {
 	go meshsyncHandler.WatchCRDs()
 
 	go meshsyncHandler.Run()
-	go meshsyncHandler.ListenToRequests()
+	if config.OutputMode == config.OutputModeNats {
+		// even so the config param name is OutputMode
+		// it is not only output but also input
+		// in that case if  OutputMode is not OutputModeNats
+		// there is no nats at all, so we do not subscribe to any topic
+		go meshsyncHandler.ListenToRequests()
+	}
+
+	if config.StopAfterSeconds > -1 {
+		go func(stopCh channels.StopChannel) {
+			<-time.After(time.Second * time.Duration(config.StopAfterSeconds))
+			log.Infof("Stopping after %d seconds", config.StopAfterSeconds)
+			stopCh <- struct{}{}
+			// close(stopCh)
+		}(chPool[channels.Stop].(channels.StopChannel))
+	}
 
 	log.Info("Server started")
 	// Handle graceful shutdown
@@ -142,7 +232,12 @@ func main() {
 		close(chPool[channels.Stop].(channels.StopChannel))
 		log.Info("Shutting down")
 	case <-chPool[channels.Stop].(channels.StopChannel):
-		close(chPool[channels.Stop].(channels.StopChannel))
+		// // NOTE:
+		// // does not make sense to close the StopChannel here,
+		// // as the general approach with stop channel to close it rather then put smth in it,
+		// // and hence next close will create panic if stop channel is already closed
+		// // so commented this out:
+		// close(chPool[channels.Stop].(channels.StopChannel))
 		log.Info("Shutting down")
 	}
 }
@@ -167,5 +262,51 @@ func connectivityTest(url string, log logger.Handler) {
 		}
 		log.Info("could not receive OK response from broker: "+pingURL, " retrying...")
 		time.Sleep(1 * time.Second)
+	}
+}
+
+func parseFlags() {
+	flag.StringVar(
+		&config.OutputMode,
+		"output",
+		config.OutputModeNats,
+		fmt.Sprintf("Output mode: '%s' or '%s'", config.OutputModeNats, config.OutputModeFile),
+	)
+	flag.StringVar(
+		&config.OutputFileName,
+		"outputFile",
+		"",
+		"Output file path (default: meshery-cluster-snapshot-YYYYMMDD-00.yaml in the current directory)",
+	)
+	flag.StringVar(
+		&config.OutputNamespace,
+		"outputNamespace",
+		"",
+		"namespace for which limit output to file",
+	)
+	var outputResourcesString string
+	flag.StringVar(
+		&outputResourcesString,
+		"outputResources",
+		"",
+		"resources for which limit output to file, coma separated list of k8s resources, f.e. pod,deployment,service",
+	)
+	flag.IntVar(
+		&config.StopAfterSeconds,
+		"stopAfterSeconds",
+		-1,
+		"stop meshsync execution after specified amount of seconds",
+	)
+
+	// Parse the command=line flags to get the output mode
+	flag.Parse()
+
+	config.OutputResourcesSet = make(map[string]bool)
+	if outputResourcesString != "" {
+		config.OutputOnlySpecifiedResources = true
+		outputResourcesList := strings.Split(outputResourcesString, ",")
+		for _, item := range outputResourcesList {
+			config.OutputResourcesSet[strings.ToLower(item)] = true
+		}
 	}
 }
