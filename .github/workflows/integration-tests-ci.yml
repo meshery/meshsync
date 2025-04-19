@@ -52,8 +52,8 @@ jobs:
       - name: Apply k8s resources
         run: |
           kubectl apply -f https://raw.githubusercontent.com/meshery/meshery/refs/heads/master/install/kubernetes/helm/meshery-operator/crds/crds.yaml
-          kubectl --namespace meshery apply -f ./integration-test-yamls/meshsync.yaml
+          kubectl --namespace meshery apply -f ./integration-tests/meshsync.yaml
       - name: Run integration tests
         run: |
-          make integration-test
+          make integration-tests
     
