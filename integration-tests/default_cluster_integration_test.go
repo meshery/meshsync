@@ -77,12 +77,15 @@ func TestWithNatsDefaultK8SClusterIntegration(t *testing.T) {
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			cmd.Stdin = os.Stdin
-			errCh := make(chan error)
-			runMeshsyncCMD := func(cmd0 *exec.Cmd, errCh0 chan<- error) {
-				errCh0 <- cmd0.Run()
+			if err := cmd.Start(); err != nil {
+				t.Fatalf("error starting binary: %v", err)
 			}
-			go runMeshsyncCMD(cmd, errCh)
+			errCh := make(chan error)
+			go func(cmd0 *exec.Cmd, errCh0 chan<- error) {
+				errCh0 <- cmd0.Wait()
+			}(cmd, errCh)
 
+			// intentionally big timeout to wait till the cmd execution ended
 			timeout := time.Duration(time.Hour * 24)
 			if tc.waitMeshsyncTimeout > 0 {
 				timeout = tc.waitMeshsyncTimeout
