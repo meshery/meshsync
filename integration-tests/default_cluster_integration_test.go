@@ -54,59 +54,75 @@ func TestWithNatsDefaultK8SClusterIntegration(t *testing.T) {
 	}
 
 	for i, tc := range defaultClusterTestCasesData {
-		t.Run(tc.name, func(t *testing.T) {
-			out := make(chan *broker.Message)
-			// Step 1: subscribe to the queue
-			err = br.SubscribeWithChannel(
-				testMeshsyncTopic,
-				fmt.Sprintf("default-cluster-queue-group-%d", i),
-				out,
-			)
+		t.Run(
+			tc.name,
+			runWithNatsDefaultK8SClusterTestCase(
+				br,
+				i,
+				tc,
+			),
+		)
+	}
+}
+
+// need this as separate function to bring down cyclomatic complexity
+func runWithNatsDefaultK8SClusterTestCase(
+	br broker.Handler,
+	tcIndex int,
+	tc defaultClusterTestCaseStruct,
+) func(t *testing.T) {
+	return func(t *testing.T) {
+
+		out := make(chan *broker.Message)
+		// Step 1: subscribe to the queue
+		if err := br.SubscribeWithChannel(
+			testMeshsyncTopic,
+			fmt.Sprintf("default-cluster-queue-group-%d", tcIndex),
+			out,
+		); err != nil {
+			t.Fatalf("error subscribing to topic: %v", err)
+		}
+
+		// Step 2: process messages
+		resultData := make(map[string]any, 1)
+		go tc.natsMessageHandler(t, out, resultData)
+
+		os.Setenv("BROKER_URL", testMeshsyncNatsURL)
+
+		// Step 3: run the meshsync command
+		cmd := exec.Command(meshsyncBinaryPath, tc.meshsyncCMDArgs...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+		if err := cmd.Start(); err != nil {
+			t.Fatalf("error starting binary: %v", err)
+		}
+		errCh := make(chan error)
+		go func(cmd0 *exec.Cmd, errCh0 chan<- error) {
+			errCh0 <- cmd0.Wait()
+		}(cmd, errCh)
+
+		// intentionally big timeout to wait till the cmd execution ended
+		timeout := time.Duration(time.Hour * 24)
+		if tc.waitMeshsyncTimeout > 0 {
+			timeout = tc.waitMeshsyncTimeout
+		}
+
+		select {
+		case err := <-errCh:
 			if err != nil {
-				t.Fatalf("error subscribing to topic: %v", err)
+				t.Fatalf("error running binary: %v", err)
 			}
-
-			// Step 2: process messages
-			resultData := make(map[string]any, 1)
-			go tc.natsMessageHandler(t, out, resultData)
-
-			os.Setenv("BROKER_URL", testMeshsyncNatsURL)
-
-			// Step 3: run the meshsync command
-			cmd := exec.Command(meshsyncBinaryPath, tc.meshsyncCMDArgs...)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			cmd.Stdin = os.Stdin
-			if err := cmd.Start(); err != nil {
-				t.Fatalf("error starting binary: %v", err)
+		case <-time.After(timeout):
+			if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+				t.Fatalf("error terminating meshsync command: %v", err)
 			}
-			errCh := make(chan error)
-			go func(cmd0 *exec.Cmd, errCh0 chan<- error) {
-				errCh0 <- cmd0.Wait()
-			}(cmd, errCh)
+			t.Logf("processing after timeout %d", timeout)
+		}
 
-			// intentionally big timeout to wait till the cmd execution ended
-			timeout := time.Duration(time.Hour * 24)
-			if tc.waitMeshsyncTimeout > 0 {
-				timeout = tc.waitMeshsyncTimeout
-			}
+		// Step 4: do final assertion, if any
+		tc.finalHandler(t, resultData)
 
-			select {
-			case err := <-errCh:
-				if err != nil {
-					t.Fatalf("error running binary: %v", err)
-				}
-			case <-time.After(timeout):
-				if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
-					t.Fatalf("error terminating meshsync command: %v", err)
-				}
-				t.Logf("processing after timeout %d", timeout)
-			}
-
-			// Step 4: do final assertion, if any
-			tc.finalHandler(t, resultData)
-
-			t.Logf("done %s", tc.name)
-		})
+		t.Logf("done %s", tc.name)
 	}
 }
