@@ -43,10 +43,6 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3 
-      #   # TODO temporally, should be somewhere in a common place to be created for build, local, tests;
-      # - name: Create .meshery folder
-      #   run: |
-      #     mkdir -p $HOME/.meshery
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1.10.0
         with:
