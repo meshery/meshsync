@@ -76,4 +76,8 @@ jobs:
       - name: Run integration tests
         run: |
           make integration-tests
-    
+      - name: Upload meshsync command output
+        uses: actions/upload-artifact@v4
+        with:
+          name: meshsync-command-output
+          path: integration-tests/*.meshsync-output.txt

@@ -101,5 +101,6 @@ integration-tests: build
 	sleep 4
 	RUN_INTEGRATION_TESTS=true \
 	MESHSYNC_BINARY_PATH=$(MESHSYNC_BINARY_TARGET_ABSOLUTE) \
+	SAVE_MESHSYNC_OUTPUT=true \
 	go test -v -count=1 -run Integration $(INTEGRATION_TESTS_DIR)
 	docker compose -f $(INTEGRATION_TESTS_DIR)/docker-compose.yaml down
