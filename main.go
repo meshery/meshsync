@@ -184,9 +184,9 @@ func main() {
 			}
 			filename = fname
 		}
-		fw, err := file.NewYAMLWriter(filename)
-		if err != nil {
-			fmt.Println(err)
+		fw, errNewYAMLWriter := file.NewYAMLWriter(filename)
+		if errNewYAMLWriter != nil {
+			fmt.Println(errNewYAMLWriter)
 			return
 		}
 		defer fw.Close()
