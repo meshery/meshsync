@@ -77,14 +77,14 @@ func main() {
 		// theoretically CRDs could be present even in file output mode.
 		// hence check if CRD is present in the cluster,
 		// and only skip them in file output mode if it is not present.
-		crd, err := config.GetMeshsyncCRD(kubeClient.DynamicKubeClient)
-		if crd != nil && err == nil {
+		crd, errGetMeshsyncCRD := config.GetMeshsyncCRD(kubeClient.DynamicKubeClient)
+		if crd != nil && errGetMeshsyncCRD == nil {
 			// this is rare, but valid case
 			log.Info("running in file output mode and meshsync CRD is present in the cluster")
 		} else {
 			useCRDFlag = false
 			// this is the most common case, file mode and no CRD
-			log.Info("running in file output mode and no meshsync CRD is present in the cluster (expected behaviour)")
+			log.Info("running in file output mode and NO meshsync CRD is present in the cluster (expected behaviour)")
 		}
 	}
 
