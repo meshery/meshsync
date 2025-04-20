@@ -78,6 +78,8 @@ jobs:
           make integration-tests
       - name: Upload meshsync command output
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: meshsync-command-output
           path: integration-tests/*.meshsync-output.txt
+          if-no-files-found: warn
