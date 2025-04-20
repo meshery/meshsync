@@ -178,8 +178,8 @@ func main() {
 	if config.OutputMode == config.OutputModeFile {
 		filename := config.OutputFileName
 		if filename == "" {
-			fname, err := file.GenerateUniqueFileNameForSnapshot("yaml")
-			if err != nil {
+			fname, errGenerateUniqueFileNameForSnapshot := file.GenerateUniqueFileNameForSnapshot("yaml")
+			if errGenerateUniqueFileNameForSnapshot != nil {
 
 			}
 			filename = fname
