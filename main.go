@@ -1,10 +1,11 @@
 // TODO fix cyclop error
-// Error: main.go:1:1: the average complexity for the package main is 10.500000, max is 7.000000 (cyclop)
+// Error: main.go:1:1: the average complexity for the package main is 8.000000, max is 7.000000 (cyclop)
 //
 //nolint:cyclop
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"net/http"
@@ -45,11 +46,17 @@ func init() {
 
 }
 
+func main() {
+	if exitCode := mainWithExitCode(); exitCode != 0 {
+		os.Exit(exitCode)
+	}
+}
+
 // TODO fix cyclop error
-// Error: main.go:31:1: calculated cyclomatic complexity for function main is 16, max is 10 (cyclop)
+// main.go:51:1: calculated cyclomatic complexity for function mainWithExitCode is 29, max is 10 (cyclop)
 //
 //nolint:cyclop
-func main() {
+func mainWithExitCode() int {
 	parseFlags()
 	viper.SetDefault("BUILD", version)
 	viper.SetDefault("COMMITSHA", commitsha)
@@ -61,14 +68,14 @@ func main() {
 	})
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return 1
 	}
 
 	// Initialize kubeclient
 	kubeClient, err := mesherykube.New(nil)
 	if err != nil {
 		fmt.Println(err)
-		os.Exit(1)
+		return 1
 	}
 
 	useCRDFlag := true
@@ -106,14 +113,14 @@ func main() {
 	cfg, err := config.New(provider)
 	if err != nil {
 		log.Error(err)
-		os.Exit(1)
+		return 1
 	}
 
 	config.Server["version"] = version
 	err = cfg.SetObject(config.ServerKey, config.Server)
 	if err != nil {
 		log.Error(err)
-		os.Exit(1)
+		return 1
 	}
 
 	if useCRDFlag {
@@ -140,20 +147,22 @@ func main() {
 	err = cfg.SetObject(config.ResourcesKey, config.Pipelines)
 	if err != nil {
 		log.Error(err)
-		os.Exit(1)
+		return 1
 	}
 
 	err = cfg.SetObject(config.ListenersKey, config.Listeners)
 	if err != nil {
 		log.Error(err)
-		os.Exit(1)
+		return 1
 	}
 
 	outputProcessor := output.NewProcessor()
 	var br broker.Handler
 	if config.OutputMode == config.OutputModeNats {
 		// Skip/Comment the below connectivity test in local environment
-		connectivityTest(cfg.GetKey(config.BrokerURL), log)
+		if exitCode := connectivityTest(cfg.GetKey(config.BrokerURL), log); exitCode != 0 {
+			return exitCode
+		}
 		// Initialize Broker instance
 		broker, errNatsNew := nats.New(nats.Options{
 			URLS:           []string{cfg.GetKey(config.BrokerURL)},
@@ -188,7 +197,7 @@ func main() {
 		fw, errNewYAMLWriter := file.NewYAMLWriter(filename)
 		if errNewYAMLWriter != nil {
 			fmt.Println(errNewYAMLWriter)
-			return
+			return 1
 		}
 		defer fw.Close()
 		outputProcessor.SetStrategy(
@@ -202,7 +211,7 @@ func main() {
 	meshsyncHandler, err := meshsync.New(cfg, log, br, outputProcessor, chPool)
 	if err != nil {
 		log.Error(err)
-		os.Exit(1)
+		return 1
 	}
 
 	go meshsyncHandler.WatchCRDs()
@@ -241,14 +250,16 @@ func main() {
 		// close(chPool[channels.Stop].(channels.StopChannel))
 		log.Info("Shutting down")
 	}
+
+	return 0
 }
 
-func connectivityTest(url string, log logger.Handler) {
+func connectivityTest(url string, log logger.Handler) int {
 	// Make sure Broker has started before starting NATS client
 	urls := strings.Split(url, ":")
 	if len(urls) == 0 {
-		log.Info("invalid URL")
-		os.Exit(1)
+		log.Error(errors.New("invalid URL"))
+		return 1
 	}
 	pingURL := "http://" + urls[0] + pingEndpoint
 	for {
@@ -264,6 +275,8 @@ func connectivityTest(url string, log logger.Handler) {
 		log.Info("could not receive OK response from broker: "+pingURL, " retrying...")
 		time.Sleep(1 * time.Second)
 	}
+
+	return 0
 }
 
 func parseFlags() {
