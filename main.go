@@ -152,7 +152,7 @@ func main() {
 	outputProcessor := output.NewProcessor()
 	var br broker.Handler
 	if config.OutputMode == config.OutputModeNats {
-		//Skip/Comment the below connectivity test in local environment
+		// Skip/Comment the below connectivity test in local environment
 		connectivityTest(cfg.GetKey(config.BrokerURL), log)
 		// Initialize Broker instance
 		broker, err := nats.New(nats.Options{
