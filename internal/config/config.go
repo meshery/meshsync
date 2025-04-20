@@ -19,10 +19,13 @@ func New(provider string) (config.Handler, error) {
 		FileName: "meshsync_config",
 	}
 
-	// // if folder exists, there is no error
-	// if err := utils.CreateDirectory(opts.FilePath); err != nil {
-	// 	return nil, ErrInitConfig(err)
-	// }
+	// this is required, because if folder opts.Filepath does not exist
+	// meshsync run ends up with error, f.e.
+	// Error while initializing MeshSync configuration. .Config File \"meshsync_config\" Not Found in \"[/home/runner/.meshery]
+	// if folder exists, there is no error
+	if err := utils.CreateDirectory(opts.FilePath); err != nil {
+		return nil, ErrInitConfig(err)
+	}
 
 	// Config provider
 	switch provider {
