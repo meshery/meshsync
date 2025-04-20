@@ -155,7 +155,7 @@ func main() {
 		// Skip/Comment the below connectivity test in local environment
 		connectivityTest(cfg.GetKey(config.BrokerURL), log)
 		// Initialize Broker instance
-		broker, err := nats.New(nats.Options{
+		broker, errNatsNew := nats.New(nats.Options{
 			URLS:           []string{cfg.GetKey(config.BrokerURL)},
 			ConnectionName: "meshsync",
 			Username:       "",
@@ -163,8 +163,8 @@ func main() {
 			ReconnectWait:  2 * time.Second,
 			MaxReconnect:   60,
 		})
-		if err != nil {
-			log.Error(err)
+		if errNatsNew != nil {
+			log.Error(errNatsNew)
 			os.Exit(1)
 		}
 		br = broker
