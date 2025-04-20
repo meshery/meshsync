@@ -43,35 +43,14 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3 
-      - name: Create k8s Kind Cluster
+      - name: Install Kind and kubectl
         uses: helm/kind-action@v1.10.0
-        with:
-          cluster_name: "kind-cluster"
-      - name: Create k8s meshery namespace
-        run: kubectl create namespace meshery
-      - name: Apply meshery k8s resources
-        run: |
-          kubectl apply -f https://raw.githubusercontent.com/meshery/meshery/refs/heads/master/install/kubernetes/helm/meshery-operator/crds/crds.yaml
-          kubectl --namespace meshery apply -f ./integration-tests/meshsync.yaml
-      - name: Apply test k8s resources (nginx deployment)
-        run: |
-          kubectl create namespace agile-otter
-          kubectl --namespace agile-otter apply -f ./integration-tests/test-deployment.yaml
-      - name: Output cluster resources
-        run: |
-          kubectl --namespace default get deployment
-          kubectl --namespace default get rs
-          kubectl --namespace default get po
-          kubectl --namespace default get service
-          kubectl --namespace default get configmap
-          kubectl --namespace agile-otter get deployment
-          kubectl --namespace agile-otter get rs
-          kubectl --namespace agile-otter get po
-          kubectl --namespace agile-otter get service
-          kubectl --namespace agile-otter get configmap
-      - name: Run integration tests
-        run: |
-          make integration-tests
+      - name: Integration tests set up
+        run: make integration-tests-setup
+      - name: Integration tests run
+        run: make integration-tests-run
+      - name: Integration tests clean up
+        run: make integration-tests-cleanup
       - name: Upload meshsync command output
         uses: actions/upload-artifact@v4
         if: always()

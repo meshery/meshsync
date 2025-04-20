@@ -25,18 +25,12 @@ func init() {
 }
 
 /**
- * to run locally this test requires
- * - k8s cluster with
- * 		- installed CRDs: meshsync (integration-tests/meshsync.yaml);
- *		- custom namespace: agile-otter;
- *		- test deployment: nginx (integration-tests/test-deployment.yaml) installed into custom namespace agile-otter;
- * - nats streaming (integration-tests/docker-compose.yaml);
+ * to run locally this test requires:
+ * - docker
+ * - kind
+ * - kubectl
  * --
- * check .github/workflows/integration-tests-ci.yml for exact cluster set up;
- * --
- * use docker compose to start nats;
- * --
- * TODO unify above to one script, same for local and github workflow, docker compose or smth;
+ * use Makefile to run
  * --
  * this test runs all test cases on the same k8s cluster, but with different input params for meshsync;
  * if you need a specific cluster setup you (probably) need to write a separate test,

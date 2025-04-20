@@ -92,15 +92,25 @@ test: check
 lint:
 	golangci-lint run ./...
 
-## Runs integration tests
-## it does not start kind (neither install CRD), only starts nats
-## hence to successful run you need a k8s cluster (with installed meshsync CRD);
+## Runs integration tests check dependencies (if docker, kind, kubectl is present)
+integration-tests-check-dependencies:
+	./integration-tests/setup.sh check_dependencies
+
+## Runs integration tests set up (runs docker compose with nats and creates a test kind cluster)
 ## docker compose exposes nats on default ports to host, so they must be available
-integration-tests: build
-	docker compose -f $(INTEGRATION_TESTS_DIR)/docker-compose.yaml up -d || exit 1
-	sleep 4
+integration-tests-setup:
+	./integration-tests/infrastructure/setup.sh setup
+
+## Runs integration tests clean up (stops docker compose and deletes test cluster)
+integration-tests-cleanup:
+	./integration-tests/infrastructure/setup.sh cleanup
+
+## Runs integration tests
+integration-tests-run: build
 	RUN_INTEGRATION_TESTS=true \
 	MESHSYNC_BINARY_PATH=$(MESHSYNC_BINARY_TARGET_ABSOLUTE) \
 	SAVE_MESHSYNC_OUTPUT=true \
 	go test -v -count=1 -run Integration $(INTEGRATION_TESTS_DIR)
-	docker compose -f $(INTEGRATION_TESTS_DIR)/docker-compose.yaml down
+
+## Runs integration tests full cycle (setup, run, cleanup)
+integration-tests: integration-tests-setup integration-tests-run integration-tests-cleanup
