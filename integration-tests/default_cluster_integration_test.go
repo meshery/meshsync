@@ -23,10 +23,13 @@ func init() {
 }
 
 /**
- * this test requires k8s cluster (with installed CRDs: meshsync) and nats streaming;
+ * to run locally this test requires:
+ * - docker
+ * - kind
+ * - kubectl
  * --
- * use docker compose to start nats;
- * ---
+ * use Makefile to run
+ * --
  * this test runs all test cases on the same k8s cluster, but with different input params for meshsync;
  * if you need a specific cluster setup you (probably) need to write a separate test,
  * or fit in the current cluster set up without failing existing tests;
