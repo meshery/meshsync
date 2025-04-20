@@ -180,7 +180,8 @@ func main() {
 		if filename == "" {
 			fname, errGenerateUniqueFileNameForSnapshot := file.GenerateUniqueFileNameForSnapshot("yaml")
 			if errGenerateUniqueFileNameForSnapshot != nil {
-
+				log.Error(errGenerateUniqueFileNameForSnapshot)
+				os.Exit(1)
 			}
 			filename = fname
 		}
