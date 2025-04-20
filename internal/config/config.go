@@ -19,6 +19,11 @@ func New(provider string) (config.Handler, error) {
 		FileName: "meshsync_config",
 	}
 
+	// // if folder exists, there is no error
+	// if err := utils.CreateDirectory(opts.FilePath); err != nil {
+	// 	return nil, ErrInitConfig(err)
+	// }
+
 	// Config provider
 	switch provider {
 	case configprovider.ViperKey:
