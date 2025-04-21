@@ -1,7 +1,3 @@
-// TODO fix cyclop error
-// Error: main.go:1:1: the average complexity for the package main is 8.000000, max is 7.000000 (cyclop)
-//
-//nolint:cyclop
 package main
 
 import (
@@ -38,27 +34,23 @@ var (
 )
 
 func main() {
+	parseFlags()
+	viper.SetDefault("BUILD", version)
+	viper.SetDefault("COMMITSHA", commitsha)
+
 	if exitCode := mainWithExitCode(); exitCode != 0 {
 		os.Exit(exitCode)
 	}
 }
 
-// TODO fix cyclop error
-// main.go:51:1: calculated cyclomatic complexity for function mainWithExitCode is 29, max is 10 (cyclop)
-//
-//nolint:cyclop
 func mainWithExitCode() int {
-	parseFlags()
-	viper.SetDefault("BUILD", version)
-	viper.SetDefault("COMMITSHA", commitsha)
-
 	// Initialize Logger instance
-	log, err := logger.New(serviceName, logger.Options{
+	log, errLoggerNew := logger.New(serviceName, logger.Options{
 		Format:   logger.SyslogLogFormat,
 		LogLevel: int(logrus.InfoLevel),
 	})
-	if err != nil {
-		fmt.Println(err)
+	if errLoggerNew != nil {
+		fmt.Println(errLoggerNew)
 		return 1
 	}
 
@@ -69,22 +61,7 @@ func mainWithExitCode() int {
 		return 1
 	}
 
-	useCRDFlag := true
-	if config.OutputMode == config.OutputModeFile {
-		// if output mode is file -> generally it is not expected to have CRD present in cluster.
-		// theoretically CRDs could be present even in file output mode.
-		// hence check if CRD is present in the cluster,
-		// and only skip them in file output mode if it is not present.
-		crd, errGetMeshsyncCRD := config.GetMeshsyncCRD(kubeClient.DynamicKubeClient)
-		if crd != nil && errGetMeshsyncCRD == nil {
-			// this is rare, but valid case
-			log.Info("running in file output mode and meshsync CRD is present in the cluster")
-		} else {
-			useCRDFlag = false
-			// this is the most common case, file mode and no CRD
-			log.Info("running in file output mode and NO meshsync CRD is present in the cluster (expected behaviour)")
-		}
-	}
+	useCRDFlag := determineUseCRDFlag(log, kubeClient)
 
 	var crdConfigs *config.MeshsyncConfig
 
@@ -314,4 +291,24 @@ func parseFlags() {
 			config.OutputResourcesSet[strings.ToLower(item)] = true
 		}
 	}
+}
+
+func determineUseCRDFlag(log logger.Handler, kubeClient *mesherykube.Client) bool {
+	useCRDFlag := true
+	if config.OutputMode == config.OutputModeFile {
+		// if output mode is file -> generally it is not expected to have CRD present in cluster.
+		// theoretically CRDs could be present even in file output mode.
+		// hence check if CRD is present in the cluster,
+		// and only skip them in file output mode if it is not present.
+		crd, errGetMeshsyncCRD := config.GetMeshsyncCRD(kubeClient.DynamicKubeClient)
+		if crd != nil && errGetMeshsyncCRD == nil {
+			// this is rare, but valid case
+			log.Info("running in file output mode and meshsync CRD is present in the cluster")
+		} else {
+			useCRDFlag = false
+			// this is the most common case, file mode and no CRD
+			log.Info("running in file output mode and NO meshsync CRD is present in the cluster (expected behaviour)")
+		}
+	}
+	return useCRDFlag
 }
