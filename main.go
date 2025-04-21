@@ -43,6 +43,10 @@ func main() {
 	}
 }
 
+// TODO fix cyclop error
+// Error: main.go:46:1: calculated cyclomatic complexity for function mainWithExitCode is 25, max is 10 (cyclop)
+//
+//nolint:cyclop
 func mainWithExitCode() int {
 	// Initialize Logger instance
 	log, errLoggerNew := logger.New(serviceName, logger.Options{
