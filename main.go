@@ -37,14 +37,7 @@ var (
 	pingEndpoint = ":8222/connz"
 )
 
-func init() {
-	// this function is also executed in tests
-	// having flag.Parse() leads to an error
-	// flag provided but not defined: -test.testlogfile
-	// because go defined custom flags during tests run
-	// moved flags to parseFlags() and call in main()
-
-}
+func init() {}
 
 func main() {
 	if exitCode := mainWithExitCode(); exitCode != 0 {
