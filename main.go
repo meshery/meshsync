@@ -84,9 +84,8 @@ func mainWithExitCode() int {
 
 	if useCRDFlag {
 		// this patch only make sense when CRD is present in cluster
-		err = config.PatchCRVersion(&kubeClient.RestConfig)
-		if err != nil {
-			log.Warn(err)
+		if errPatchCRVersion := config.PatchCRVersion(&kubeClient.RestConfig); errPatchCRVersion != nil {
+			log.Warn(errPatchCRVersion)
 		}
 	}
 
