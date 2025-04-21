@@ -173,4 +173,34 @@ var defaultClusterTestCasesData []defaultClusterTestCaseStruct = []defaultCluste
 
 		},
 	},
+	{
+		name: "output mode file: must not receive message from queue",
+		meshsyncCMDArgs: []string{
+			"--stopAfterSeconds", "8",
+			"--output", "file",
+		},
+		natsMessageHandler: func(
+			t *testing.T,
+			out chan *broker.Message,
+			resultData map[string]any,
+		) {
+			count := 0
+			resultData["count"] = count
+			go func() {
+				for range out {
+					count++
+					resultData["count"] = count
+				}
+			}()
+		},
+		finalHandler: func(t *testing.T, resultData map[string]any) {
+			count, ok := resultData["count"].(int)
+			assert.True(t, ok, "must get count from result map")
+			if ok {
+				t.Logf("received %d messages from broker", count)
+				assert.Equal(t, 0, count, "must not receive messages from queue")
+			}
+
+		},
+	},
 }
