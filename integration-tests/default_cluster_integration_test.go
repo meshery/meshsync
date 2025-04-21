@@ -97,24 +97,7 @@ func runWithNatsDefaultK8SClusterTestCase(
 		os.Setenv("BROKER_URL", testMeshsyncNatsURL)
 
 		// Step 3: run the meshsync command
-		cmd := exec.Command(meshsyncBinaryPath, tc.meshsyncCMDArgs...)
-		// there is quite rich output from meshsync
-		// save to file instead of stdout
-		if saveMeshsyncOutput {
-			meshsyncOutputFileName := fmt.Sprintf("default-cluster-test-case-%02d.meshsync-output.txt", tcIndex)
-			meshsyncOutputFile, err := os.Create(meshsyncOutputFileName)
-			if err != nil {
-				t.Logf("Could not create meshsync output file %s", meshsyncOutputFileName)
-				// if not possible to create output file, print to the stdout
-				cmd.Stdout = os.Stdout
-			}
-			defer meshsyncOutputFile.Close()
-			cmd.Stdout = meshsyncOutputFile
-		} else {
-			cmd.Stdout = nil
-		}
-		cmd.Stderr = os.Stderr
-		cmd.Stdin = os.Stdin
+		cmd := prepareMeshsyncCMD(t, tcIndex, tc)
 		if err := cmd.Start(); err != nil {
 			t.Fatalf("error starting binary: %v", err)
 		}
@@ -146,4 +129,32 @@ func runWithNatsDefaultK8SClusterTestCase(
 
 		t.Logf("done %s", tc.name)
 	}
+}
+
+// introduced this function to decrease cyclomatic complexity
+func prepareMeshsyncCMD(
+	t *testing.T,
+	tcIndex int,
+	tc defaultClusterTestCaseStruct,
+) *exec.Cmd {
+	cmd := exec.Command(meshsyncBinaryPath, tc.meshsyncCMDArgs...)
+	// there is quite rich output from meshsync
+	// save to file instead of stdout
+	if saveMeshsyncOutput {
+		meshsyncOutputFileName := fmt.Sprintf("default-cluster-test-case-%02d.meshsync-output.txt", tcIndex)
+		meshsyncOutputFile, err := os.Create(meshsyncOutputFileName)
+		if err != nil {
+			t.Logf("Could not create meshsync output file %s", meshsyncOutputFileName)
+			// if not possible to create output file, print to the stdout
+			cmd.Stdout = os.Stdout
+		}
+		defer meshsyncOutputFile.Close()
+		cmd.Stdout = meshsyncOutputFile
+	} else {
+		cmd.Stdout = nil
+	}
+	cmd.Stderr = os.Stderr
+	cmd.Stdin = os.Stdin
+
+	return cmd
 }
