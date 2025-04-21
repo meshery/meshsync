@@ -90,7 +90,9 @@ func runWithNatsDefaultK8SClusterTestCase(
 
 		// Step 2: process messages
 		resultData := make(map[string]any, 1)
-		go tc.natsMessageHandler(t, out, resultData)
+		if tc.natsMessageHandler != nil {
+			go tc.natsMessageHandler(t, out, resultData)
+		}
 
 		os.Setenv("BROKER_URL", testMeshsyncNatsURL)
 
@@ -99,7 +101,7 @@ func runWithNatsDefaultK8SClusterTestCase(
 		// there is quite rich output from meshsync
 		// save to file instead of stdout
 		if saveMeshsyncOutput {
-			meshsyncOutputFileName := fmt.Sprintf("default-cluster-test-case-%d.meshsync-output.txt", tcIndex)
+			meshsyncOutputFileName := fmt.Sprintf("default-cluster-test-case-%02d.meshsync-output.txt", tcIndex)
 			meshsyncOutputFile, err := os.Create(meshsyncOutputFileName)
 			if err != nil {
 				t.Logf("Could not create meshsync output file %s", meshsyncOutputFileName)
