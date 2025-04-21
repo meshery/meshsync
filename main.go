@@ -65,7 +65,7 @@ func mainWithExitCode() int {
 	// Initialize kubeclient
 	kubeClient, err := mesherykube.New(nil)
 	if err != nil {
-		fmt.Println(err)
+		log.Error(err)
 		return 1
 	}
 
@@ -187,7 +187,7 @@ func mainWithExitCode() int {
 		}
 		fw, errNewYAMLWriter := file.NewYAMLWriter(filename)
 		if errNewYAMLWriter != nil {
-			fmt.Println(errNewYAMLWriter)
+			log.Error(errNewYAMLWriter)
 			return 1
 		}
 		defer fw.Close()
