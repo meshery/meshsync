@@ -63,17 +63,8 @@ func mainWithExitCode() int {
 
 	useCRDFlag := determineUseCRDFlag(log, kubeClient)
 
-	var crdConfigs *config.MeshsyncConfig
-
-	if useCRDFlag {
-		// get configs from meshsync crd if available
-		crdConfigs, err = config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
-	} else {
-		// get configs from local variable
-		crdConfigs, err = config.GetMeshsyncCRDConfigsLocal()
-
-	}
-	if err != nil {
+	crdConfigs, errGetMeshsyncCRDConfigs := getMeshsyncCRDConfigs(useCRDFlag, kubeClient)
+	if errGetMeshsyncCRDConfigs != nil {
 		// no configs found from meshsync CRD log warning
 		log.Warn(err)
 	}
@@ -311,4 +302,14 @@ func determineUseCRDFlag(log logger.Handler, kubeClient *mesherykube.Client) boo
 		}
 	}
 	return useCRDFlag
+}
+
+func getMeshsyncCRDConfigs(useCRDFlag bool, kubeClient *mesherykube.Client) (*config.MeshsyncConfig, error) {
+	if useCRDFlag {
+		// get configs from meshsync crd if available
+		return config.GetMeshsyncCRDConfigs(kubeClient.DynamicKubeClient)
+	}
+	// get configs from local variable
+	return config.GetMeshsyncCRDConfigsLocal()
+
 }
