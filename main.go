@@ -37,8 +37,6 @@ var (
 	pingEndpoint = ":8222/connz"
 )
 
-func init() {}
-
 func main() {
 	if exitCode := mainWithExitCode(); exitCode != 0 {
 		os.Exit(exitCode)
