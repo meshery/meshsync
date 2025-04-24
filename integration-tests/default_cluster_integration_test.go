@@ -14,19 +14,24 @@ import (
 
 var runIntegrationTest bool
 var meshsyncBinaryPath string
+var saveMeshsyncOutput bool // if true, saves outputof meshsync binary to file
 var testMeshsyncTopic = "meshery.meshsync.core"
 var testMeshsyncNatsURL = "localhost:4222"
 
 func init() {
 	runIntegrationTest = os.Getenv("RUN_INTEGRATION_TESTS") == "true"
 	meshsyncBinaryPath = os.Getenv("MESHSYNC_BINARY_PATH")
+	saveMeshsyncOutput = os.Getenv("SAVE_MESHSYNC_OUTPUT") == "true"
 }
 
 /**
- * this test requires k8s cluster (with installed CRDs: meshsync) and nats streaming;
+ * to run locally this test requires:
+ * - docker
+ * - kind
+ * - kubectl
  * --
- * use docker compose to start nats;
- * ---
+ * use Makefile to run
+ * --
  * this test runs all test cases on the same k8s cluster, but with different input params for meshsync;
  * if you need a specific cluster setup you (probably) need to write a separate test,
  * or fit in the current cluster set up without failing existing tests;
@@ -91,7 +96,21 @@ func runWithNatsDefaultK8SClusterTestCase(
 
 		// Step 3: run the meshsync command
 		cmd := exec.Command(meshsyncBinaryPath, tc.meshsyncCMDArgs...)
-		cmd.Stdout = os.Stdout
+		// there is quite rich output from meshsync
+		// save to file instead of stdout
+		if saveMeshsyncOutput {
+			meshsyncOutputFileName := fmt.Sprintf("default-cluster-test-case-%d.meshsync-output.txt", tcIndex)
+			meshsyncOutputFile, err := os.Create(meshsyncOutputFileName)
+			if err != nil {
+				t.Logf("Could not create meshsync output file %s", meshsyncOutputFileName)
+				// if not possible to create output file, print to the stdout
+				cmd.Stdout = os.Stdout
+			}
+			defer meshsyncOutputFile.Close()
+			cmd.Stdout = meshsyncOutputFile
+		} else {
+			cmd.Stdout = nil
+		}
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = os.Stdin
 		if err := cmd.Start(); err != nil {
