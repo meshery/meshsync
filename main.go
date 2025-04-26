@@ -38,16 +38,6 @@ func main() {
 	viper.SetDefault("BUILD", version)
 	viper.SetDefault("COMMITSHA", commitsha)
 
-	if exitCode := mainWithExitCode(); exitCode != 0 {
-		os.Exit(exitCode)
-	}
-}
-
-// TODO fix cyclop error
-// Error: main.go:46:1: calculated cyclomatic complexity for function mainWithExitCode is 25, max is 10 (cyclop)
-//
-//nolint:cyclop
-func mainWithExitCode() int {
 	// Initialize Logger instance
 	log, errLoggerNew := logger.New(serviceName, logger.Options{
 		Format:   logger.SyslogLogFormat,
@@ -55,14 +45,24 @@ func mainWithExitCode() int {
 	})
 	if errLoggerNew != nil {
 		fmt.Println(errLoggerNew)
-		return 1
+		os.Exit(1)
 	}
 
+	if err := mainWithError(log); err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+}
+
+// TODO fix cyclop error
+// Error: main.go:46:1: calculated cyclomatic complexity for function mainWithExitCode is 25, max is 10 (cyclop)
+//
+//nolint:cyclop
+func mainWithError(log logger.Handler) error {
 	// Initialize kubeclient
 	kubeClient, err := mesherykube.New(nil)
 	if err != nil {
-		log.Error(err)
-		return 1
+		return err
 	}
 
 	useCRDFlag := determineUseCRDFlag(log, kubeClient)
@@ -75,15 +75,13 @@ func mainWithExitCode() int {
 	// Config init and seed
 	cfg, err := config.New(provider)
 	if err != nil {
-		log.Error(err)
-		return 1
+		return err
 	}
 
 	config.Server["version"] = version
 	err = cfg.SetObject(config.ServerKey, config.Server)
 	if err != nil {
-		log.Error(err)
-		return 1
+		return err
 	}
 
 	if useCRDFlag {
@@ -108,22 +106,20 @@ func mainWithExitCode() int {
 
 	err = cfg.SetObject(config.ResourcesKey, config.Pipelines)
 	if err != nil {
-		log.Error(err)
-		return 1
+		return err
 	}
 
 	err = cfg.SetObject(config.ListenersKey, config.Listeners)
 	if err != nil {
-		log.Error(err)
-		return 1
+		return err
 	}
 
 	outputProcessor := output.NewProcessor()
 	var br broker.Handler
 	if config.OutputMode == config.OutputModeNats {
 		// Skip/Comment the below connectivity test in local environment
-		if exitCode := connectivityTest(cfg.GetKey(config.BrokerURL), log); exitCode != 0 {
-			return exitCode
+		if errConnectivityTest := connectivityTest(cfg.GetKey(config.BrokerURL), log); errConnectivityTest != nil {
+			return errConnectivityTest
 		}
 		// Initialize Broker instance
 		broker, errNatsNew := nats.New(nats.Options{
@@ -135,8 +131,7 @@ func mainWithExitCode() int {
 			MaxReconnect:   60,
 		})
 		if errNatsNew != nil {
-			log.Error(errNatsNew)
-			os.Exit(1)
+			return errNatsNew
 		}
 		br = broker
 		outputProcessor.SetStrategy(
@@ -151,15 +146,13 @@ func mainWithExitCode() int {
 		if filename == "" {
 			fname, errGenerateUniqueFileNameForSnapshot := file.GenerateUniqueFileNameForSnapshot("yaml")
 			if errGenerateUniqueFileNameForSnapshot != nil {
-				log.Error(errGenerateUniqueFileNameForSnapshot)
-				os.Exit(1)
+				return errGenerateUniqueFileNameForSnapshot
 			}
 			filename = fname
 		}
 		fw, errNewYAMLWriter := file.NewYAMLWriter(filename)
 		if errNewYAMLWriter != nil {
-			log.Error(errNewYAMLWriter)
-			return 1
+			return errNewYAMLWriter
 		}
 		defer fw.Close()
 		outputProcessor.SetStrategy(
@@ -172,8 +165,7 @@ func mainWithExitCode() int {
 	chPool := channels.NewChannelPool()
 	meshsyncHandler, err := meshsync.New(cfg, log, br, outputProcessor, chPool)
 	if err != nil {
-		log.Error(err)
-		return 1
+		return err
 	}
 
 	go meshsyncHandler.WatchCRDs()
@@ -213,15 +205,14 @@ func mainWithExitCode() int {
 		log.Info("Shutting down")
 	}
 
-	return 0
+	return nil
 }
 
-func connectivityTest(url string, log logger.Handler) int {
+func connectivityTest(url string, log logger.Handler) error {
 	// Make sure Broker has started before starting NATS client
 	urls := strings.Split(url, ":")
 	if len(urls) == 0 {
-		log.Error(errors.New("invalid URL"))
-		return 1
+		return errors.New("invalid URL")
 	}
 	pingURL := "http://" + urls[0] + pingEndpoint
 	for {
@@ -238,7 +229,7 @@ func connectivityTest(url string, log logger.Handler) int {
 		time.Sleep(1 * time.Second)
 	}
 
-	return 0
+	return nil
 }
 
 func parseFlags() {
