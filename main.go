@@ -305,5 +305,4 @@ func getMeshsyncCRDConfigs(useCRDFlag bool, kubeClient *mesherykube.Client) (*co
 	}
 	// get configs from local variable
 	return config.GetMeshsyncCRDConfigsLocal()
-
 }
