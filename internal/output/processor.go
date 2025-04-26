@@ -7,14 +7,14 @@ import (
 )
 
 type Processor struct {
-	strategy Strategy
+	strategy Writer
 }
 
 func NewProcessor() *Processor {
 	return &Processor{}
 }
 
-func (p *Processor) SetStrategy(strategy Strategy) {
+func (p *Processor) SetStrategy(strategy Writer) {
 	p.strategy = strategy
 }
 

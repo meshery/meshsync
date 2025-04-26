@@ -6,17 +6,17 @@ import (
 	"github.com/layer5io/meshsync/pkg/model"
 )
 
-type NatsStrategy struct {
+type NatsWriter struct {
 	br broker.Handler
 }
 
-func NewNatsStrategy(br broker.Handler) *NatsStrategy {
-	return &NatsStrategy{
+func NewNatsWriter(br broker.Handler) *NatsWriter {
+	return &NatsWriter{
 		br: br,
 	}
 }
 
-func (s *NatsStrategy) Write(
+func (s *NatsWriter) Write(
 	obj model.KubernetesResource,
 	evtype broker.EventType,
 	config config.PipelineConfig,

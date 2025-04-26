@@ -14,18 +14,18 @@ import (
 
 type RegisterInformer struct {
 	pipeline.StepContext
-	log             logger.Handler
-	informer        dynamicinformer.DynamicSharedInformerFactory
-	config          internalconfig.PipelineConfig
-	outputProcessor output.Strategy
+	log          logger.Handler
+	informer     dynamicinformer.DynamicSharedInformerFactory
+	config       internalconfig.PipelineConfig
+	outputWriter output.Writer
 }
 
-func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, config internalconfig.PipelineConfig, os output.Strategy) *RegisterInformer {
+func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, config internalconfig.PipelineConfig, ow output.Writer) *RegisterInformer {
 	return &RegisterInformer{
-		log:             log,
-		informer:        informer,
-		config:          config,
-		outputProcessor: os,
+		log:          log,
+		informer:     informer,
+		config:       config,
+		outputWriter: ow,
 	}
 }
 

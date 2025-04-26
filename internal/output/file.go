@@ -7,17 +7,17 @@ import (
 	"github.com/layer5io/meshsync/pkg/model"
 )
 
-type FileStrategy struct {
+type FileWriter struct {
 	fw file.Writer
 }
 
-func NewFileStrategy(fw file.Writer) *FileStrategy {
-	return &FileStrategy{
+func NewFileWriter(fw file.Writer) *FileWriter {
+	return &FileWriter{
 		fw: fw,
 	}
 }
 
-func (s *FileStrategy) Write(
+func (s *FileWriter) Write(
 	obj model.KubernetesResource,
 	evtype broker.EventType,
 	config config.PipelineConfig,

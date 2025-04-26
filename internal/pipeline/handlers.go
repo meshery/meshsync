@@ -100,7 +100,7 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 
 	}
 
-	if err := ri.outputProcessor.Write(
+	if err := ri.outputWriter.Write(
 		k8sResource,
 		evtype,
 		config,

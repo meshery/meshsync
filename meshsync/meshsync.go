@@ -27,7 +27,7 @@ type Handler struct {
 	staticClient    *kubernetes.Clientset
 	channelPool     map[string]channels.GenericChannel
 	stores          map[string]cache.Store
-	outputProcessor output.Strategy
+	outputProcessor output.Writer
 }
 
 func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
@@ -51,7 +51,7 @@ func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
 	}, nil
 }
 
-func New(config config.Handler, log logger.Handler, br broker.Handler, os output.Strategy, pool map[string]channels.GenericChannel) (*Handler, error) {
+func New(config config.Handler, log logger.Handler, br broker.Handler, os output.Writer, pool map[string]channels.GenericChannel) (*Handler, error) {
 	// Initialize Kubeconfig
 	kubeClient, err := mesherykube.New(nil)
 	if err != nil {

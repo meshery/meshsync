@@ -135,7 +135,7 @@ func mainWithError(log logger.Handler) error {
 		}
 		br = broker
 		outputProcessor.SetStrategy(
-			output.NewNatsStrategy(
+			output.NewNatsWriter(
 				br,
 			),
 		)
@@ -156,7 +156,7 @@ func mainWithError(log logger.Handler) error {
 		}
 		defer fw.Close()
 		outputProcessor.SetStrategy(
-			output.NewFileStrategy(
+			output.NewFileWriter(
 				fw,
 			),
 		)

@@ -6,7 +6,7 @@ import (
 	"github.com/layer5io/meshsync/pkg/model"
 )
 
-type Strategy interface {
+type Writer interface {
 	Write(
 		obj model.KubernetesResource,
 		evtype broker.EventType,
