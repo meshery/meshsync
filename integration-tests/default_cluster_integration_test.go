@@ -110,7 +110,9 @@ func runWithNatsDefaultK8SClusterTestCase(
 		os.Setenv("BROKER_URL", testMeshsyncNatsURL)
 
 		// Step 3: run the meshsync command
-		cmd := prepareMeshsyncCMD(t, tcIndex, tc)
+		cmd, deferFunc := prepareMeshsyncCMD(t, tcIndex, tc)
+		defer deferFunc()
+
 		if err := cmd.Start(); err != nil {
 			t.Fatalf("error starting binary: %v", err)
 		}
@@ -149,8 +151,9 @@ func prepareMeshsyncCMD(
 	t *testing.T,
 	tcIndex int,
 	tc defaultClusterTestCaseStruct,
-) *exec.Cmd {
+) (*exec.Cmd, func()) {
 	cmd := exec.Command(meshsyncBinaryPath, tc.meshsyncCMDArgs...)
+	deferFunc := func() {}
 	// there is quite rich output from meshsync
 	// save to file instead of stdout
 	if saveMeshsyncOutput {
@@ -161,7 +164,9 @@ func prepareMeshsyncCMD(
 			// if not possible to create output file, print to the stdout
 			cmd.Stdout = os.Stdout
 		}
-		defer meshsyncOutputFile.Close()
+		deferFunc = func() {
+			meshsyncOutputFile.Close()
+		}
 		cmd.Stdout = meshsyncOutputFile
 	} else {
 		cmd.Stdout = nil
@@ -169,5 +174,5 @@ func prepareMeshsyncCMD(
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 
-	return cmd
+	return cmd, deferFunc
 }
