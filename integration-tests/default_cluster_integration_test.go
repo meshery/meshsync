@@ -71,12 +71,25 @@ func TestWithNatsDefaultK8SClusterIntegration(t *testing.T) {
 }
 
 // need this as separate function to bring down cyclomatic complexity
+// this one itself is to complicated :)
+//
+// TODO fix cyclop error
+// integration-tests/default_cluster_integration_test.go:74:1: calculated cyclomatic complexity for function runWithNatsDefaultK8SClusterTestCase is 11, max is 10 (cyclop)
+//
+//nolint:cyclop
 func runWithNatsDefaultK8SClusterTestCase(
 	br broker.Handler,
 	tcIndex int,
 	tc defaultClusterTestCaseStruct,
 ) func(t *testing.T) {
 	return func(t *testing.T) {
+		for _, cleanupHook := range tc.cleanupHooks {
+			defer cleanupHook()
+		}
+
+		for _, setupHook := range tc.setupHooks {
+			setupHook()
+		}
 
 		out := make(chan *broker.Message)
 		// Step 1: subscribe to the queue

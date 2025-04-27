@@ -13,6 +13,8 @@ import (
 )
 
 type defaultClusterTestCaseStruct struct {
+	setupHooks          []func()
+	cleanupHooks        []func()
 	name                string
 	meshsyncCMDArgs     []string      // args to pass to meshsync binary
 	waitMeshsyncTimeout time.Duration // if <= 0: waits till meshsync ends execution, otherwise moves  further after specified duration
@@ -182,6 +184,15 @@ var defaultClusterTestCasesData []defaultClusterTestCaseStruct = []defaultCluste
 			"--output", "file",
 			"--outputFile", "meshery-cluster-snapshot-integration-test-03.yaml",
 		},
+		setupHooks: []func(){
+			func() {
+				// put this in setupHooks and not in cleanupHooks
+				// as it is convinient to have files stay after test run
+				// but need to clear them before the test run
+				os.RemoveAll("meshery-cluster-snapshot-integration-test-03-extended.yaml")
+				os.RemoveAll("meshery-cluster-snapshot-integration-test-03.yaml")
+			},
+		},
 		natsMessageHandler: func(
 			t *testing.T,
 			out chan *broker.Message,
@@ -218,6 +229,15 @@ var defaultClusterTestCasesData []defaultClusterTestCaseStruct = []defaultCluste
 			"--outputResources", "pod,deployment",
 			"--outputNamespace", "agile-otter",
 			"--outputFile", "meshery-cluster-snapshot-integration-test-04.yaml",
+		},
+		setupHooks: []func(){
+			func() {
+				// put this in setupHooks and not in cleanupHooks
+				// as it is convinient to have files stay after test run
+				// but need to clear them before the test run
+				os.RemoveAll("meshery-cluster-snapshot-integration-test-04-extended.yaml")
+				os.RemoveAll("meshery-cluster-snapshot-integration-test-04.yaml")
+			},
 		},
 		finalHandler: func(t *testing.T, resultData map[string]any) {
 			expectedKinds := []string{"pod", "deployment"}
