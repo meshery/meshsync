@@ -1,3 +1,7 @@
+// TODO fix cyclop error
+// Error: main.go:1:1: the average complexity for the package main is 7.166667, max is 7.000000 (cyclop)
+//
+//nolint:cyclop
 package main
 
 import (
@@ -7,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -143,21 +148,50 @@ func mainWithError(log logger.Handler) error {
 
 	if config.OutputMode == config.OutputModeFile {
 		filename := config.OutputFileName
+		defaultFormat := "yaml"
 		if filename == "" {
-			fname, errGenerateUniqueFileNameForSnapshot := file.GenerateUniqueFileNameForSnapshot("yaml")
+			fname, errGenerateUniqueFileNameForSnapshot := file.GenerateUniqueFileNameForSnapshot(defaultFormat)
 			if errGenerateUniqueFileNameForSnapshot != nil {
 				return errGenerateUniqueFileNameForSnapshot
 			}
 			filename = fname
 		}
-		fw, errNewYAMLWriter := file.NewYAMLWriter(filename)
+		ext := path.Ext(filename)
+		if ext == "" {
+			ext = "." + defaultFormat
+		}
+		// this is a file which contains all messages from nats
+		// (hence it also contains more than one yaml manifest for the same entity)
+		fw, errNewYAMLWriter := file.NewYAMLWriter(
+			fmt.Sprintf(
+				"%s-extended%s",
+				strings.TrimSuffix(filename, ext),
+				ext,
+			),
+		)
 		if errNewYAMLWriter != nil {
 			return errNewYAMLWriter
 		}
 		defer fw.Close()
+
+		// this is a file which contains only unique resource's messages from nats
+		// it filters out duplicates and writes only latest message from nats per resource
+		fw2, errNewYAMLWriter2 := file.NewYAMLWriter(filename)
+		if errNewYAMLWriter2 != nil {
+			return errNewYAMLWriter2
+		}
+		// this one not written immediately,
+		// but collects in memory and flushes in the end
+		outputInMemoryDeduplicatorWriter := output.NewInMemoryDeduplicatorWriter(
+			output.NewFileWriter(fw2),
+		)
+		// ensure to flush
+		defer outputInMemoryDeduplicatorWriter.Flush()
+
 		outputProcessor.SetStrategy(
-			output.NewFileWriter(
-				fw,
+			output.NewCompositeWriter(
+				output.NewFileWriter(fw),
+				outputInMemoryDeduplicatorWriter,
 			),
 		)
 	}
@@ -194,7 +228,6 @@ func mainWithError(log logger.Handler) error {
 	select {
 	case <-chPool[channels.OS].(channels.OSChannel):
 		close(chPool[channels.Stop].(channels.StopChannel))
-		log.Info("Shutting down")
 	case <-chPool[channels.Stop].(channels.StopChannel):
 		// // NOTE:
 		// // does not make sense to close the StopChannel here,
@@ -202,9 +235,9 @@ func mainWithError(log logger.Handler) error {
 		// // and hence next close will create panic if stop channel is already closed
 		// // so commented this out:
 		// close(chPool[channels.Stop].(channels.StopChannel))
-		log.Info("Shutting down")
 	}
 
+	log.Info("Shutting down")
 	return nil
 }
 
