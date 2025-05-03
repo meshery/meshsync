@@ -29,7 +29,7 @@ func (h *Handler) startDiscovery(pipelineCh chan struct{}) {
 	}
 
 	h.Log.Info("Pipeline started")
-	pl := pipeline.New(h.Log, h.informer, h.outputProcessor, pipelineConfigs, pipelineCh)
+	pl := pipeline.New(h.Log, h.informer, h.outputWriter, pipelineConfigs, pipelineCh)
 	result := pl.Run()
 	h.stores = result.Data.(map[string]cache.Store)
 	if result.Error != nil {
