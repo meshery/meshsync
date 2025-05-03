@@ -238,6 +238,7 @@ func mainWithError(log logger.Handler) error {
 	}
 
 	log.Info("Shutting down")
+
 	return nil
 }
 
