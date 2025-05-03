@@ -139,7 +139,7 @@ func mainWithError(log logger.Handler) error {
 			return errNatsNew
 		}
 		br = broker
-		outputProcessor.SetStrategy(
+		outputProcessor.SetOutput(
 			output.NewNatsWriter(
 				br,
 			),
@@ -188,7 +188,7 @@ func mainWithError(log logger.Handler) error {
 		// ensure to flush
 		defer outputInMemoryDeduplicatorWriter.Flush()
 
-		outputProcessor.SetStrategy(
+		outputProcessor.SetOutput(
 			output.NewCompositeWriter(
 				output.NewFileWriter(fw),
 				outputInMemoryDeduplicatorWriter,

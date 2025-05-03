@@ -7,15 +7,15 @@ import (
 )
 
 type Processor struct {
-	strategy Writer
+	output Writer
 }
 
 func NewProcessor() *Processor {
 	return &Processor{}
 }
 
-func (p *Processor) SetStrategy(strategy Writer) {
-	p.strategy = strategy
+func (p *Processor) SetOutput(output Writer) {
+	p.output = output
 }
 
 func (p *Processor) Write(
@@ -23,5 +23,5 @@ func (p *Processor) Write(
 	evtype broker.EventType,
 	config config.PipelineConfig,
 ) error {
-	return p.strategy.Write(obj, evtype, config)
+	return p.output.Write(obj, evtype, config)
 }
