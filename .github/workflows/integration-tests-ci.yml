@@ -7,7 +7,6 @@ on:
       - "**.go"
       - "**.golden"
       - "Makefile"
-      - "docker-compose.yaml"
       - ".github/workflows/integration-tests-ci.yml"
   pull_request:
     branches:
@@ -16,7 +15,6 @@ on:
       - "**.go"
       - "**.golden"
       - "Makefile"
-      - "docker-compose.yaml"
       - ".github/workflows/integration-tests-ci.yml"
   workflow_dispatch:
     inputs:
@@ -57,4 +55,4 @@ jobs:
         with:
           name: meshsync-command-output
           path: integration-tests/*.meshsync-output.txt
-          if-no-files-found: warn    
+          if-no-files-found: warn
