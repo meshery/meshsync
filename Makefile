@@ -92,7 +92,7 @@ test: check
 lint:
 	golangci-lint run ./...
 
-## Runs integration tests check dependencies (if docker, kind, kubectl is present)
+## Runs integration tests check dependencies (if docker, kind, kubectl are present)
 integration-tests-check-dependencies:
 	./integration-tests/setup.sh check_dependencies
 
