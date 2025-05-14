@@ -6,6 +6,7 @@ import (
 	"github.com/layer5io/meshkit/logger"
 	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
+	"github.com/layer5io/meshsync/internal/output"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
@@ -26,6 +27,7 @@ type Handler struct {
 	staticClient *kubernetes.Clientset
 	channelPool  map[string]channels.GenericChannel
 	stores       map[string]cache.Store
+	outputWriter output.Writer
 }
 
 func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
@@ -49,7 +51,7 @@ func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
 	}, nil
 }
 
-func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[string]channels.GenericChannel) (*Handler, error) {
+func New(config config.Handler, log logger.Handler, br broker.Handler, ow output.Writer, pool map[string]channels.GenericChannel) (*Handler, error) {
 	// Initialize Kubeconfig
 	kubeClient, err := mesherykube.New(nil)
 	if err != nil {
@@ -66,6 +68,7 @@ func New(config config.Handler, log logger.Handler, br broker.Handler, pool map[
 		Config:       config,
 		Log:          log,
 		Broker:       br,
+		outputWriter: ow,
 		informer:     informer,
 		restConfig:   kubeClient.RestConfig,
 		staticClient: kubeClient.KubeClient,

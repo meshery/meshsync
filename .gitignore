@@ -24,3 +24,4 @@ cover.html
 .DS_Store
 
 bin/meshsync
+meshery-cluster-snapshot-*

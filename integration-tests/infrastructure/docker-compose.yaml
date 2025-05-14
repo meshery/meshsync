@@ -1,6 +1,5 @@
 version: '3.8'
 
-# this docker compose is solely for local run with main_test.go
 services:
   nats:
     image: nats:2.11-alpine3.21
