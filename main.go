@@ -271,26 +271,26 @@ func parseFlags() {
 		&config.OutputMode,
 		"output",
 		config.OutputModeNats,
-		fmt.Sprintf("Output mode: '%s' or '%s'", config.OutputModeNats, config.OutputModeFile),
+		fmt.Sprintf("output mode: \"%s\" or \"%s\"", config.OutputModeNats, config.OutputModeFile),
 	)
 	flag.StringVar(
 		&config.OutputFileName,
 		"outputFile",
 		"",
-		"Output file path (default: meshery-cluster-snapshot-YYYYMMDD-00.yaml in the current directory)",
+		"output file where to put the meshsync events (cluster snapshot), only applicable for file output mode (default \"./meshery-cluster-snapshot-YYYYMMDD-00.yaml\")",
 	)
 	flag.StringVar(
 		&config.OutputNamespace,
 		"outputNamespace",
 		"",
-		"namespace for which limit output to file",
+		"k8s namespace for which limit the output, f.e. \"default\", applicable for both nats and file output mode",
 	)
 	var outputResourcesString string
 	flag.StringVar(
 		&outputResourcesString,
 		"outputResources",
 		"",
-		"resources for which limit output to file, coma separated list of k8s resources, f.e. pod,deployment,service",
+		"k8s resources for which limit the output, coma separated case insensitive list of k8s resources, f.e. \"pod,deployment,service\", applicable for both nats and file output mode",
 	)
 	flag.IntVar(
 		&config.StopAfterSeconds,

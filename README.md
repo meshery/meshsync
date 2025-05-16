@@ -28,6 +28,54 @@ MeshSync, an event-driven, continuous discovery and synchronization engine perfo
 
 See [MeshSync in Meshery Docs](https://docs.meshery.io/concepts/architecture/meshsync) for additional information.
 
+----
+
+Could be run in two modes:
+- nats (default)
+- file
+
+See details on input params in command help output:
+```sh
+meshsync --help
+```
+
+
+## Nats mode
+Nats mode is the default mode.
+
+In that mode meshsync expect nats connection and outputs k8s resources updates into nats queue.
+
+It is how it runs in kubernetes environment.
+
+## File mode
+File mode is an option to run meshsync without dependency on nats and CRD.
+
+In that mode meshsync outputs  k8s resources updates into file in kubernetes manifest yaml format.
+
+The result of run is two files:
+- meshery-cluster-snapshot-YYYYMMDD-00.yaml
+- meshery-cluster-snapshot-YYYYMMDD-00-extended.yaml
+
+meshery-cluster-snapshot-YYYYMMDD-00-extended.yaml contains all events meshsync produces as output;
+
+meshery-cluster-snapshot-YYYYMMDD-00.yaml contains a deduplicated version where each resource is presented with one entity. 
+Deduplication is done by `metadata.uid` field.
+
+
+### Notes (on file mode)
+Right now the format of the generated files is very close to kubernetes manifest yaml format, but not exactly the same. 
+
+Generated files contain `metadata.labels` as array while in kubernetes manifest it should be an object.
+
+It is due to the format of [KubernetesResourceObjectMeta](pkg/model/model.go#52).
+
+`kubectl apply --dry-run` returns corresponding error:
+
+```sh
+kubectl apply --dry-run=client -f meshery-cluster-snapshot-YYYYMMDD-00.yaml
+
+unable to decode "meshery-cluster-snapshot-YYYYMMDD-00.yaml": json: cannot unmarshal array into Go struct field ObjectMeta.metadata.labels of type map[string]string
+```
 
 <div>&nbsp;</div>
 
