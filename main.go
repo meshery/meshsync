@@ -272,7 +272,7 @@ func parseFlags() {
 		&notUsedBrokerURL,
 		"broker-url",
 		"",
-		"this param is not used",
+		"Broker URL (note: primarily configured via BROKER_URL env var; this flag is for compatibility and its value is ignored).",
 	)
 	flag.StringVar(
 		&config.OutputMode,
