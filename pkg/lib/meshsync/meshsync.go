@@ -185,10 +185,10 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		go meshsyncHandler.ListenToRequests()
 	}
 
-	if config.StopAfterSeconds > -1 {
+	if options.StopAfterDuration > -1 {
 		go func(stopCh channels.StopChannel) {
-			<-time.After(time.Second * time.Duration(config.StopAfterSeconds))
-			log.Infof("Stopping after %d seconds", config.StopAfterSeconds)
+			<-time.After(options.StopAfterDuration)
+			log.Infof("Stopping after %s", options.StopAfterDuration)
 			stopCh <- struct{}{}
 			// close(stopCh)
 		}(chPool[channels.Stop].(channels.StopChannel))

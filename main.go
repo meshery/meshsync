@@ -42,6 +42,7 @@ func main() {
 		libmeshsync.WithVersion(version),
 		libmeshsync.WithPingEndpoint(pingEndpoint),
 		libmeshsync.WithMeshkitConfigProvider(provider),
+		libmeshsync.WithStopAfterDuration(config.StopAfterDuration),
 	); err != nil {
 		log.Error(err)
 		os.Exit(1)
@@ -81,11 +82,11 @@ func parseFlags() {
 		"",
 		"k8s resources for which limit the output, coma separated case insensitive list of k8s resources, f.e. \"pod,deployment,service\", applicable for both nats and file output mode",
 	)
-	flag.IntVar(
-		&config.StopAfterSeconds,
-		"stopAfterSeconds",
+	flag.DurationVar(
+		&config.StopAfterDuration,
+		"stopAfter",
 		-1,
-		"stop meshsync execution after specified amount of seconds",
+		"stop meshsync execution after specified duration, excepts value which is parsable by time.ParseDuration,  f.e. 8s",
 	)
 
 	// Parse the command=line flags to get the output mode
