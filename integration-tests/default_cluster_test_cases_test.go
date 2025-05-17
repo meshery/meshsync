@@ -51,7 +51,6 @@ var defaultClusterTestCasesData []defaultClusterTestCaseStruct = []defaultCluste
 			assert.True(t, ok, "must get count from result map")
 			if ok {
 				t.Logf("received %d messages from broker", count)
-				// TODO some more meaningful check
 				assert.True(t, count > 0, "must receive messages from queue")
 			}
 
@@ -290,6 +289,36 @@ var defaultClusterTestCasesData []defaultClusterTestCaseStruct = []defaultCluste
 					assert.Equal(t, expectedNamespace, namespace, "namespace must match expected namespace")
 				}
 			}
+		},
+	},
+	{
+		name: "must not fail with a --broker-url param",
+		meshsyncCMDArgs: []string{
+			"--broker-url", "10.96.235.19:4222",
+			"--stopAfterSeconds", "8",
+		},
+		natsMessageHandler: func(
+			t *testing.T,
+			out chan *broker.Message,
+			resultData map[string]any,
+		) {
+			count := 0
+			resultData["count"] = count
+			go func() {
+				for range out {
+					count++
+					resultData["count"] = count
+				}
+			}()
+		},
+		finalHandler: func(t *testing.T, resultData map[string]any) {
+			count, ok := resultData["count"].(int)
+			assert.True(t, ok, "must get count from result map")
+			if ok {
+				t.Logf("received %d messages from broker", count)
+				assert.True(t, count > 0, "must receive messages from queue")
+			}
+
 		},
 	},
 }
