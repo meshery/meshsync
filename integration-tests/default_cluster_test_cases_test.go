@@ -31,7 +31,7 @@ type defaultClusterTestCaseStruct struct {
 var defaultClusterTestCasesData []defaultClusterTestCaseStruct = []defaultClusterTestCaseStruct{
 	{
 		name:            "number of messages received from nats is greater than zero",
-		meshsyncCMDArgs: []string{"--stopAfterSeconds", "8"},
+		meshsyncCMDArgs: []string{"--stopAfter", "8s"},
 		natsMessageHandler: func(
 			t *testing.T,
 			out chan *broker.Message,
@@ -59,8 +59,8 @@ var defaultClusterTestCasesData []defaultClusterTestCaseStruct = []defaultCluste
 	{
 		name: "receive from nats only specified resources",
 		meshsyncCMDArgs: []string{
-			"--stopAfterSeconds",
-			"8",
+			"--stopAfter",
+			"8s",
 			"--outputResources",
 			"pod,replicaset",
 		},
@@ -119,8 +119,8 @@ var defaultClusterTestCasesData []defaultClusterTestCaseStruct = []defaultCluste
 	{
 		name: "receive from nats only resources from specified namespace",
 		meshsyncCMDArgs: []string{
-			"--stopAfterSeconds",
-			"8",
+			"--stopAfter",
+			"8s",
 			"--outputNamespace",
 			"agile-otter",
 		},
@@ -179,7 +179,7 @@ var defaultClusterTestCasesData []defaultClusterTestCaseStruct = []defaultCluste
 	{
 		name: "output mode file: must not receive message from queue",
 		meshsyncCMDArgs: []string{
-			"--stopAfterSeconds", "8",
+			"--stopAfter", "8s",
 			"--output", "file",
 			"--outputFile", "meshery-cluster-snapshot-integration-test-03.yaml",
 		},
@@ -223,7 +223,7 @@ var defaultClusterTestCasesData []defaultClusterTestCaseStruct = []defaultCluste
 		// unable to decode "integration-tests/meshery-cluster-snapshot-integration-test-04.yaml": json: cannot unmarshal array into Go struct field ObjectMeta.metadata.labels of type map[string]string
 		name: "output mode file: must have yaml with kind pod and kind deployment only and from dedicated namespace",
 		meshsyncCMDArgs: []string{
-			"--stopAfterSeconds", "8",
+			"--stopAfter", "8s",
 			"--output", "file",
 			"--outputResources", "pod,deployment",
 			"--outputNamespace", "agile-otter",
@@ -295,7 +295,7 @@ var defaultClusterTestCasesData []defaultClusterTestCaseStruct = []defaultCluste
 		name: "must not fail with a --broker-url param",
 		meshsyncCMDArgs: []string{
 			"--broker-url", "10.96.235.19:4222",
-			"--stopAfterSeconds", "8",
+			"--stopAfter", "8s",
 		},
 		natsMessageHandler: func(
 			t *testing.T,

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"golang.org/x/exp/slices"
 )
 
@@ -26,7 +28,7 @@ var (
 	OutputMode                   string
 	OutputFileName               string
 	OutputNamespace              string
-	StopAfterSeconds             int
+	StopAfterDuration            time.Duration
 	OutputResourcesSet           map[string]bool
 	OutputOnlySpecifiedResources bool
 )
