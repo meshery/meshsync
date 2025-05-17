@@ -267,6 +267,13 @@ func connectivityTest(url string, log logger.Handler) error {
 }
 
 func parseFlags() {
+	notUsedBrokerURL := ""
+	flag.StringVar(
+		&notUsedBrokerURL,
+		"broker-url",
+		"",
+		"this param is not used",
+	)
 	flag.StringVar(
 		&config.OutputMode,
 		"output",
