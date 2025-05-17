@@ -46,7 +46,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		log.Warn(err)
 	}
 	// Config init and seed
-	cfg, err := config.New(options.Provider)
+	cfg, err := config.New(options.MeshkitConfigProvider)
 	if err != nil {
 		return err
 	}

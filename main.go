@@ -39,9 +39,9 @@ func main() {
 
 	if err := libmeshsync.Run(
 		log,
-		libmeshsync.WithPingEndpoint(pingEndpoint),
-		libmeshsync.WithProvider(provider),
 		libmeshsync.WithVersion(version),
+		libmeshsync.WithPingEndpoint(pingEndpoint),
+		libmeshsync.WithMeshkitConfigProvider(provider),
 	); err != nil {
 		log.Error(err)
 		os.Exit(1)
