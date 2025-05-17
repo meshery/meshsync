@@ -40,12 +40,10 @@ meshsync --help
 ```
 
 
-## Nats mode
-Nats mode is the default mode.
+## NATS mode
+NATS mode is the default mode.
 
-In that mode meshsync expect nats connection and outputs k8s resources updates into nats queue.
-
-It is how it runs in kubernetes environment.
+In that mode, MeshSync expects a NATS connection and outputs Kubernetes resources updates into NATS queue, which is how MeshSync runs when deployed in Kubernetes cluster in conjuction with Meshery Broker.
 
 ## File mode
 File mode is an option to run meshsync without dependency on nats and CRD.
