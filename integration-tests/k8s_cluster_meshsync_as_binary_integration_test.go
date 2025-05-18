@@ -87,7 +87,7 @@ func runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
 		}
 
 		// Step 2: process messages
-		resultData := make(map[string]any, 1)
+		resultData := make(map[string]any)
 		if tc.natsMessageHandler != nil {
 			go tc.natsMessageHandler(t, out, resultData)
 		}
@@ -125,7 +125,9 @@ func runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
 		}
 
 		// Step 4: do final assertion, if any
-		tc.finalHandler(t, resultData)
+		if tc.finalHandler != nil {
+			tc.finalHandler(t, resultData)
+		}
 
 		t.Logf("done %s", tc.name)
 	}
