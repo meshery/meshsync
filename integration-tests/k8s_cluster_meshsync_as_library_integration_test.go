@@ -1,7 +1,17 @@
 package tests
 
 import (
+	"fmt"
+	"os"
+	"syscall"
 	"testing"
+	"time"
+
+	"github.com/layer5io/meshkit/logger"
+	"github.com/layer5io/meshsync/internal/output"
+	libmeshsync "github.com/layer5io/meshsync/pkg/lib/meshsync"
+	"github.com/sirupsen/logrus"
+	"gotest.tools/v3/assert"
 )
 
 var k8sClusterMeshsyncAsLibraryTestCasesData []k8sClusterMeshsyncLibraryTestCaseStruct
@@ -22,37 +32,95 @@ func TestWithMeshsyncLibraryAndK8sClusterIntegration(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	// // Initialize Logger instance
-	// log, errLoggerNew := logger.New("TestWithMeshsyncLibraryAndK8sClusterIntegration", logger.Options{
-	// 	Format:   logger.SyslogLogFormat,
-	// 	LogLevel: int(logrus.InfoLevel),
-	// })
-	// if errLoggerNew != nil {
-	// 	t.Fatal("must not end with error when creating logger", errLoggerNew)
-	// }
-
-	// if err := libmeshsync.Run(
-	// 	log,
-	// 	libmeshsync.WithStopAfterDuration(config.StopAfterDuration),
-	// ); err != nil {
-	// 	log.Error(err)
-	// 	os.Exit(1)
-	// }
-
-	// for i, tc := range k8sClusterMeshsyncAsLibraryTestCasesData {
-	// 	t.Run(
-	// 		tc.name,
-	// 		runWithMeshsyncLibraryAndk8sClusterMeshsyncBinaryTestCase(
-	// 			i,
-	// 			tc,
-	// 		),
-	// 	)
-	// }
+	for i, tc := range k8sClusterMeshsyncAsLibraryTestCasesData {
+		t.Run(
+			tc.name,
+			runWithMeshsyncLibraryAndk8sClusterMeshsyncBinaryTestCase(
+				i,
+				tc,
+			),
+		)
+	}
 }
 
+// TODO put output from meshsync library to separate file (same as done for binary mode)
 func runWithMeshsyncLibraryAndk8sClusterMeshsyncBinaryTestCase(
 	tcIndex int,
-	tc k8sClusterMeshsyncBinaryTestCaseStruct,
+	tc k8sClusterMeshsyncLibraryTestCaseStruct,
 ) func(t *testing.T) {
-	return func(t *testing.T) {}
+	return func(t *testing.T) {
+		for _, cleanupHook := range tc.cleanupHooks {
+			defer cleanupHook()
+		}
+
+		for _, setupHook := range tc.setupHooks {
+			setupHook()
+		}
+
+		// Initialize Logger instance
+		log, errLoggerNew := logger.New(
+			fmt.Sprintf("TestWithMeshsyncLibraryAndK8sClusterIntegration-%02d", tcIndex),
+			logger.Options{
+				Format:   logger.SyslogLogFormat,
+				LogLevel: int(logrus.InfoLevel),
+			},
+		)
+		if errLoggerNew != nil {
+			t.Fatal("must not end with error when creating logger", errLoggerNew)
+		}
+
+		// prepare transport and error channels, result map
+		transportCh := make(chan *output.ChannelItem, 1024)
+		errCh := make(chan error)
+		resultData := make(map[string]any)
+
+		// Step 1: run meshsync channel message handler
+		if tc.channelMessageHandler != nil {
+			go tc.channelMessageHandler(t, transportCh, resultData)
+		}
+
+		// Step 2: run meshsync library
+		go func(errCh0 chan<- error) {
+			runOptions := make([]libmeshsync.OptionsSetter, 0, len(tc.meshsyncRunOptions))
+			runOptions = append(runOptions, tc.meshsyncRunOptions...)
+			runOptions = append(runOptions, libmeshsync.WithTransportChannel(transportCh))
+
+			errCh0 <- libmeshsync.Run(
+				log,
+				runOptions...,
+			)
+		}(errCh)
+
+		// intentionally big timeout to wait till the cmd execution ended
+		timeout := time.Duration(time.Hour * 24)
+		if tc.waitMeshsyncTimeout > 0 {
+			timeout = tc.waitMeshsyncTimeout
+		}
+
+		select {
+		case err := <-errCh:
+			if err != nil {
+				if tc.expectedError == nil {
+					t.Fatal("must not end with error", err)
+				}
+				assert.ErrorIs(t, err, tc.expectedError, "must end with expected error")
+			}
+		case <-time.After(timeout):
+			self, err := os.FindProcess(os.Getpid())
+			if err != nil {
+				t.Fatalf("could not find self process: %v", err)
+			}
+			if err := self.Signal(syscall.SIGTERM); err != nil {
+				t.Fatalf("error terminating meshsync library: %v", err)
+			}
+			t.Logf("processing after timeout %d", timeout)
+		}
+
+		// Step 3: do final assertion, if any
+		if tc.finalHandler != nil {
+			tc.finalHandler(t, resultData)
+		}
+
+		t.Logf("done %s", tc.name)
+	}
 }

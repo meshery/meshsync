@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/layer5io/meshkit/broker"
+	"github.com/layer5io/meshsync/internal/output"
+	libmeshsync "github.com/layer5io/meshsync/pkg/lib/meshsync"
 )
 
 /**
@@ -51,14 +53,16 @@ type k8sClusterMeshsyncBinaryTestCaseStruct struct {
 }
 
 type k8sClusterMeshsyncLibraryTestCaseStruct struct {
-	setupHooks   []func()
-	cleanupHooks []func()
-	name         string
-	// result map is to propagate data between channelMessageHandler and finalHandler
+	setupHooks            []func()
+	cleanupHooks          []func()
+	name                  string
+	waitMeshsyncTimeout   time.Duration // if <= 0: waits till meshsync ends execution, otherwise moves  further after specified duration
+	meshsyncRunOptions    []libmeshsync.OptionsSetter
 	channelMessageHandler func(
 		t *testing.T,
-		out chan *broker.Message,
+		out chan *output.ChannelItem,
 		resultData map[string]any,
-	)
-	finalHandler func(t *testing.T, resultData map[string]any)
+	) // result map is to propagate data between channelMessageHandler and finalHandler
+	finalHandler  func(t *testing.T, resultData map[string]any)
+	expectedError error // if this is not nil, result run expected to end with error
 }
