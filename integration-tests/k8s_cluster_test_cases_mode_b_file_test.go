@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-var defaultClusterTestCasesFileModeData []defaultClusterTestCaseStruct = []defaultClusterTestCaseStruct{
+var k8sClusterTestCasesFileModeData []k8sClusterTestCaseStruct = []k8sClusterTestCaseStruct{
 	{
 		name: "output mode file: must not receive message from queue",
 		meshsyncCMDArgs: []string{
