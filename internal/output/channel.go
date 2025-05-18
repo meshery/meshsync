@@ -7,10 +7,12 @@ import (
 )
 
 type ChannelWriter struct {
-	transport chan *ChannelItem
+	transport chan<- *ChannelItem
 }
 
-func NewChannelWriter(transport chan *ChannelItem) *ChannelWriter {
+type ChannelItem = broker.Message
+
+func NewChannelWriter(transport chan<- *ChannelItem) *ChannelWriter {
 	return &ChannelWriter{
 		transport: transport,
 	}
@@ -22,14 +24,10 @@ func (s *ChannelWriter) Write(
 	config config.PipelineConfig,
 ) error {
 	s.transport <- &ChannelItem{
-		Object:    obj,
-		EventType: evtype,
+		ObjectType: broker.MeshSync,
+		EventType:  evtype,
+		Object:     obj,
 	}
 
 	return nil
-}
-
-type ChannelItem struct {
-	Object    model.KubernetesResource
-	EventType broker.EventType
 }

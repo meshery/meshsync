@@ -21,6 +21,7 @@ const (
 	InformerStore     = "informer-store"
 	OutputModeNats    = "nats"
 	OutputModeFile    = "file"
+	OutputModeChannel = "channel"
 )
 
 // Command line flag to determine the output mode

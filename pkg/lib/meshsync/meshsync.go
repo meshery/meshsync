@@ -168,6 +168,15 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		)
 	}
 
+	if config.OutputMode == config.OutputModeChannel {
+		if options.transportChannel == nil {
+			return errors.New("options.transportChannel is nil")
+		}
+		outputProcessor.SetOutput(
+			output.NewChannelWriter(options.transportChannel),
+		)
+	}
+
 	chPool := channels.NewChannelPool()
 	meshsyncHandler, err := meshsync.New(cfg, log, br, outputProcessor, chPool)
 	if err != nil {
