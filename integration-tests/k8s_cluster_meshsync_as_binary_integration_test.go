@@ -95,7 +95,7 @@ func runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
 		os.Setenv("BROKER_URL", testMeshsyncNatsURL)
 
 		// Step 3: run the meshsync command
-		cmd, deferFunc := prepareMeshsyncCMD(t, tcIndex, tc)
+		cmd, deferFunc := withMeshsyncBinaryPrepareMeshsyncCMD(t, tcIndex, tc)
 		defer deferFunc()
 
 		if err := cmd.Start(); err != nil {
@@ -134,7 +134,7 @@ func runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
 }
 
 // introduced this function to decrease cyclomatic complexity
-func prepareMeshsyncCMD(
+func withMeshsyncBinaryPrepareMeshsyncCMD(
 	t *testing.T,
 	tcIndex int,
 	tc k8sClusterMeshsyncBinaryTestCaseStruct,
