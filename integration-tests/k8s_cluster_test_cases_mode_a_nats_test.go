@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var k8sClusterTestCasesNatsModeData []k8sClusterTestCaseStruct = []k8sClusterTestCaseStruct{
+var k8sClusterMeshsyncBinaryTestCasesNatsModeData []k8sClusterMeshsyncBinaryTestCaseStruct = []k8sClusterMeshsyncBinaryTestCaseStruct{
 	{
 		name:            "number of messages received from nats is greater than zero",
 		meshsyncCMDArgs: []string{"--stopAfter", "8s"},

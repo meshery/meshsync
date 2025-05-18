@@ -16,14 +16,10 @@ import (
  * --
  * use Makefile to run
  * --
- * this test runs all test cases on the same k8s cluster, but with different input params for meshsync;
- * if you need a specific cluster setup you (probably) need to write a separate test,
+ * this tests runs all test cases on the same k8s cluster, but with different input params for meshsync;
+ * if you need a specific cluster setup you (probably) need to write a separate tests,
  * or fit in the current cluster set up without failing existing tests;
  * --
- * test flow of every test case is as follow:
- * - subscribe to nats (each test case has a separate queue group, so it receives every message);
- * - run meshsync binary;
- * - receive messages from nats and perform assertions;
  */
 
 var runIntegrationTest bool
@@ -38,7 +34,7 @@ func init() {
 	saveMeshsyncOutput = os.Getenv("SAVE_MESHSYNC_OUTPUT") == "true"
 }
 
-type k8sClusterTestCaseStruct struct {
+type k8sClusterMeshsyncBinaryTestCaseStruct struct {
 	setupHooks          []func()
 	cleanupHooks        []func()
 	name                string
@@ -47,6 +43,19 @@ type k8sClusterTestCaseStruct struct {
 	// the reason for resultData map is that natsMessageHandler is processing chan indefinitely
 	// and there is no graceful exit from function;
 	natsMessageHandler func(
+		t *testing.T,
+		out chan *broker.Message,
+		resultData map[string]any,
+	)
+	finalHandler func(t *testing.T, resultData map[string]any)
+}
+
+type k8sClusterMeshsyncLibraryTestCaseStruct struct {
+	setupHooks   []func()
+	cleanupHooks []func()
+	name         string
+	// result map is to propagate data between channelMessageHandler and finalHandler
+	channelMessageHandler func(
 		t *testing.T,
 		out chan *broker.Message,
 		resultData map[string]any,

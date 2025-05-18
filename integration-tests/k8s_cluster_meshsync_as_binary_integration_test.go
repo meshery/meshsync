@@ -12,12 +12,12 @@ import (
 	"github.com/layer5io/meshkit/broker/nats"
 )
 
-var k8sClusterMeshsyncAsBinaryTestCasesData []k8sClusterTestCaseStruct
+var k8sClusterMeshsyncAsBinaryTestCasesData []k8sClusterMeshsyncBinaryTestCaseStruct
 
 func init() {
-	for _, tcs := range [][]k8sClusterTestCaseStruct{
-		k8sClusterTestCasesNatsModeData,
-		k8sClusterTestCasesFileModeData,
+	for _, tcs := range [][]k8sClusterMeshsyncBinaryTestCaseStruct{
+		k8sClusterMeshsyncBinaryTestCasesNatsModeData,
+		k8sClusterMeshsyncBinaryTestCasesFileModeData,
 	} {
 		k8sClusterMeshsyncAsBinaryTestCasesData = append(
 			k8sClusterMeshsyncAsBinaryTestCasesData,
@@ -46,7 +46,7 @@ func TestWithMeshsyncBinaryAndK8sClusterIntegration(t *testing.T) {
 	for i, tc := range k8sClusterMeshsyncAsBinaryTestCasesData {
 		t.Run(
 			tc.name,
-			runWithMeshsyncBinaryAndK8sClusterTestCase(
+			runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
 				br,
 				i,
 				tc,
@@ -59,13 +59,13 @@ func TestWithMeshsyncBinaryAndK8sClusterIntegration(t *testing.T) {
 // this one itself is also already too complicated :)
 //
 // TODO fix cyclop error
-// integration-tests/k8s_cluster_integration_test.go:74:1: calculated cyclomatic complexity for function runWithMeshsyncBinaryAndK8sClusterTestCase is 11, max is 10 (cyclop)
+// integration-tests/k8s_cluster_integration_test.go:74:1: calculated cyclomatic complexity for function runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase is 11, max is 10 (cyclop)
 //
 //nolint:cyclop
-func runWithMeshsyncBinaryAndK8sClusterTestCase(
+func runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
 	br broker.Handler,
 	tcIndex int,
-	tc k8sClusterTestCaseStruct,
+	tc k8sClusterMeshsyncBinaryTestCaseStruct,
 ) func(t *testing.T) {
 	return func(t *testing.T) {
 		for _, cleanupHook := range tc.cleanupHooks {
@@ -135,7 +135,7 @@ func runWithMeshsyncBinaryAndK8sClusterTestCase(
 func prepareMeshsyncCMD(
 	t *testing.T,
 	tcIndex int,
-	tc k8sClusterTestCaseStruct,
+	tc k8sClusterMeshsyncBinaryTestCaseStruct,
 ) (*exec.Cmd, func()) {
 	cmd := exec.Command(meshsyncBinaryPath, tc.meshsyncCMDArgs...)
 	deferFunc := func() {}
