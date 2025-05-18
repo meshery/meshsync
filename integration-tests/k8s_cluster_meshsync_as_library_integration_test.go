@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"syscall"
 	"testing"
@@ -43,7 +44,6 @@ func TestWithMeshsyncLibraryAndK8sClusterIntegration(t *testing.T) {
 	}
 }
 
-// TODO put output from meshsync library to separate file (same as done for binary mode)
 func runWithMeshsyncLibraryAndk8sClusterMeshsyncBinaryTestCase(
 	tcIndex int,
 	tc k8sClusterMeshsyncLibraryTestCaseStruct,
@@ -57,13 +57,13 @@ func runWithMeshsyncLibraryAndk8sClusterMeshsyncBinaryTestCase(
 			setupHook()
 		}
 
+		loggerOptions, deferFunc := withMeshsyncLibraryPrepareMeshsyncLoggerOptions(t, tcIndex)
+		defer deferFunc()
+
 		// Initialize Logger instance
 		log, errLoggerNew := logger.New(
 			fmt.Sprintf("TestWithMeshsyncLibraryAndK8sClusterIntegration-%02d", tcIndex),
-			logger.Options{
-				Format:   logger.SyslogLogFormat,
-				LogLevel: int(logrus.InfoLevel),
-			},
+			loggerOptions,
 		)
 		if errLoggerNew != nil {
 			t.Fatal("must not end with error when creating logger", errLoggerNew)
@@ -123,4 +123,34 @@ func runWithMeshsyncLibraryAndk8sClusterMeshsyncBinaryTestCase(
 
 		t.Logf("done %s", tc.name)
 	}
+}
+
+func withMeshsyncLibraryPrepareMeshsyncLoggerOptions(
+	t *testing.T,
+	tcIndex int,
+) (logger.Options, func()) {
+	options := logger.Options{
+		Format:   logger.SyslogLogFormat,
+		LogLevel: int(logrus.InfoLevel),
+	}
+	deferFunc := func() {}
+	// there is quite rich output from meshsync
+	// save to file instead of stdout
+	if saveMeshsyncOutput {
+		meshsyncOutputFileName := fmt.Sprintf("k8s-cluster-meshsync-as-library-test-case-%02d.meshsync-output.txt", tcIndex)
+		meshsyncOutputFile, err := os.Create(meshsyncOutputFileName)
+		if err != nil {
+			t.Logf("Could not create meshsync output file %s", meshsyncOutputFileName)
+			// if not possible to create output file, leave default output for logger
+		} else {
+			deferFunc = func() {
+				meshsyncOutputFile.Close()
+			}
+			options.Output = meshsyncOutputFile
+		}
+	} else {
+		options.Output = io.Discard
+	}
+
+	return options, deferFunc
 }

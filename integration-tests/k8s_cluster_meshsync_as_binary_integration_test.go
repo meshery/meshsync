@@ -150,11 +150,12 @@ func prepareMeshsyncCMD(
 			t.Logf("Could not create meshsync output file %s", meshsyncOutputFileName)
 			// if not possible to create output file, print to the stdout
 			cmd.Stdout = os.Stdout
+		} else {
+			deferFunc = func() {
+				meshsyncOutputFile.Close()
+			}
+			cmd.Stdout = meshsyncOutputFile
 		}
-		deferFunc = func() {
-			meshsyncOutputFile.Close()
-		}
-		cmd.Stdout = meshsyncOutputFile
 	} else {
 		cmd.Stdout = nil
 	}
