@@ -38,7 +38,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		return err
 	}
 
-	useCRDFlag := determineUseCRDFlag(log, kubeClient)
+	useCRDFlag := determineUseCRDFlag(options, log, kubeClient)
 
 	crdConfigs, errGetMeshsyncCRDConfigs := getMeshsyncCRDConfigs(useCRDFlag, kubeClient)
 	if errGetMeshsyncCRDConfigs != nil {
@@ -89,7 +89,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 
 	outputProcessor := output.NewProcessor()
 	var br broker.Handler
-	if config.OutputMode == config.OutputModeNats {
+	if options.OutputMode == config.OutputModeNats {
 		// Skip/Comment the below connectivity test in local environment
 		if errConnectivityTest := connectivityTest(
 			log,
@@ -118,7 +118,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		)
 	}
 
-	if config.OutputMode == config.OutputModeFile {
+	if options.OutputMode == config.OutputModeFile {
 		filename := config.OutputFileName
 		defaultFormat := "yaml"
 		if filename == "" {
@@ -168,12 +168,12 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		)
 	}
 
-	if config.OutputMode == config.OutputModeChannel {
-		if options.transportChannel == nil {
+	if options.OutputMode == config.OutputModeChannel {
+		if options.TransportChannel == nil {
 			return errors.New("options.transportChannel is nil")
 		}
 		outputProcessor.SetOutput(
-			output.NewChannelWriter(options.transportChannel),
+			output.NewChannelWriter(options.TransportChannel),
 		)
 	}
 
@@ -186,7 +186,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	go meshsyncHandler.WatchCRDs()
 
 	go meshsyncHandler.Run()
-	if config.OutputMode == config.OutputModeNats {
+	if options.OutputMode == config.OutputModeNats {
 		// even so the config param name is OutputMode
 		// it is not only output but also input
 		// in that case if  OutputMode is not OutputModeNats
@@ -247,9 +247,13 @@ func connectivityTest(log logger.Handler, pingEndpoint string, url string) error
 	return nil
 }
 
-func determineUseCRDFlag(log logger.Handler, kubeClient *mesherykube.Client) bool {
+func determineUseCRDFlag(
+	options Options,
+	log logger.Handler,
+	kubeClient *mesherykube.Client,
+) bool {
 	useCRDFlag := true
-	if config.OutputMode == config.OutputModeFile {
+	if options.OutputMode == config.OutputModeFile {
 		// if output mode is file -> generally it is not expected to have CRD present in cluster.
 		// theoretically CRDs could be present even in file output mode.
 		// hence check if CRD is present in the cluster,

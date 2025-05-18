@@ -22,6 +22,11 @@ var (
 	pingEndpoint = ":8222/connz"
 )
 
+// command line input params
+var (
+	outputMode string
+)
+
 func main() {
 	parseFlags()
 	viper.SetDefault("BUILD", version)
@@ -39,10 +44,11 @@ func main() {
 
 	if err := libmeshsync.Run(
 		log,
+		libmeshsync.WithOutputMode(outputMode),
+		libmeshsync.WithStopAfterDuration(config.StopAfterDuration),
 		libmeshsync.WithVersion(version),
 		libmeshsync.WithPingEndpoint(pingEndpoint),
 		libmeshsync.WithMeshkitConfigProvider(provider),
-		libmeshsync.WithStopAfterDuration(config.StopAfterDuration),
 	); err != nil {
 		log.Error(err)
 		os.Exit(1)
@@ -58,7 +64,7 @@ func parseFlags() {
 		"Broker URL (note: primarily configured via BROKER_URL env var; this flag is for compatibility and its value is ignored).",
 	)
 	flag.StringVar(
-		&config.OutputMode,
+		&outputMode,
 		"output",
 		config.OutputModeNats,
 		fmt.Sprintf("output mode: \"%s\" or \"%s\"", config.OutputModeNats, config.OutputModeFile),

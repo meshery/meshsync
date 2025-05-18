@@ -8,26 +8,41 @@ import (
 )
 
 type Options struct {
+	OutputMode        string
+	TransportChannel  chan<- *output.ChannelItem
+	StopAfterDuration time.Duration
+
 	Version               string
 	PingEndpoint          string
 	MeshkitConfigProvider string
-	StopAfterDuration     time.Duration
-	transportChannel      chan<- *output.ChannelItem
 }
 
 var DefautOptions = Options{
+	StopAfterDuration: -1, // -1 turns it off
+	TransportChannel:  nil,
+
 	Version:               "Not Set",
 	PingEndpoint:          ":8222/connz",
 	MeshkitConfigProvider: mcp.ViperKey,
-	StopAfterDuration:     -1, // -1 turns it off
-	transportChannel:      nil,
 }
 
 type OptionsSetter func(*Options)
 
-func WithMeshkitConfigProvider(value string) OptionsSetter {
+func WithOutputMode(value string) OptionsSetter {
 	return func(o *Options) {
-		o.MeshkitConfigProvider = value
+		o.OutputMode = value
+	}
+}
+
+func WithTransportChannel(value chan<- *output.ChannelItem) OptionsSetter {
+	return func(o *Options) {
+		o.TransportChannel = value
+	}
+}
+
+func WithStopAfterDuration(value time.Duration) OptionsSetter {
+	return func(o *Options) {
+		o.StopAfterDuration = value
 	}
 }
 
@@ -43,14 +58,8 @@ func WithPingEndpoint(value string) OptionsSetter {
 	}
 }
 
-func WithStopAfterDuration(value time.Duration) OptionsSetter {
+func WithMeshkitConfigProvider(value string) OptionsSetter {
 	return func(o *Options) {
-		o.StopAfterDuration = value
-	}
-}
-
-func WithTransportChannel(value chan<- *output.ChannelItem) OptionsSetter {
-	return func(o *Options) {
-		o.transportChannel = value
+		o.MeshkitConfigProvider = value
 	}
 }

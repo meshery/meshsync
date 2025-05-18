@@ -24,9 +24,9 @@ const (
 	OutputModeChannel = "channel"
 )
 
-// Command line flag to determine the output mode
+// Command line input params
+// TODO do not have global config variables
 var (
-	OutputMode                   string
 	OutputFileName               string
 	OutputNamespace              string
 	StopAfterDuration            time.Duration
