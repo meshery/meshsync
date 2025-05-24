@@ -11,7 +11,7 @@ import (
 
 var k8sClusterMeshsyncBinaryTestCasesNatsModeData []k8sClusterMeshsyncBinaryTestCaseStruct = []k8sClusterMeshsyncBinaryTestCaseStruct{
 	{
-		name:            "number of messages received from nats is greater than zero",
+		name:            "output mode nats: number of messages received from nats is greater than zero",
 		meshsyncCMDArgs: []string{"--stopAfter", "8s"},
 		natsMessageHandler: func(
 			t *testing.T,
@@ -38,7 +38,7 @@ var k8sClusterMeshsyncBinaryTestCasesNatsModeData []k8sClusterMeshsyncBinaryTest
 		},
 	},
 	{
-		name: "receive from nats only specified resources",
+		name: "output mode nats: receive from nats only specified resources",
 		meshsyncCMDArgs: []string{
 			"--stopAfter",
 			"8s",
@@ -98,7 +98,7 @@ var k8sClusterMeshsyncBinaryTestCasesNatsModeData []k8sClusterMeshsyncBinaryTest
 		},
 	},
 	{
-		name: "receive from nats only resources from specified namespace",
+		name: "output mode nats: receive from nats only resources from specified namespace",
 		meshsyncCMDArgs: []string{
 			"--stopAfter",
 			"8s",
@@ -158,7 +158,7 @@ var k8sClusterMeshsyncBinaryTestCasesNatsModeData []k8sClusterMeshsyncBinaryTest
 		},
 	},
 	{
-		name: "must not fail with a --broker-url param",
+		name: "output mode nats: must not fail with a --broker-url param",
 		meshsyncCMDArgs: []string{
 			"--broker-url", "10.96.235.19:4222",
 			"--stopAfter", "8s",
