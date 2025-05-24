@@ -30,7 +30,10 @@ import (
 func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	options := DefautOptions
 	for _, setOptions := range optsSetters {
-		setOptions(&options)
+		// test case: "output mode channel: must not fail when has nil in options setter"
+		if setOptions != nil {
+			setOptions(&options)
+		}
 	}
 	// Initialize kubeclient
 	kubeClient, err := mesherykube.New(nil)

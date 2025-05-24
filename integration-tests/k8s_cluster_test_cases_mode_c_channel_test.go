@@ -41,4 +41,12 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 
 		},
 	},
+	{
+		name: "output mode channel: must not fail when has nil in options setter",
+		meshsyncRunOptions: []libmeshsync.OptionsSetter{
+			nil,
+			libmeshsync.WithOutputMode(config.OutputModeChannel),
+			libmeshsync.WithStopAfterDuration(1 * time.Second),
+		},
+	},
 }
