@@ -80,7 +80,9 @@ func runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
 		// Step 1: subscribe to the queue
 		if err := br.SubscribeWithChannel(
 			testMeshsyncTopic,
-			fmt.Sprintf("k8s-cluster-meshsync-as-binary-queue-group-%d", tcIndex),
+			// impotant to have a different queue group per test case
+			// so that every test case receive message for each event
+			fmt.Sprintf("k8s-cluster-meshsync-as-binary-queue-group-%02d", tcIndex),
 			out,
 		); err != nil {
 			t.Fatalf("error subscribing to topic: %v", err)
