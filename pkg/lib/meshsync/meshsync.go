@@ -45,7 +45,8 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	}
 
 	// Initialize kubeclient
-	kubeClient, err := mesherykube.New(nil)
+	// options.KubeConfig is nil by default
+	kubeClient, err := mesherykube.New(options.KubeConfig)
 	if err != nil {
 		return err
 	}
@@ -190,7 +191,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	}
 
 	chPool := channels.NewChannelPool()
-	meshsyncHandler, err := meshsync.New(cfg, log, br, outputProcessor, chPool)
+	meshsyncHandler, err := meshsync.New(cfg, kubeClient, log, br, outputProcessor, chPool)
 	if err != nil {
 		return err
 	}

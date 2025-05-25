@@ -12,6 +12,7 @@ type Options struct {
 	OutputMode        string
 	TransportChannel  chan<- *output.ChannelItem
 	StopAfterDuration time.Duration
+	KubeConfig        []byte
 
 	Version               string
 	PingEndpoint          string
@@ -21,6 +22,7 @@ type Options struct {
 var DefautOptions = Options{
 	StopAfterDuration: -1, // -1 turns it off
 	TransportChannel:  nil,
+	KubeConfig:        nil, // if nil, truies to detekt kube config by the means of github.com/layer5io/meshkit/utils/kubernetes/client.go:DetectKubeConfig
 
 	Version:               "Not Set",
 	PingEndpoint:          ":8222/connz",
@@ -51,6 +53,13 @@ func WithTransportChannel(value chan<- *output.ChannelItem) OptionsSetter {
 func WithStopAfterDuration(value time.Duration) OptionsSetter {
 	return func(o *Options) {
 		o.StopAfterDuration = value
+	}
+}
+
+// value here is all what is good to pass to github.com/layer5io/meshkit/utils/kubernetes/client.go:DetectKubeConfig
+func WithKubeConfig(value []byte) OptionsSetter {
+	return func(o *Options) {
+		o.KubeConfig = value
 	}
 }
 

@@ -22,12 +22,13 @@ type Handler struct {
 	Log    logger.Handler
 	Broker broker.Handler
 
-	restConfig   rest.Config
-	informer     dynamicinformer.DynamicSharedInformerFactory
-	staticClient *kubernetes.Clientset
-	channelPool  map[string]channels.GenericChannel
-	stores       map[string]cache.Store
-	outputWriter output.Writer
+	restConfig    rest.Config
+	informer      dynamicinformer.DynamicSharedInformerFactory
+	staticClient  *kubernetes.Clientset
+	dynamicClient dynamic.Interface
+	channelPool   map[string]channels.GenericChannel
+	stores        map[string]cache.Store
+	outputWriter  output.Writer
 }
 
 func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
@@ -51,12 +52,14 @@ func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
 	}, nil
 }
 
-func New(config config.Handler, log logger.Handler, br broker.Handler, ow output.Writer, pool map[string]channels.GenericChannel) (*Handler, error) {
-	// Initialize Kubeconfig
-	kubeClient, err := mesherykube.New(nil)
-	if err != nil {
-		return nil, ErrKubeConfig(err)
-	}
+func New(
+	config config.Handler,
+	kubeClient *mesherykube.Client,
+	log logger.Handler,
+	br broker.Handler,
+	ow output.Writer,
+	pool map[string]channels.GenericChannel,
+) (*Handler, error) {
 	listOptionsFunc, err := GetListOptionsFunc(config)
 	if err != nil {
 		return nil, err
@@ -65,14 +68,15 @@ func New(config config.Handler, log logger.Handler, br broker.Handler, ow output
 	informer := GetDynamicInformer(config, kubeClient.DynamicKubeClient, listOptionsFunc)
 
 	return &Handler{
-		Config:       config,
-		Log:          log,
-		Broker:       br,
-		outputWriter: ow,
-		informer:     informer,
-		restConfig:   kubeClient.RestConfig,
-		staticClient: kubeClient.KubeClient,
-		channelPool:  pool,
+		Config:        config,
+		Log:           log,
+		Broker:        br,
+		outputWriter:  ow,
+		informer:      informer,
+		restConfig:    kubeClient.RestConfig,
+		staticClient:  kubeClient.KubeClient,
+		dynamicClient: kubeClient.DynamicKubeClient,
+		channelPool:   pool,
 	}, nil
 }
 

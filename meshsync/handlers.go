@@ -173,13 +173,7 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 }
 
 func (h *Handler) WatchCRDs() {
-	kubeclient, err := kubernetes.New(nil)
-	if err != nil {
-		h.Log.Error(err)
-		return
-	}
-
-	crdWatcher, err := kubeclient.DynamicKubeClient.Resource(schema.GroupVersionResource{
+	crdWatcher, err := h.dynamicClient.Resource(schema.GroupVersionResource{
 		Group:    "apiextensions.k8s.io",
 		Version:  "v1",
 		Resource: "customresourcedefinitions",
