@@ -45,7 +45,7 @@ func (h *Handler) processLogRequest(obj interface{}, cfg config.ListenerConfig) 
 }
 
 func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.ListenerConfig) {
-	resp, err := h.staticClient.CoreV1().Pods(req.Namespace).GetLogs(req.Name, &v1.PodLogOptions{
+	resp, err := h.kubeClient.KubeClient.CoreV1().Pods(req.Namespace).GetLogs(req.Name, &v1.PodLogOptions{
 		Container:  req.Container,
 		Follow:     req.Follow,
 		Previous:   req.Previous,

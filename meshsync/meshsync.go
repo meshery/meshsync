@@ -10,8 +10,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -22,13 +20,11 @@ type Handler struct {
 	Log    logger.Handler
 	Broker broker.Handler
 
-	restConfig    rest.Config
-	informer      dynamicinformer.DynamicSharedInformerFactory
-	staticClient  *kubernetes.Clientset
-	dynamicClient dynamic.Interface
-	channelPool   map[string]channels.GenericChannel
-	stores        map[string]cache.Store
-	outputWriter  output.Writer
+	informer     dynamicinformer.DynamicSharedInformerFactory
+	kubeClient   *mesherykube.Client
+	channelPool  map[string]channels.GenericChannel
+	stores       map[string]cache.Store
+	outputWriter output.Writer
 }
 
 func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
@@ -68,15 +64,13 @@ func New(
 	informer := GetDynamicInformer(config, kubeClient.DynamicKubeClient, listOptionsFunc)
 
 	return &Handler{
-		Config:        config,
-		Log:           log,
-		Broker:        br,
-		outputWriter:  ow,
-		informer:      informer,
-		restConfig:    kubeClient.RestConfig,
-		staticClient:  kubeClient.KubeClient,
-		dynamicClient: kubeClient.DynamicKubeClient,
-		channelPool:   pool,
+		Config:       config,
+		Log:          log,
+		Broker:       br,
+		outputWriter: ow,
+		informer:     informer,
+		kubeClient:   kubeClient,
+		channelPool:  pool,
 	}, nil
 }
 

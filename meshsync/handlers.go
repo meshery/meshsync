@@ -56,7 +56,7 @@ func (h *Handler) Run() {
 }
 
 func (h *Handler) UpdateInformer() error {
-	dynamicClient, err := dynamic.NewForConfig(&h.restConfig)
+	dynamicClient, err := dynamic.NewForConfig(&h.kubeClient.RestConfig)
 	if err != nil {
 		return ErrNewInformer(err)
 	}
@@ -173,7 +173,7 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 }
 
 func (h *Handler) WatchCRDs() {
-	crdWatcher, err := h.dynamicClient.Resource(schema.GroupVersionResource{
+	crdWatcher, err := h.kubeClient.DynamicKubeClient.Resource(schema.GroupVersionResource{
 		Group:    "apiextensions.k8s.io",
 		Version:  "v1",
 		Resource: "customresourcedefinitions",
