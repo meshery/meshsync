@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -35,6 +36,14 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 			setOptions(&options)
 		}
 	}
+	if !slices.Contains(AllowedOutputModes, options.OutputMode) {
+		return fmt.Errorf(
+			"unsupported output mode \"%s\", supported list is [%s]",
+			options.OutputMode,
+			strings.Join(AllowedOutputModes, ", "),
+		)
+	}
+
 	// Initialize kubeclient
 	kubeClient, err := mesherykube.New(nil)
 	if err != nil {

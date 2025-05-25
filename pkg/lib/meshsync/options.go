@@ -4,6 +4,7 @@ import (
 	"time"
 
 	mcp "github.com/layer5io/meshkit/config/provider"
+	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/internal/output"
 )
 
@@ -24,6 +25,12 @@ var DefautOptions = Options{
 	Version:               "Not Set",
 	PingEndpoint:          ":8222/connz",
 	MeshkitConfigProvider: mcp.ViperKey,
+}
+
+var AllowedOutputModes = []string{
+	config.OutputModeNats,
+	config.OutputModeFile,
+	config.OutputModeChannel,
 }
 
 type OptionsSetter func(*Options)
