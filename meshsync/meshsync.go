@@ -7,6 +7,7 @@ import (
 	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/output"
+	iutils "github.com/layer5io/meshsync/pkg/utils"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
@@ -20,6 +21,7 @@ type Handler struct {
 	Log    logger.Handler
 	Broker broker.Handler
 
+	clusterID    string
 	informer     dynamicinformer.DynamicSharedInformerFactory
 	kubeClient   *mesherykube.Client
 	channelPool  map[string]channels.GenericChannel
@@ -61,6 +63,7 @@ func New(
 		return nil, err
 	}
 
+	clusterID := iutils.GetClusterID(kubeClient.KubeClient)
 	informer := GetDynamicInformer(config, kubeClient.DynamicKubeClient, listOptionsFunc)
 
 	return &Handler{
@@ -70,6 +73,7 @@ func New(
 		outputWriter: ow,
 		informer:     informer,
 		kubeClient:   kubeClient,
+		clusterID:    clusterID,
 		channelPool:  pool,
 	}, nil
 }

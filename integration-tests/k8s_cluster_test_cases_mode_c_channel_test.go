@@ -4,9 +4,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/internal/output"
 	libmeshsync "github.com/layer5io/meshsync/pkg/lib/meshsync"
+	iutils "github.com/layer5io/meshsync/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,6 +52,27 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 			nil,
 			libmeshsync.WithOutputMode(config.OutputModeChannel),
 			libmeshsync.WithStopAfterDuration(1 * time.Second),
+		},
+	},
+	// TODO
+	// this is not an output mode test
+	// we do not need to run libmeshsync.Run, as we only test call to GetClusterID
+	// we still need k8s cluster in place;
+	// maybe think about to move in a separate flow.
+	{
+		name: "output mode channel: can get clusterID from utils function",
+		meshsyncRunOptions: []libmeshsync.OptionsSetter{
+			libmeshsync.WithOutputMode(config.OutputModeChannel),
+			libmeshsync.WithStopAfterDuration(0 * time.Second),
+		},
+		finalHandler: func(t *testing.T, resultData map[string]any) {
+			kubeClient, err := kubernetes.New(nil)
+			assert.NoError(t, err)
+			if err == nil {
+				clusterID := iutils.GetClusterID(kubeClient.KubeClient)
+				t.Logf("clusterId = %s", clusterID)
+				assert.NotEmpty(t, clusterID)
+			}
 		},
 	},
 }
