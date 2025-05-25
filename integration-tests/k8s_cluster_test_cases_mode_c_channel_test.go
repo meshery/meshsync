@@ -41,6 +41,9 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 
 		},
 	},
+	// TODO
+	// remove this as a separate test case,
+	// add nil to []libmeshsync.OptionsSetter in the previous test case with a comment
 	{
 		name: "output mode channel: must not fail when has nil in options setter",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
