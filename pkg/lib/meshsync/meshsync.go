@@ -198,6 +198,9 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	go meshsyncHandler.WatchCRDs()
 
 	go meshsyncHandler.Run()
+	// TODO
+	// as we have introduced a new output mode channel
+	// do we need to have a ListenToRequests channel?
 	if options.OutputMode == config.OutputModeNats {
 		// even so the config param name is OutputMode
 		// it is not only output but also input
