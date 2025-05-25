@@ -57,8 +57,14 @@ func runWithMeshsyncLibraryAndk8sClusterMeshsyncBinaryTestCase(
 			setupHook()
 		}
 
-		loggerOptions, deferFunc := withMeshsyncLibraryPrepareMeshsyncLoggerOptions(t, tcIndex)
-		defer deferFunc()
+		// loggerOptions, deferFunc := withMeshsyncLibraryPrepareMeshsyncLoggerOptions(t, tcIndex)
+		// defer deferFunc()
+		// TODO
+		// do not call deferFunc for now
+		// because of
+		// "Failed to write to log, write k8s-cluster-meshsync-as-library-test-case-00.meshsync-output.txt: file already closed"
+		// this will be fixed when halting all gorutines will be imlemented for library mode
+		loggerOptions, _ := withMeshsyncLibraryPrepareMeshsyncLoggerOptions(t, tcIndex)
 
 		// Initialize Logger instance
 		log, errLoggerNew := logger.New(
