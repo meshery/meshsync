@@ -35,6 +35,7 @@ var AllowedOutputModes = []string{
 
 type OptionsSetter func(*Options)
 
+// value is one of the AllowedOutputModes
 func WithOutputMode(value string) OptionsSetter {
 	return func(o *Options) {
 		o.OutputMode = value
