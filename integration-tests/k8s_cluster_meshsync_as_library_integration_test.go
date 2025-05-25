@@ -36,7 +36,7 @@ func TestWithMeshsyncLibraryAndK8sClusterIntegration(t *testing.T) {
 	for i, tc := range k8sClusterMeshsyncAsLibraryTestCasesData {
 		t.Run(
 			tc.name,
-			runWithMeshsyncLibraryAndk8sClusterMeshsyncBinaryTestCase(
+			runWithMeshsyncLibraryAndk8sClusterTestCase(
 				i,
 				tc,
 			),
@@ -44,7 +44,11 @@ func TestWithMeshsyncLibraryAndK8sClusterIntegration(t *testing.T) {
 	}
 }
 
-func runWithMeshsyncLibraryAndk8sClusterMeshsyncBinaryTestCase(
+// TODO fix cyclop error
+// integration-tests/k8s_cluster_meshsync_as_library_integration_test.go:47:1: calculated cyclomatic complexity for function runWithMeshsyncLibraryAndk8sClusterTestCase is 15, max is 10 (cyclop)
+//
+//nolint:cyclop
+func runWithMeshsyncLibraryAndk8sClusterTestCase(
 	tcIndex int,
 	tc k8sClusterMeshsyncLibraryTestCaseStruct,
 ) func(t *testing.T) {
