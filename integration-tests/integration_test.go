@@ -63,6 +63,7 @@ type k8sClusterMeshsyncLibraryTestCaseStruct struct {
 		out chan *output.ChannelItem,
 		resultData map[string]any,
 	) // result map is to propagate data between channelMessageHandler and finalHandler
-	finalHandler  func(t *testing.T, resultData map[string]any)
-	expectedError error // if this is not nil, result run expected to end with error
+	finalHandler         func(t *testing.T, resultData map[string]any)
+	expectError          bool   // if this is true, result run expected to end with error
+	expectedErrorMessage string // if this is not "", check that return error contains message, makes sense only if expectError = true
 }

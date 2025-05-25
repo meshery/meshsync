@@ -106,10 +106,15 @@ func runWithMeshsyncLibraryAndk8sClusterMeshsyncBinaryTestCase(
 		select {
 		case err := <-errCh:
 			if err != nil {
-				if tc.expectedError == nil {
+				if !tc.expectError {
 					t.Fatal("must not end with error", err)
 				}
-				assert.ErrorIs(t, err, tc.expectedError, "must end with expected error")
+				assert.ErrorContains(t, err, tc.expectedErrorMessage, "must end with expected error")
+			} else if tc.expectError {
+				if tc.expectedErrorMessage != "" {
+					t.Fatalf("must end with expected error message %s", tc.expectedErrorMessage)
+				}
+				t.Fatalf("must end with error")
 			}
 		case <-time.After(timeout):
 			self, err := os.FindProcess(os.Getpid())

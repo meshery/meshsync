@@ -1,10 +1,14 @@
 package tests
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/layer5io/meshkit/utils/kubernetes"
+	meshkitutils "github.com/layer5io/meshkit/utils"
+	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/internal/output"
 	libmeshsync "github.com/layer5io/meshsync/pkg/lib/meshsync"
@@ -51,7 +55,7 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
 			nil,
 			libmeshsync.WithOutputMode(config.OutputModeChannel),
-			libmeshsync.WithStopAfterDuration(1 * time.Second),
+			libmeshsync.WithStopAfterDuration(0 * time.Second),
 		},
 	},
 	// TODO
@@ -66,7 +70,7 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 			libmeshsync.WithStopAfterDuration(0 * time.Second),
 		},
 		finalHandler: func(t *testing.T, resultData map[string]any) {
-			kubeClient, err := kubernetes.New(nil)
+			kubeClient, err := mesherykube.New(nil)
 			assert.NoError(t, err)
 			if err == nil {
 				clusterID := iutils.GetClusterID(kubeClient.KubeClient)
@@ -74,5 +78,64 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 				assert.NotEmpty(t, clusterID)
 			}
 		},
+	},
+	{
+		name: "output mode channel: can access cluster when receive kube config from options",
+		meshsyncRunOptions: []libmeshsync.OptionsSetter{
+			libmeshsync.WithOutputMode(config.OutputModeChannel),
+			// read the kube config and provide its content through libmeshsync.WithKubeConfig
+			func() libmeshsync.OptionsSetter {
+				kubeConfigFilePath := os.Getenv("KUBECONFIG")
+				if kubeConfigFilePath == "" {
+					kubeConfigFilePath = filepath.Join(
+						meshkitutils.GetHome(),
+						".kube",
+						"config",
+					)
+					fmt.Println(kubeConfigFilePath)
+				}
+				data, _ := os.ReadFile(kubeConfigFilePath)
+				if data == nil {
+					// because if data is nil, meshsync will read from default kube config
+					// and we would like to test from custom provided
+					data = fmt.Appendf(nil, "could not read from kube config %s", kubeConfigFilePath)
+				}
+				return libmeshsync.WithKubeConfig(data)
+			}(),
+			libmeshsync.WithStopAfterDuration(8 * time.Second),
+		},
+		channelMessageHandler: func(
+			t *testing.T,
+			out chan *output.ChannelItem,
+			resultData map[string]any,
+		) {
+			count := 0
+			resultData["count"] = count
+			go func() {
+				for range out {
+					count++
+					resultData["count"] = count
+				}
+			}()
+		},
+		finalHandler: func(t *testing.T, resultData map[string]any) {
+			count, ok := resultData["count"].(int)
+			assert.True(t, ok, "must get count from result map")
+			if ok {
+				t.Logf("received %d messages from meshsync", count)
+				assert.True(t, count > 0, "must receive messages from meshsync")
+			}
+
+		},
+	},
+	{
+		name: "output mode channel: could not access cluster with invalid kubeconfig",
+		meshsyncRunOptions: []libmeshsync.OptionsSetter{
+			libmeshsync.WithOutputMode(config.OutputModeChannel),
+			libmeshsync.WithKubeConfig([]byte(`fake kube config`)),
+			libmeshsync.WithStopAfterDuration(0 * time.Second),
+		},
+		expectError:          true,
+		expectedErrorMessage: "cannot unmarshal string into Go value of type struct",
 	},
 }
