@@ -10,6 +10,7 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -210,28 +211,31 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		go meshsyncHandler.ListenToRequests()
 	}
 
+	chTimeout := make(chan struct{})
 	if options.StopAfterDuration > -1 {
-		go func(stopCh channels.StopChannel) {
+		go func(ch chan struct{}) {
 			<-time.After(options.StopAfterDuration)
 			log.Infof("Stopping after %s", options.StopAfterDuration)
-			stopCh <- struct{}{}
-			// close(stopCh)
-		}(chPool[channels.Stop].(channels.StopChannel))
+			close(chTimeout)
+		}(chTimeout)
 	}
 
 	log.Info("Server started")
 	// Handle graceful shutdown
 	signal.Notify(chPool[channels.OS].(channels.OSChannel), syscall.SIGTERM, os.Interrupt)
+
+	// close stop channel (and ensure to close it only once),
+	// as there are many goroutines which wait for channels.Stop to be closed to stop their execution
+	var closeOnce sync.Once
 	select {
+	case <-chTimeout:
+		closeOnce.Do(func() {
+			close(chPool[channels.Stop].(channels.StopChannel))
+		})
 	case <-chPool[channels.OS].(channels.OSChannel):
-		close(chPool[channels.Stop].(channels.StopChannel))
-	case <-chPool[channels.Stop].(channels.StopChannel):
-		// // NOTE:
-		// // does not make sense to close the StopChannel here,
-		// // as the general approach with stop channel to close it rather then put smth in it,
-		// // and hence next close will create panic if stop channel is already closed
-		// // so commented this out:
-		// close(chPool[channels.Stop].(channels.StopChannel))
+		closeOnce.Do(func() {
+			close(chPool[channels.Stop].(channels.StopChannel))
+		})
 	}
 
 	log.Info("Shutting down")

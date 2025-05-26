@@ -50,8 +50,14 @@ func (h *Handler) Run() {
 		h.startDiscovery(pipelineCh)
 
 	})
-	for range h.channelPool[channels.ReSync].(channels.ReSyncChannel) {
-		go debouncedStartDiscovery(pipelineCh)
+	for {
+		select {
+		case <-h.channelPool[channels.Stop].(channels.StopChannel):
+			h.Log.Info("Stopping Run")
+			return
+		case <-h.channelPool[channels.ReSync].(channels.ReSyncChannel):
+			go debouncedStartDiscovery(pipelineCh)
+		}
 	}
 }
 
@@ -86,10 +92,10 @@ func (h *Handler) ListenToRequests() {
 		h.Log.Error(ErrSubscribeRequest(err))
 	}
 
-	for request := range reqChan {
+	processRequest := func(request *broker.Message) {
 		if request.Request == nil {
 			h.Log.Error(ErrInvalidRequest)
-			continue
+			return
 		}
 
 		switch request.Request.Entity {
@@ -98,7 +104,7 @@ func (h *Handler) ListenToRequests() {
 			err := h.processLogRequest(request.Request.Payload, listenerConfigs[config.LogStream])
 			if err != nil {
 				h.Log.Error(err)
-				continue
+				return
 			}
 
 			// TODO: Add this to the broker pkg
@@ -108,12 +114,12 @@ func (h *Handler) ListenToRequests() {
 			var payload struct{ Reply string }
 			if err != nil {
 				h.Log.Error(err)
-				continue
+				return
 			}
 			err = json.Unmarshal(d, &payload)
 			if err != nil {
 				h.Log.Error(err)
-				continue
+				return
 			}
 			replySubject := payload.Reply
 			storeObjects := h.listStoreObjects()
@@ -138,14 +144,14 @@ func (h *Handler) ListenToRequests() {
 			err := h.processExecRequest(request.Request.Payload, listenerConfigs[config.ExecShell])
 			if err != nil {
 				h.Log.Error(err)
-				continue
+				return
 			}
 		case broker.ActiveExecEntity:
 			h.Log.Info("Connecting to channel pool")
 			err := h.processActiveExecRequest()
 			if err != nil {
 				h.Log.Error(err)
-				continue
+				return
 			}
 		case "meshsync-meta":
 			h.Log.Info("Publishing MeshSync metadata to the subject")
@@ -154,8 +160,18 @@ func (h *Handler) ListenToRequests() {
 			})
 			if err != nil {
 				h.Log.Error(err)
-				continue
+				return
 			}
+		}
+	}
+
+	for {
+		select {
+		case <-h.channelPool[channels.Stop].(channels.StopChannel):
+			h.Log.Info("Stopping ListenToRequests")
+			return
+		case request := <-reqChan:
+			processRequest(request)
 		}
 	}
 }
@@ -180,30 +196,32 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 }
 
 func (h *Handler) WatchCRDs() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	crdWatcher, err := h.kubeClient.DynamicKubeClient.Resource(schema.GroupVersionResource{
 		Group:    "apiextensions.k8s.io",
 		Version:  "v1",
 		Resource: "customresourcedefinitions",
-	}).Watch(context.Background(), metav1.ListOptions{})
+	}).Watch(ctx, metav1.ListOptions{})
 
 	if err != nil {
 		h.Log.Error(err)
 		return
 	}
 
-	for event := range crdWatcher.ResultChan() {
-
+	processEvent := func(event watch.Event) {
 		crd := &kubernetes.CRDItem{}
 		byt, err := json.Marshal(event.Object)
 		if err != nil {
 			h.Log.Error(err)
-			continue
+			return
 		}
 
 		err = json.Unmarshal(byt, crd)
 		if err != nil {
 			h.Log.Error(err)
-			continue
+			return
 		}
 
 		gvr := kubernetes.GetGVRForCustomResources(crd)
@@ -212,7 +230,7 @@ func (h *Handler) WatchCRDs() {
 		err = h.Config.GetObject(config.ResourcesKey, existingPipelines)
 		if err != nil {
 			h.Log.Error(err)
-			continue
+			return
 		}
 
 		existingPipelineConfigs := existingPipelines[config.GlobalResourceKey]
@@ -242,6 +260,16 @@ func (h *Handler) WatchCRDs() {
 			return
 		}
 		h.channelPool[channels.ReSync].(channels.ReSyncChannel).ReSyncInformer()
+	}
+
+	for {
+		select {
+		case <-h.channelPool[channels.Stop].(channels.StopChannel):
+			h.Log.Info("Stopping WatchCRDs")
+			return
+		case event := <-crdWatcher.ResultChan():
+			processEvent(event)
+		}
 	}
 }
 
