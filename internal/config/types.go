@@ -1,8 +1,6 @@
 package config
 
 import (
-	"time"
-
 	"golang.org/x/exp/slices"
 )
 
@@ -28,7 +26,6 @@ const (
 // TODO do not have global config variables
 var (
 	OutputNamespace              string
-	StopAfterDuration            time.Duration
 	OutputResourcesSet           map[string]bool
 	OutputOnlySpecifiedResources bool
 )

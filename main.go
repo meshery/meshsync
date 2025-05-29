@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	configprovider "github.com/layer5io/meshkit/config/provider"
 	"github.com/layer5io/meshkit/logger"
@@ -24,8 +25,9 @@ var (
 
 // command line input params
 var (
-	outputMode     string
-	outputFileName string
+	outputMode        string
+	outputFileName    string
+	stopAfterDuration time.Duration
 )
 
 func main() {
@@ -47,7 +49,7 @@ func main() {
 		log,
 		libmeshsync.WithOutputMode(outputMode),
 		libmeshsync.WithOutputFileName(outputFileName),
-		libmeshsync.WithStopAfterDuration(config.StopAfterDuration),
+		libmeshsync.WithStopAfterDuration(stopAfterDuration),
 		libmeshsync.WithVersion(version),
 		libmeshsync.WithPingEndpoint(pingEndpoint),
 		libmeshsync.WithMeshkitConfigProvider(provider),
@@ -91,7 +93,7 @@ func parseFlags() {
 		"k8s resources for which limit the output, coma separated case insensitive list of k8s resources, f.e. \"pod,deployment,service\", applicable for both nats and file output mode",
 	)
 	flag.DurationVar(
-		&config.StopAfterDuration,
+		&stopAfterDuration,
 		"stopAfter",
 		-1,
 		"stop meshsync execution after specified duration, excepts value which is parsable by time.ParseDuration,  f.e. 8s",
