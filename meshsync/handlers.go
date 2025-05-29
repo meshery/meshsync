@@ -33,6 +33,13 @@ func debounce(d time.Duration, f func(ch chan struct{})) func(ch chan struct{}) 
 
 func (h *Handler) Run() {
 	pipelineCh := make(chan struct{})
+	defer func() {
+		if !utils.IsClosed(pipelineCh) {
+			h.Log.Info("Closing informer stop channel")
+			close(pipelineCh)
+		}
+	}()
+
 	go h.startDiscovery(pipelineCh)
 
 	debouncedStartDiscovery := debounce(time.Second*5, func(pipelinechannel chan struct{}) {
@@ -50,15 +57,16 @@ func (h *Handler) Run() {
 		h.startDiscovery(pipelineCh)
 
 	})
+loop:
 	for {
 		select {
 		case <-h.channelPool[channels.Stop].(channels.StopChannel):
-			h.Log.Info("Stopping Run")
-			return
+			break loop
 		case <-h.channelPool[channels.ReSync].(channels.ReSyncChannel):
 			go debouncedStartDiscovery(pipelineCh)
 		}
 	}
+	h.Log.Info("Stopping Run")
 }
 
 func (h *Handler) UpdateInformer() error {
@@ -70,8 +78,19 @@ func (h *Handler) UpdateInformer() error {
 	if err != nil {
 		return err
 	}
+	if h.informer != nil {
+		h.informer.Shutdown()
+	}
 	h.informer = GetDynamicInformer(h.Config, dynamicClient, listOptionsFunc)
 	return nil
+}
+
+func (h *Handler) ShutdownInformer() {
+	if h.informer != nil {
+		h.Log.Info("Shutting down informer...")
+		h.informer.Shutdown()
+		h.Log.Info("Shutting down informer done.")
+	}
 }
 
 // TODO fix cyclop error
@@ -259,6 +278,7 @@ func (h *Handler) WatchCRDs() {
 			h.Log.Info("skipping informer resync")
 			return
 		}
+		h.Log.Info("Resyncing informer from watch crd")
 		h.channelPool[channels.ReSync].(channels.ReSyncChannel).ReSyncInformer()
 	}
 

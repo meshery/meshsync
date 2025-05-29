@@ -196,10 +196,12 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	if err != nil {
 		return err
 	}
+	defer meshsyncHandler.ShutdownInformer()
 
 	go meshsyncHandler.WatchCRDs()
 
 	go meshsyncHandler.Run()
+
 	// TODO
 	// as we have introduced a new output mode channel
 	// do we need to have a ListenToRequests channel?
@@ -220,7 +222,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		}(chTimeout)
 	}
 
-	log.Info("Server started")
+	log.Info("MeshSync run started")
 	// Handle graceful shutdown
 	signal.Notify(chPool[channels.OS].(channels.OSChannel), syscall.SIGTERM, os.Interrupt)
 
@@ -238,7 +240,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		})
 	}
 
-	log.Info("Shutting down")
+	log.Info("MeshSync run shutting down")
 
 	return nil
 }
