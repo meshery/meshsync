@@ -96,7 +96,10 @@ func (h *Handler) getActiveChannels() []*string {
 
 func (h *Handler) streamChannelPool() {
 	go func() {
-		for {
+		ticker := time.NewTicker(10 * time.Second)
+		defer ticker.Stop()
+
+		publish := func() {
 			err := h.Broker.Publish("active_sessions.exec", &broker.Message{
 				ObjectType: broker.ActiveExecObject,
 				Object:     h.getActiveChannels(),
@@ -104,8 +107,16 @@ func (h *Handler) streamChannelPool() {
 			if err != nil {
 				h.Log.Error(ErrGetObject(err))
 			}
+		}
 
-			time.Sleep(10 * time.Second)
+		for {
+			select {
+			case <-h.channelPool[channels.Stop].(channels.StopChannel):
+				h.Log.Info("Stopping streamChannelPool")
+				return
+			case <-ticker.C:
+				publish()
+			}
 		}
 	}()
 }
