@@ -27,7 +27,6 @@ const (
 // Command line input params
 // TODO do not have global config variables
 var (
-	OutputFileName               string
 	OutputNamespace              string
 	StopAfterDuration            time.Duration
 	OutputResourcesSet           map[string]bool

@@ -13,6 +13,7 @@ type Options struct {
 	TransportChannel  chan<- *output.ChannelItem
 	StopAfterDuration time.Duration
 	KubeConfig        []byte
+	OutputFileName    string
 
 	Version               string
 	PingEndpoint          string
@@ -60,6 +61,12 @@ func WithStopAfterDuration(value time.Duration) OptionsSetter {
 func WithKubeConfig(value []byte) OptionsSetter {
 	return func(o *Options) {
 		o.KubeConfig = value
+	}
+}
+
+func WithOutputFileName(value string) OptionsSetter {
+	return func(o *Options) {
+		o.OutputFileName = value
 	}
 }
 

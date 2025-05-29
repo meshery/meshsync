@@ -132,7 +132,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	}
 
 	if options.OutputMode == config.OutputModeFile {
-		filename := config.OutputFileName
+		filename := options.OutputFileName
 		defaultFormat := "yaml"
 		if filename == "" {
 			fname, errGenerateUniqueFileNameForSnapshot := file.GenerateUniqueFileNameForSnapshot(defaultFormat)

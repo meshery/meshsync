@@ -24,7 +24,8 @@ var (
 
 // command line input params
 var (
-	outputMode string
+	outputMode     string
+	outputFileName string
 )
 
 func main() {
@@ -45,6 +46,7 @@ func main() {
 	if err := libmeshsync.Run(
 		log,
 		libmeshsync.WithOutputMode(outputMode),
+		libmeshsync.WithOutputFileName(outputFileName),
 		libmeshsync.WithStopAfterDuration(config.StopAfterDuration),
 		libmeshsync.WithVersion(version),
 		libmeshsync.WithPingEndpoint(pingEndpoint),
@@ -70,7 +72,7 @@ func parseFlags() {
 		fmt.Sprintf("output mode: \"%s\" or \"%s\"", config.OutputModeNats, config.OutputModeFile),
 	)
 	flag.StringVar(
-		&config.OutputFileName,
+		&outputFileName,
 		"outputFile",
 		"",
 		"output file where to put the meshsync events (cluster snapshot), only applicable for file output mode (default \"./meshery-cluster-snapshot-YYYYMMDD-00.yaml\")",
