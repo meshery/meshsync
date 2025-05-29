@@ -109,15 +109,16 @@ func (h *Handler) streamChannelPool() {
 			}
 		}
 
+	loop:
 		for {
 			select {
 			case <-h.channelPool[channels.Stop].(channels.StopChannel):
-				h.Log.Info("Stopping streamChannelPool")
-				return
+				break loop
 			case <-ticker.C:
 				publish()
 			}
 		}
+		h.Log.Info("Stopping streamChannelPool")
 	}()
 }
 

@@ -184,15 +184,16 @@ func (h *Handler) ListenToRequests() {
 		}
 	}
 
+loop:
 	for {
 		select {
 		case <-h.channelPool[channels.Stop].(channels.StopChannel):
-			h.Log.Info("Stopping ListenToRequests")
-			return
+			break loop
 		case request := <-reqChan:
 			processRequest(request)
 		}
 	}
+	h.Log.Info("Stopping ListenToRequests")
 }
 
 func (h *Handler) listStoreObjects() []model.KubernetesResource {
@@ -282,15 +283,16 @@ func (h *Handler) WatchCRDs() {
 		h.channelPool[channels.ReSync].(channels.ReSyncChannel).ReSyncInformer()
 	}
 
+loop:
 	for {
 		select {
 		case <-h.channelPool[channels.Stop].(channels.StopChannel):
-			h.Log.Info("Stopping WatchCRDs")
-			return
+			break loop
 		case event := <-crdWatcher.ResultChan():
 			processEvent(event)
 		}
 	}
+	h.Log.Info("Stopping WatchCRDs")
 }
 
 // TODO: move this to meshkit
