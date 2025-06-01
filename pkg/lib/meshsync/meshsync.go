@@ -268,22 +268,25 @@ func determineUseCRDFlag(
 	log logger.Handler,
 	kubeClient *mesherykube.Client,
 ) bool {
-	useCRDFlag := true
-	if options.OutputMode == config.OutputModeFile {
-		// if output mode is file -> generally it is not expected to have CRD present in cluster.
-		// theoretically CRDs could be present even in file output mode.
-		// hence check if CRD is present in the cluster,
-		// and only skip them in file output mode if it is not present.
-		crd, errGetMeshsyncCRD := config.GetMeshsyncCRD(kubeClient.DynamicKubeClient)
-		if crd != nil && errGetMeshsyncCRD == nil {
-			// this is rare, but valid case
-			log.Info("running in file output mode and meshsync CRD is present in the cluster")
-		} else {
-			useCRDFlag = false
-			// this is the most common case, file mode and no CRD
-			log.Info("running in file output mode and NO meshsync CRD is present in the cluster (expected behaviour)")
-		}
+	// if output mode is not nats generally it is not expected to have CRD present in cluster.
+	// theoretically CRD could be present even in file, channel output mode.
+	// hence check if CRD are present in the cluster,
+	// and only skip them if it is not present.
+	crd, errGetMeshsyncCRD := config.GetMeshsyncCRD(kubeClient.DynamicKubeClient)
+	useCRDFlag := crd != nil && errGetMeshsyncCRD == nil
+	if useCRDFlag {
+		log.Infof(
+			"running in %s output mode and meshsync CRD is present in the cluster",
+			options.OutputMode,
+		)
+	} else {
+		// this is the most common case, file mode and no CRD
+		log.Infof(
+			"running in file %s mode and NO meshsync CRD is present in the cluster",
+			options.OutputMode,
+		)
 	}
+
 	return useCRDFlag
 }
 
