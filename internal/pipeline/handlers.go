@@ -79,7 +79,7 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 	if !slices.Contains(ri.config.Events, string(evtype)) {
 		return nil
 	}
-	k8sResource := model.ParseList(*obj, evtype)
+	k8sResource := model.ParseList(*obj, evtype, ri.clusterID)
 
 	mustSkip := false
 
