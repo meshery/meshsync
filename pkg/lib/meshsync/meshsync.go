@@ -282,7 +282,7 @@ func determineUseCRDFlag(
 	} else {
 		// this is the most common case, file mode and no CRD
 		log.Infof(
-			"running in file %s mode and NO meshsync CRD is present in the cluster",
+			"running in %s mode and NO meshsync CRD is present in the cluster",
 			options.OutputMode,
 		)
 	}
