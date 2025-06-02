@@ -3,7 +3,7 @@ package pipeline
 import (
 	"fmt"
 
-	"github.com/layer5io/meshkit/logger"
+	"github.com/meshery/meshkit/logger"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/internal/output"
 	"github.com/myntra/pipeline"

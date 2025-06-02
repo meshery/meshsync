@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/layer5io/meshkit/broker"
-	"github.com/layer5io/meshkit/utils/kubernetes"
+	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshkit/utils/kubernetes"
 	v1 "k8s.io/api/core/v1"
 )
 

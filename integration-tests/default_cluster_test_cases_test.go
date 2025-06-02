@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/layer5io/meshkit/broker"
+	"github.com/meshery/meshkit/broker"
 	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/yaml"
 )

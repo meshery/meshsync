@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/layer5io/meshkit/errors"
+	"github.com/meshery/meshkit/errors"
 )
 
 const (

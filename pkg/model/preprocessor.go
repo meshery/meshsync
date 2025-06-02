@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/layer5io/meshkit/broker"
+	"github.com/meshery/meshkit/broker"
 )
 
 type ProcessFunc interface {
