@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/layer5io/meshkit/broker"
+	"github.com/meshery/meshkit/broker"
 	internalconfig "github.com/layer5io/meshsync/internal/config"
 	"github.com/layer5io/meshsync/pkg/model"
 	"golang.org/x/exp/slices"

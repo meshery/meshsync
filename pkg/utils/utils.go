@@ -3,7 +3,7 @@ package utils
 import (
 	"context"
 
-	"github.com/layer5io/meshkit/utils/kubernetes"
+	"github.com/meshery/meshkit/utils/kubernetes"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

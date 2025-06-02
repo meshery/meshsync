@@ -7,8 +7,8 @@ import (
 
 	"github.com/buger/jsonparser"
 	"github.com/google/uuid"
-	"github.com/layer5io/meshkit/broker"
-	"github.com/layer5io/meshkit/orchestration"
+	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshkit/orchestration"
 	iutils "github.com/layer5io/meshsync/pkg/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )

@@ -1,10 +1,10 @@
 package meshsync
 
 import (
-	"github.com/layer5io/meshkit/broker"
-	"github.com/layer5io/meshkit/config"
-	"github.com/layer5io/meshkit/logger"
-	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
+	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshkit/config"
+	"github.com/meshery/meshkit/logger"
+	mesherykube "github.com/meshery/meshkit/utils/kubernetes"
 	"github.com/layer5io/meshsync/internal/channels"
 	"github.com/layer5io/meshsync/internal/output"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

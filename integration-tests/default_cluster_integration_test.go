@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/layer5io/meshkit/broker"
-	"github.com/layer5io/meshkit/broker/nats"
+	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshkit/broker/nats"
 )
 
 var runIntegrationTest bool

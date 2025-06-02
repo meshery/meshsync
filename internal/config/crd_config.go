@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/layer5io/meshery-operator/pkg/client"
-	"github.com/layer5io/meshkit/utils"
+	"github.com/meshery/meshkit/utils"
 	"golang.org/x/exp/slices"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
