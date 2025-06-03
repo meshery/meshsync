@@ -142,15 +142,6 @@ Please do! We're a warm and welcoming community of open source contributors. Ple
 
 <div>&nbsp;</div>
 
-### Stargazers
-
-<p align="center">
-  <i>If you like Meshery, please <a href="../../stargazers">★</a> star this repository to show your support! 🤩</i>
- <br />
-<a href="../../stargazers">
- <img align="center" src="https://api.star-history.com/svg?repos=meshery/meshery&type=Date" />
-</a></p>
-
 ### License
 
 This repository and site are available as open-source under the terms of the [Apache 2.0 License](https://opensource.org/licenses/Apache-2.0).
