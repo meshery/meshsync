@@ -2,8 +2,8 @@ package pipeline
 
 import (
 	"github.com/meshery/meshkit/logger"
-	internalconfig "github.com/layer5io/meshsync/internal/config"
-	"github.com/layer5io/meshsync/internal/output"
+	internalconfig "github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/internal/output"
 	"github.com/myntra/pipeline"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 )
