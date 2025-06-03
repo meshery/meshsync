@@ -11,7 +11,7 @@
 </picture>
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/layer5/meshsync.svg)](https://hub.docker.com/r/layer5/meshsync)
-[![Go Report Card](https://goreportcard.com/badge/github.com/layer5io/meshsync)](https://goreportcard.com/report/github.com/layer5io/meshsync)
+[![Go Report Card](https://goreportcard.com/badge/github.com/meshery/meshsync)](https://goreportcard.com/report/github.com/meshery/meshsync)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/meshery/meshsync/multi-platform.yml?branch=master)](https://github.com/meshery/meshsync/actions)
 [![Website](https://img.shields.io/website/https/layer5.io/meshery.svg)](https://meshery.io/)
 [![Twitter Follow](https://img.shields.io/twitter/follow/layer5.svg?label=Follow&style=social)](https://twitter.com/intent/follow?screen_name=mesheryio)
@@ -20,7 +20,7 @@
 <a href="https://discuss.layer5.io/c/service-mesh-patterns/10" alt="Discuss Users">
   <img src="https://img.shields.io/discourse/users?label=discuss&logo=discourse&server=https%3A%2F%2Fdiscuss.layer5.io" /></a>
 <br /><br />
-<p style="text-align:center;" align="center"><a href="https://meshery.io"><img align="left" style="margin-bottom:20px;" src="https://raw.githubusercontent.com/layer5io/meshsync/master/.github/readme/images/meshsync.svg"  width="150px" /></a></p>
+<p style="text-align:center;" align="center"><a href="https://meshery.io"><img align="left" style="margin-bottom:20px;" src="https://raw.githubusercontent.com/meshery/meshsync/master/.github/readme/images/meshsync.svg"  width="150px" /></a></p>
 
 # MeshSync
 
@@ -119,7 +119,7 @@ Learn more about the <a href="https://meshery.io/community#meshmates">MeshMates<
 </div>
 <br /><br />
 <p align="left">
-&nbsp;&nbsp;&nbsp;&nbsp; <i>Not sure where to start?</i> Grab an open issue with the <a href="https://github.com/issues?q=is%3Aopen+is%3Aissue+archived%3Afalse+org%3Alayer5io+org%3Ameshery+org%3Alayer5labs+org%3Aservice-mesh-performance+org%3Aservice-mesh-patterns+org%3Ameshery-extensions+label%3A%22help+wanted%22+">help-wanted label</a>.
+&nbsp;&nbsp;&nbsp;&nbsp; <i>Not sure where to start?</i> Grab an open issue with the <a href="https://github.com/issues?q=is%3Aopen+is%3Aissue+archived%3Afalse+org%3Ameshery+org%3Ameshery+org%3Alayer5labs+org%3Aservice-mesh-performance+org%3Aservice-mesh-patterns+org%3Ameshery-extensions+label%3A%22help+wanted%22+">help-wanted label</a>.
 </p>
 <br /><br />
 
