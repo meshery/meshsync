@@ -34,7 +34,7 @@ endif
 .PHONY: docker-check
 ## Build Meshsync's docker image
 docker: check
-	docker build -t layer5/meshery-meshsync .
+	docker build -t meshery/meshery-meshsync .
 
 .PHONY: docker-run
 ## Runs Meshsync in docker
@@ -43,7 +43,7 @@ docker-run:
 	docker run --name meshery-meshsync -d \
 	-p 10007:10007 \
 	-e DEBUG=true \
-	layer5/meshery-meshsync
+	meshery/meshery-meshsync
 
 PHONY: nats
 ## Runs a local instance of NATS server in detached mode

@@ -2,8 +2,8 @@ package output
 
 import (
 	"github.com/meshery/meshkit/broker"
-	"github.com/layer5io/meshsync/internal/config"
-	"github.com/layer5io/meshsync/pkg/model"
+	"github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/pkg/model"
 )
 
 type Processor struct {

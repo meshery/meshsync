@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/meshery/meshkit/broker"
 	"github.com/meshery/meshkit/orchestration"
-	iutils "github.com/layer5io/meshsync/pkg/utils"
+	iutils "github.com/meshery/meshsync/pkg/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 

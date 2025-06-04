@@ -1,16 +1,13 @@
-module github.com/layer5io/meshsync
+module github.com/meshery/meshsync
 
-replace (
-	github.com/kudobuilder/kuttl => github.com/layer5io/kuttl v0.4.1-0.20200806180306-b7e46afd657f
-	vbom.ml/util => github.com/fvbommel/util v0.0.0-20180919145318-efcd4e0f9787
-)
+replace vbom.ml/util => github.com/fvbommel/util v0.0.0-20180919145318-efcd4e0f9787
 
 go 1.23.4
 
 require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/google/uuid v1.6.0
-	github.com/layer5io/meshery-operator v0.8.1
+	github.com/meshery/meshery-operator v0.8.7
 	github.com/meshery/meshkit v0.8.32
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/sirupsen/logrus v1.9.3
