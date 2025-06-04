@@ -5,7 +5,9 @@ on:
       - 'master'
     tags:
       - 'v*'
-
+    paths-ignore:
+      - 'docs/**'
+      - '.github/**'
 jobs:
   build:
     name: Build check
