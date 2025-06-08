@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/layer5io/meshkit/broker"
-	internalconfig "github.com/layer5io/meshsync/internal/config"
-	"github.com/layer5io/meshsync/pkg/model"
+	"github.com/meshery/meshkit/broker"
+	internalconfig "github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/pkg/model"
 	"golang.org/x/exp/slices"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/tools/cache"

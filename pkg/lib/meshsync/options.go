@@ -3,9 +3,9 @@ package meshsync
 import (
 	"time"
 
-	mcp "github.com/layer5io/meshkit/config/provider"
-	"github.com/layer5io/meshsync/internal/config"
-	"github.com/layer5io/meshsync/internal/output"
+	mcp "github.com/meshery/meshkit/config/provider"
+	"github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/internal/output"
 )
 
 type Options struct {
@@ -23,7 +23,7 @@ type Options struct {
 var DefautOptions = Options{
 	StopAfterDuration: -1, // -1 turns it off
 	TransportChannel:  nil,
-	KubeConfig:        nil, // if nil, truies to detekt kube config by the means of github.com/layer5io/meshkit/utils/kubernetes/client.go:DetectKubeConfig
+	KubeConfig:        nil, // if nil, truies to detekt kube config by the means of github.com/meshery/meshkit/utils/kubernetes/client.go:DetectKubeConfig
 
 	Version:               "Not Set",
 	PingEndpoint:          ":8222/connz",
@@ -57,7 +57,7 @@ func WithStopAfterDuration(value time.Duration) OptionsSetter {
 	}
 }
 
-// value here is all what is good to pass to github.com/layer5io/meshkit/utils/kubernetes/client.go:DetectKubeConfig
+// value here is all what is good to pass to github.com/meshery/meshkit/utils/kubernetes/client.go:DetectKubeConfig
 func WithKubeConfig(value []byte) OptionsSetter {
 	return func(o *Options) {
 		o.KubeConfig = value

@@ -1,9 +1,9 @@
 package config
 
 import (
-	"github.com/layer5io/meshkit/config"
-	configprovider "github.com/layer5io/meshkit/config/provider"
-	"github.com/layer5io/meshkit/utils"
+	"github.com/meshery/meshkit/config"
+	configprovider "github.com/meshery/meshkit/config/provider"
+	"github.com/meshery/meshkit/utils"
 )
 
 // New creates a new config instance

@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	configprovider "github.com/layer5io/meshkit/config/provider"
-	"github.com/layer5io/meshkit/logger"
-	"github.com/layer5io/meshsync/internal/config"
-	libmeshsync "github.com/layer5io/meshsync/pkg/lib/meshsync"
+	configprovider "github.com/meshery/meshkit/config/provider"
+	"github.com/meshery/meshkit/logger"
+	"github.com/meshery/meshsync/internal/config"
+	libmeshsync "github.com/meshery/meshsync/pkg/lib/meshsync"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )

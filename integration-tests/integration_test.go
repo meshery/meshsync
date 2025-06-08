@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/layer5io/meshkit/broker"
-	"github.com/layer5io/meshsync/internal/output"
-	libmeshsync "github.com/layer5io/meshsync/pkg/lib/meshsync"
+	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshsync/internal/output"
+	libmeshsync "github.com/meshery/meshsync/pkg/lib/meshsync"
 )
 
 /**

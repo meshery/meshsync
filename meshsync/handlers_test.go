@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/layer5io/meshsync/pkg/model"
+	"github.com/meshery/meshsync/pkg/model"
 )
 
 // TestSplitIntoMultipleSlices tests the splitIntoMultipleSlices function

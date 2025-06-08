@@ -13,15 +13,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/layer5io/meshkit/broker"
-	"github.com/layer5io/meshkit/broker/nats"
-	"github.com/layer5io/meshkit/logger"
-	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
-	"github.com/layer5io/meshsync/internal/channels"
-	"github.com/layer5io/meshsync/internal/config"
-	"github.com/layer5io/meshsync/internal/file"
-	"github.com/layer5io/meshsync/internal/output"
-	"github.com/layer5io/meshsync/meshsync"
+	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshkit/broker/nats"
+	"github.com/meshery/meshkit/logger"
+	mesherykube "github.com/meshery/meshkit/utils/kubernetes"
+	"github.com/meshery/meshsync/internal/channels"
+	"github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/internal/file"
+	"github.com/meshery/meshsync/internal/output"
+	"github.com/meshery/meshsync/meshsync"
 )
 
 // TODO fix cyclop error
