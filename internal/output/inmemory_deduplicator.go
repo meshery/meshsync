@@ -3,9 +3,9 @@ package output
 import (
 	"errors"
 
-	"github.com/layer5io/meshkit/broker"
-	"github.com/layer5io/meshsync/internal/config"
-	"github.com/layer5io/meshsync/pkg/model"
+	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/pkg/model"
 )
 
 // instead of direct write to output destination

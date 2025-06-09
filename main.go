@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
-	configprovider "github.com/layer5io/meshkit/config/provider"
-	"github.com/layer5io/meshkit/logger"
-	"github.com/layer5io/meshsync/internal/config"
-	libmeshsync "github.com/layer5io/meshsync/pkg/lib/meshsync"
+	configprovider "github.com/meshery/meshkit/config/provider"
+	"github.com/meshery/meshkit/logger"
+	"github.com/meshery/meshsync/internal/config"
+	libmeshsync "github.com/meshery/meshsync/pkg/lib/meshsync"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -24,7 +25,9 @@ var (
 
 // command line input params
 var (
-	outputMode string
+	outputMode        string
+	outputFileName    string
+	stopAfterDuration time.Duration
 )
 
 func main() {
@@ -45,7 +48,8 @@ func main() {
 	if err := libmeshsync.Run(
 		log,
 		libmeshsync.WithOutputMode(outputMode),
-		libmeshsync.WithStopAfterDuration(config.StopAfterDuration),
+		libmeshsync.WithOutputFileName(outputFileName),
+		libmeshsync.WithStopAfterDuration(stopAfterDuration),
 		libmeshsync.WithVersion(version),
 		libmeshsync.WithPingEndpoint(pingEndpoint),
 		libmeshsync.WithMeshkitConfigProvider(provider),
@@ -70,7 +74,7 @@ func parseFlags() {
 		fmt.Sprintf("output mode: \"%s\" or \"%s\"", config.OutputModeNats, config.OutputModeFile),
 	)
 	flag.StringVar(
-		&config.OutputFileName,
+		&outputFileName,
 		"outputFile",
 		"",
 		"output file where to put the meshsync events (cluster snapshot), only applicable for file output mode (default \"./meshery-cluster-snapshot-YYYYMMDD-00.yaml\")",
@@ -89,7 +93,7 @@ func parseFlags() {
 		"k8s resources for which limit the output, coma separated case insensitive list of k8s resources, f.e. \"pod,deployment,service\", applicable for both nats and file output mode",
 	)
 	flag.DurationVar(
-		&config.StopAfterDuration,
+		&stopAfterDuration,
 		"stopAfter",
 		-1,
 		"stop meshsync execution after specified duration, excepts value which is parsable by time.ParseDuration,  f.e. 8s",

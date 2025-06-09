@@ -1,10 +1,13 @@
 name: Meshsync CI
 
 on:
-  push:
-    branches: [ master ]
+  # push:
+  #   branches: [ master ]
   pull_request:
     branches: [ master ]
+    paths-ignore:
+      - 'docs/**'
+      - '.github/**'
 
 jobs:
   golangci-lint:

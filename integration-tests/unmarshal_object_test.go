@@ -1,9 +1,9 @@
 package tests
 
 import (
-	"github.com/layer5io/meshkit/encoding"
-	"github.com/layer5io/meshkit/utils"
-	"github.com/layer5io/meshsync/pkg/model"
+	"github.com/meshery/meshkit/encoding"
+	"github.com/meshery/meshkit/utils"
+	"github.com/meshery/meshsync/pkg/model"
 )
 
 func unmarshalObject(object interface{}) (model.KubernetesResource, error) {

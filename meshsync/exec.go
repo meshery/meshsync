@@ -1,4 +1,4 @@
-// Copyright 2023 Layer5, Inc.
+// Copyright Meshery Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/layer5io/meshkit/broker"
-	"github.com/layer5io/meshkit/utils"
-	"github.com/layer5io/meshsync/internal/channels"
-	"github.com/layer5io/meshsync/internal/config"
-	"github.com/layer5io/meshsync/pkg/model"
+	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshkit/utils"
+	"github.com/meshery/meshsync/internal/channels"
+	"github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/pkg/model"
 	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"

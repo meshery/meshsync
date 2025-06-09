@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	meshkitutils "github.com/layer5io/meshkit/utils"
-	mesherykube "github.com/layer5io/meshkit/utils/kubernetes"
-	"github.com/layer5io/meshsync/internal/config"
-	"github.com/layer5io/meshsync/internal/output"
-	libmeshsync "github.com/layer5io/meshsync/pkg/lib/meshsync"
-	iutils "github.com/layer5io/meshsync/pkg/utils"
+	meshkitutils "github.com/meshery/meshkit/utils"
+	mesherykube "github.com/meshery/meshkit/utils/kubernetes"
+	"github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/internal/output"
+	libmeshsync "github.com/meshery/meshsync/pkg/lib/meshsync"
+	iutils "github.com/meshery/meshsync/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 
