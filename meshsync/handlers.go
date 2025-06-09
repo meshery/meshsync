@@ -215,6 +215,11 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	return parsedObjects
 }
 
+// TODO
+// fix lint error
+// calculated cyclomatic complexity for function WatchCRDs is 11, max is 10 (cyclop)
+//
+//nolint:cyclop
 func (h *Handler) WatchCRDs() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
