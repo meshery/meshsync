@@ -7,11 +7,10 @@ import (
 	mesherykube "github.com/meshery/meshkit/utils/kubernetes"
 	"github.com/meshery/meshsync/internal/channels"
 	"github.com/meshery/meshsync/internal/output"
+	iutils "github.com/meshery/meshsync/pkg/utils"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -22,9 +21,9 @@ type Handler struct {
 	Log    logger.Handler
 	Broker broker.Handler
 
-	restConfig   rest.Config
+	clusterID    string
 	informer     dynamicinformer.DynamicSharedInformerFactory
-	staticClient *kubernetes.Clientset
+	kubeClient   *mesherykube.Client
 	channelPool  map[string]channels.GenericChannel
 	stores       map[string]cache.Store
 	outputWriter output.Writer
@@ -51,17 +50,20 @@ func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
 	}, nil
 }
 
-func New(config config.Handler, log logger.Handler, br broker.Handler, ow output.Writer, pool map[string]channels.GenericChannel) (*Handler, error) {
-	// Initialize Kubeconfig
-	kubeClient, err := mesherykube.New(nil)
-	if err != nil {
-		return nil, ErrKubeConfig(err)
-	}
+func New(
+	config config.Handler,
+	kubeClient *mesherykube.Client,
+	log logger.Handler,
+	br broker.Handler,
+	ow output.Writer,
+	pool map[string]channels.GenericChannel,
+) (*Handler, error) {
 	listOptionsFunc, err := GetListOptionsFunc(config)
 	if err != nil {
 		return nil, err
 	}
 
+	clusterID := iutils.GetClusterID(kubeClient.KubeClient)
 	informer := GetDynamicInformer(config, kubeClient.DynamicKubeClient, listOptionsFunc)
 
 	return &Handler{
@@ -70,8 +72,8 @@ func New(config config.Handler, log logger.Handler, br broker.Handler, ow output
 		Broker:       br,
 		outputWriter: ow,
 		informer:     informer,
-		restConfig:   kubeClient.RestConfig,
-		staticClient: kubeClient.KubeClient,
+		kubeClient:   kubeClient,
+		clusterID:    clusterID,
 		channelPool:  pool,
 	}, nil
 }

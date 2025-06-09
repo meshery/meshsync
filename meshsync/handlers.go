@@ -56,7 +56,7 @@ func (h *Handler) Run() {
 }
 
 func (h *Handler) UpdateInformer() error {
-	dynamicClient, err := dynamic.NewForConfig(&h.restConfig)
+	dynamicClient, err := dynamic.NewForConfig(&h.kubeClient.RestConfig)
 	if err != nil {
 		return ErrNewInformer(err)
 	}
@@ -167,19 +167,20 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	}
 	parsedObjects := make([]model.KubernetesResource, 0)
 	for _, obj := range objects {
-		parsedObjects = append(parsedObjects, model.ParseList(*obj.(*unstructured.Unstructured), broker.Add))
+		parsedObjects = append(
+			parsedObjects,
+			model.ParseList(
+				*obj.(*unstructured.Unstructured),
+				broker.Add,
+				h.clusterID,
+			),
+		)
 	}
 	return parsedObjects
 }
 
 func (h *Handler) WatchCRDs() {
-	kubeclient, err := kubernetes.New(nil)
-	if err != nil {
-		h.Log.Error(err)
-		return
-	}
-
-	crdWatcher, err := kubeclient.DynamicKubeClient.Resource(schema.GroupVersionResource{
+	crdWatcher, err := h.kubeClient.DynamicKubeClient.Resource(schema.GroupVersionResource{
 		Group:    "apiextensions.k8s.io",
 		Version:  "v1",
 		Resource: "customresourcedefinitions",

@@ -18,14 +18,22 @@ type RegisterInformer struct {
 	informer     dynamicinformer.DynamicSharedInformerFactory
 	config       internalconfig.PipelineConfig
 	outputWriter output.Writer
+	clusterID    string
 }
 
-func newRegisterInformerStep(log logger.Handler, informer dynamicinformer.DynamicSharedInformerFactory, config internalconfig.PipelineConfig, ow output.Writer) *RegisterInformer {
+func newRegisterInformerStep(
+	log logger.Handler,
+	informer dynamicinformer.DynamicSharedInformerFactory,
+	config internalconfig.PipelineConfig,
+	ow output.Writer,
+	clusterID string,
+) *RegisterInformer {
 	return &RegisterInformer{
 		log:          log,
 		informer:     informer,
 		config:       config,
 		outputWriter: ow,
+		clusterID:    clusterID,
 	}
 }
 

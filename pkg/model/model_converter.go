@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/meshery/meshkit/broker"
 	"github.com/meshery/meshkit/orchestration"
-	iutils "github.com/meshery/meshsync/pkg/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -17,7 +16,11 @@ import (
 // Error: pkg/model/model_converter.go:16:1: calculated cyclomatic complexity for function ParseList is 13, max is 10 (cyclop)
 //
 //nolint:cyclop
-func ParseList(object unstructured.Unstructured, eventType broker.EventType) KubernetesResource {
+func ParseList(
+	object unstructured.Unstructured,
+	eventType broker.EventType,
+	clusterID string,
+) KubernetesResource {
 	data, _ := object.MarshalJSON()
 	result := KubernetesResource{}
 	_ = json.Unmarshal(data, &result)
@@ -92,7 +95,7 @@ func ParseList(object unstructured.Unstructured, eventType broker.EventType) Kub
 		result.Type = string(objType)
 	}
 
-	result.ClusterID = iutils.GetClusterID()
+	result.ClusterID = clusterID
 	if processorInstance != nil {
 		_ = processorInstance.Process(data, &result, eventType)
 	}

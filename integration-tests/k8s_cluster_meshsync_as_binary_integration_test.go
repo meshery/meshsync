@@ -12,36 +12,21 @@ import (
 	"github.com/meshery/meshkit/broker/nats"
 )
 
-var runIntegrationTest bool
-var meshsyncBinaryPath string
-var saveMeshsyncOutput bool // if true, saves outputof meshsync binary to file
-var testMeshsyncTopic = "meshery.meshsync.core"
-var testMeshsyncNatsURL = "localhost:4222"
+var k8sClusterMeshsyncAsBinaryTestCasesData []k8sClusterMeshsyncBinaryTestCaseStruct
 
 func init() {
-	runIntegrationTest = os.Getenv("RUN_INTEGRATION_TESTS") == "true"
-	meshsyncBinaryPath = os.Getenv("MESHSYNC_BINARY_PATH")
-	saveMeshsyncOutput = os.Getenv("SAVE_MESHSYNC_OUTPUT") == "true"
+	for _, tcs := range [][]k8sClusterMeshsyncBinaryTestCaseStruct{
+		k8sClusterMeshsyncBinaryTestCasesNatsModeData,
+		k8sClusterMeshsyncBinaryTestCasesFileModeData,
+	} {
+		k8sClusterMeshsyncAsBinaryTestCasesData = append(
+			k8sClusterMeshsyncAsBinaryTestCasesData,
+			tcs...,
+		)
+	}
 }
 
-/**
- * to run locally this test requires:
- * - docker
- * - kind
- * - kubectl
- * --
- * use Makefile to run
- * --
- * this test runs all test cases on the same k8s cluster, but with different input params for meshsync;
- * if you need a specific cluster setup you (probably) need to write a separate test,
- * or fit in the current cluster set up without failing existing tests;
- * --
- * test flow of every test case is as follow:
- * - subscribe to nats (each test case has a separate queue group, so it receives every message);
- * - run meshsync binary;
- * - receive messages from nats and perform assertions;
- */
-func TestWithNatsDefaultK8SClusterIntegration(t *testing.T) {
+func TestWithMeshsyncBinaryAndK8sClusterIntegration(t *testing.T) {
 	if !runIntegrationTest {
 		t.Skip("skipping integration test")
 	}
@@ -58,10 +43,10 @@ func TestWithNatsDefaultK8SClusterIntegration(t *testing.T) {
 		t.Fatal("error connecting to nats", err)
 	}
 
-	for i, tc := range defaultClusterTestCasesData {
+	for i, tc := range k8sClusterMeshsyncAsBinaryTestCasesData {
 		t.Run(
 			tc.name,
-			runWithNatsDefaultK8SClusterTestCase(
+			runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
 				br,
 				i,
 				tc,
@@ -71,16 +56,16 @@ func TestWithNatsDefaultK8SClusterIntegration(t *testing.T) {
 }
 
 // need this as separate function to bring down cyclomatic complexity
-// this one itself is to complicated :)
+// this one itself is also already too complicated :)
 //
 // TODO fix cyclop error
-// integration-tests/default_cluster_integration_test.go:74:1: calculated cyclomatic complexity for function runWithNatsDefaultK8SClusterTestCase is 11, max is 10 (cyclop)
+// integration-tests/k8s_cluster_integration_test.go:74:1: calculated cyclomatic complexity for function runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase is 11, max is 10 (cyclop)
 //
 //nolint:cyclop
-func runWithNatsDefaultK8SClusterTestCase(
+func runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
 	br broker.Handler,
 	tcIndex int,
-	tc defaultClusterTestCaseStruct,
+	tc k8sClusterMeshsyncBinaryTestCaseStruct,
 ) func(t *testing.T) {
 	return func(t *testing.T) {
 		for _, cleanupHook := range tc.cleanupHooks {
@@ -95,14 +80,16 @@ func runWithNatsDefaultK8SClusterTestCase(
 		// Step 1: subscribe to the queue
 		if err := br.SubscribeWithChannel(
 			testMeshsyncTopic,
-			fmt.Sprintf("default-cluster-queue-group-%d", tcIndex),
+			// impotant to have a different queue group per test case
+			// so that every test case receive message for each event
+			fmt.Sprintf("k8s-cluster-meshsync-as-binary-queue-group-%02d", tcIndex),
 			out,
 		); err != nil {
 			t.Fatalf("error subscribing to topic: %v", err)
 		}
 
 		// Step 2: process messages
-		resultData := make(map[string]any, 1)
+		resultData := make(map[string]any)
 		if tc.natsMessageHandler != nil {
 			go tc.natsMessageHandler(t, out, resultData)
 		}
@@ -110,7 +97,7 @@ func runWithNatsDefaultK8SClusterTestCase(
 		os.Setenv("BROKER_URL", testMeshsyncNatsURL)
 
 		// Step 3: run the meshsync command
-		cmd, deferFunc := prepareMeshsyncCMD(t, tcIndex, tc)
+		cmd, deferFunc := withMeshsyncBinaryPrepareMeshsyncCMD(t, tcIndex, tc)
 		defer deferFunc()
 
 		if err := cmd.Start(); err != nil {
@@ -140,34 +127,37 @@ func runWithNatsDefaultK8SClusterTestCase(
 		}
 
 		// Step 4: do final assertion, if any
-		tc.finalHandler(t, resultData)
+		if tc.finalHandler != nil {
+			tc.finalHandler(t, resultData)
+		}
 
 		t.Logf("done %s", tc.name)
 	}
 }
 
 // introduced this function to decrease cyclomatic complexity
-func prepareMeshsyncCMD(
+func withMeshsyncBinaryPrepareMeshsyncCMD(
 	t *testing.T,
 	tcIndex int,
-	tc defaultClusterTestCaseStruct,
+	tc k8sClusterMeshsyncBinaryTestCaseStruct,
 ) (*exec.Cmd, func()) {
 	cmd := exec.Command(meshsyncBinaryPath, tc.meshsyncCMDArgs...)
 	deferFunc := func() {}
 	// there is quite rich output from meshsync
 	// save to file instead of stdout
 	if saveMeshsyncOutput {
-		meshsyncOutputFileName := fmt.Sprintf("default-cluster-test-case-%02d.meshsync-output.txt", tcIndex)
+		meshsyncOutputFileName := fmt.Sprintf("k8s-cluster-meshsync-as-binary-test-case-%02d.meshsync-output.txt", tcIndex)
 		meshsyncOutputFile, err := os.Create(meshsyncOutputFileName)
 		if err != nil {
 			t.Logf("Could not create meshsync output file %s", meshsyncOutputFileName)
 			// if not possible to create output file, print to the stdout
 			cmd.Stdout = os.Stdout
+		} else {
+			deferFunc = func() {
+				meshsyncOutputFile.Close()
+			}
+			cmd.Stdout = meshsyncOutputFile
 		}
-		deferFunc = func() {
-			meshsyncOutputFile.Close()
-		}
-		cmd.Stdout = meshsyncOutputFile
 	} else {
 		cmd.Stdout = nil
 	}

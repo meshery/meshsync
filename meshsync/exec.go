@@ -137,7 +137,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 	// TTY request GoRoutine
 	go func() {
 		fn := func() error {
-			request := h.staticClient.CoreV1().RESTClient().Post().
+			request := h.kubeClient.KubeClient.CoreV1().RESTClient().Post().
 				Namespace(req.Namespace).
 				Resource("pods").
 				Name(req.Name).
@@ -151,7 +151,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 				TTY:       true,
 			}, scheme.ParameterCodec)
 
-			exec, postErr := remotecommand.NewSPDYExecutor(&h.restConfig, "POST", request.URL())
+			exec, postErr := remotecommand.NewSPDYExecutor(&h.kubeClient.RestConfig, "POST", request.URL())
 			if postErr != nil {
 				return err
 			}
