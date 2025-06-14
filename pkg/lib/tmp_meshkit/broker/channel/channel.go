@@ -141,7 +141,7 @@ func (h *TMPChannelBrokerHandler) SubscribeWithChannel(subject, queue string, ms
 	}
 
 	go func() {
-		// this loopwill terminate when the h.storage[subject][queue] is closed
+		// this loop will terminate when the h.storage[subject][queue] is closed
 		for message := range h.storage[subject][queue] {
 			// this flow is correct as if we have more than one consumer for one queue
 			// only one will receive the message
