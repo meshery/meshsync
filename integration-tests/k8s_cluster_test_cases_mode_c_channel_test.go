@@ -12,6 +12,7 @@ import (
 	"github.com/meshery/meshsync/internal/config"
 	"github.com/meshery/meshsync/internal/output"
 	libmeshsync "github.com/meshery/meshsync/pkg/lib/meshsync"
+	"github.com/meshery/meshsync/pkg/lib/tmp_meshkit/broker/channel"
 	iutils "github.com/meshery/meshsync/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,7 +21,8 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 	{
 		name: "output mode channel: number of messages received from meshsync is greater than zero",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
-			libmeshsync.WithOutputMode(config.OutputModeChannel),
+			libmeshsync.WithOutputMode(config.OutputModeNats),
+			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
 			libmeshsync.WithStopAfterDuration(8 * time.Second),
 		},
 		channelMessageHandler: func(
@@ -54,7 +56,8 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 		name: "output mode channel: must not fail when has nil in options setter",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
 			nil,
-			libmeshsync.WithOutputMode(config.OutputModeChannel),
+			libmeshsync.WithOutputMode(config.OutputModeNats),
+			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
 			libmeshsync.WithStopAfterDuration(0 * time.Second),
 		},
 	},
@@ -66,7 +69,8 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 	{
 		name: "output mode channel: can get clusterID from utils function",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
-			libmeshsync.WithOutputMode(config.OutputModeChannel),
+			libmeshsync.WithOutputMode(config.OutputModeNats),
+			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
 			libmeshsync.WithStopAfterDuration(0 * time.Second),
 		},
 		finalHandler: func(t *testing.T, resultData map[string]any) {
@@ -82,7 +86,8 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 	{
 		name: "output mode channel: can access cluster when receive kube config from options",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
-			libmeshsync.WithOutputMode(config.OutputModeChannel),
+			libmeshsync.WithOutputMode(config.OutputModeNats),
+			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
 			// read the kube config and provide its content through libmeshsync.WithKubeConfig
 			func() libmeshsync.OptionsSetter {
 				kubeConfigFilePath := os.Getenv("KUBECONFIG")
@@ -131,7 +136,8 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 	{
 		name: "output mode channel: could not access cluster with invalid kubeconfig",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
-			libmeshsync.WithOutputMode(config.OutputModeChannel),
+			libmeshsync.WithOutputMode(config.OutputModeNats),
+			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
 			libmeshsync.WithKubeConfig([]byte(`fake kube config`)),
 			libmeshsync.WithStopAfterDuration(0 * time.Second),
 		},

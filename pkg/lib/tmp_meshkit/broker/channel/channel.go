@@ -161,13 +161,13 @@ func (h *TMPChannelBrokerHandler) DeepCopyInto(out realBroker.Handler) {
 }
 
 // DeepCopy is a deepcopy function, copying the receiver, creating a new Nats.
-func (h *TMPChannelBrokerHandler) DeepCopy() *TMPChannelBrokerHandler {
+func (h *TMPChannelBrokerHandler) DeepCopy() realBroker.Handler {
 	// Not supported
 	return h
 }
 
 // DeepCopyObject is a deepcopy function, copying the receiver, creating a new realBroker.Handler.
-func (h *TMPChannelBrokerHandler) DeepCopyObject() *TMPChannelBrokerHandler {
+func (h *TMPChannelBrokerHandler) DeepCopyObject() realBroker.Handler {
 	// Not supported
 	return h
 }

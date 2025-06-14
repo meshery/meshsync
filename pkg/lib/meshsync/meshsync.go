@@ -103,27 +103,20 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	outputProcessor := output.NewProcessor()
 	var br broker.Handler
 	if options.OutputMode == config.OutputModeNats {
-		// Skip/Comment the below connectivity test in local environment
-		if errConnectivityTest := connectivityTest(
-			log,
-			options.PingEndpoint,
-			cfg.GetKey(config.BrokerURL),
-		); errConnectivityTest != nil {
-			return errConnectivityTest
+		// take from options, if nil instantiate
+		// this allows ti provide custom implementation of broker.Handler interface
+		br = options.BrokerHandler
+		if br == nil {
+			brokerHandler, errNatsNew := createNatsBrokerHandler(
+				log,
+				options.PingEndpoint,
+				cfg.GetKey(config.BrokerURL),
+			)
+			if errNatsNew != nil {
+				return errNatsNew
+			}
+			br = brokerHandler
 		}
-		// Initialize Broker instance
-		broker, errNatsNew := nats.New(nats.Options{
-			URLS:           []string{cfg.GetKey(config.BrokerURL)},
-			ConnectionName: "meshsync",
-			Username:       "",
-			Password:       "",
-			ReconnectWait:  2 * time.Second,
-			MaxReconnect:   60,
-		})
-		if errNatsNew != nil {
-			return errNatsNew
-		}
-		br = broker
 		outputProcessor.SetOutput(
 			output.NewNatsWriter(
 				br,
@@ -181,15 +174,6 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		)
 	}
 
-	if options.OutputMode == config.OutputModeChannel {
-		if options.TransportChannel == nil {
-			return errors.New("options.transportChannel is nil")
-		}
-		outputProcessor.SetOutput(
-			output.NewChannelWriter(options.TransportChannel),
-		)
-	}
-
 	chPool := channels.NewChannelPool()
 	meshsyncHandler, err := meshsync.New(cfg, kubeClient, log, br, outputProcessor, chPool)
 	if err != nil {
@@ -199,11 +183,8 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	go meshsyncHandler.WatchCRDs()
 
 	go meshsyncHandler.Run()
-	// TODO
-	// as we have introduced a new output mode channel
-	// do we need to have a ListenToRequests channel?
 	if options.OutputMode == config.OutputModeNats {
-		// even so the config param name is OutputMode
+		// even so the config param name starts with OutputMode
 		// it is not only output but also input
 		// in that case if  OutputMode is not OutputModeNats
 		// there is no nats at all, so we do not subscribe to any topic
@@ -263,6 +244,24 @@ func connectivityTest(log logger.Handler, pingEndpoint string, url string) error
 	return nil
 }
 
+func createNatsBrokerHandler(log logger.Handler, pingEndpoint string, brokerURL string) (broker.Handler, error) {
+	if err := connectivityTest(
+		log,
+		pingEndpoint,
+		brokerURL,
+	); err != nil {
+		return nil, err
+	}
+	return nats.New(nats.Options{
+		URLS:           []string{brokerURL},
+		ConnectionName: "meshsync",
+		Username:       "",
+		Password:       "",
+		ReconnectWait:  2 * time.Second,
+		MaxReconnect:   60,
+	})
+}
+
 func determineUseCRDFlag(
 	options Options,
 	log logger.Handler,
@@ -280,7 +279,6 @@ func determineUseCRDFlag(
 			options.OutputMode,
 		)
 	} else {
-		// this is the most common case, file mode and no CRD
 		log.Infof(
 			"running in %s mode and NO meshsync CRD is present in the cluster",
 			options.OutputMode,

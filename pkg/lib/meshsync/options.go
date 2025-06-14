@@ -3,17 +3,17 @@ package meshsync
 import (
 	"time"
 
+	"github.com/meshery/meshkit/broker"
 	mcp "github.com/meshery/meshkit/config/provider"
 	"github.com/meshery/meshsync/internal/config"
-	"github.com/meshery/meshsync/internal/output"
 )
 
 type Options struct {
 	OutputMode        string
-	TransportChannel  chan<- *output.ChannelItem
 	StopAfterDuration time.Duration
 	KubeConfig        []byte
 	OutputFileName    string
+	BrokerHandler     broker.Handler
 
 	Version               string
 	PingEndpoint          string
@@ -21,9 +21,9 @@ type Options struct {
 }
 
 var DefautOptions = Options{
-	StopAfterDuration: -1, // -1 turns it off
-	TransportChannel:  nil,
+	StopAfterDuration: -1,  // -1 turns it off
 	KubeConfig:        nil, // if nil, truies to detekt kube config by the means of github.com/meshery/meshkit/utils/kubernetes/client.go:DetectKubeConfig
+	BrokerHandler:     nil, // if nil, will instantiate broker connection itself
 
 	Version:               "Not Set",
 	PingEndpoint:          ":8222/connz",
@@ -33,7 +33,6 @@ var DefautOptions = Options{
 var AllowedOutputModes = []string{
 	config.OutputModeNats,
 	config.OutputModeFile,
-	config.OutputModeChannel,
 }
 
 type OptionsSetter func(*Options)
@@ -42,12 +41,6 @@ type OptionsSetter func(*Options)
 func WithOutputMode(value string) OptionsSetter {
 	return func(o *Options) {
 		o.OutputMode = value
-	}
-}
-
-func WithTransportChannel(value chan<- *output.ChannelItem) OptionsSetter {
-	return func(o *Options) {
-		o.TransportChannel = value
 	}
 }
 
@@ -67,6 +60,12 @@ func WithKubeConfig(value []byte) OptionsSetter {
 func WithOutputFileName(value string) OptionsSetter {
 	return func(o *Options) {
 		o.OutputFileName = value
+	}
+}
+
+func WithBrokerHandler(value broker.Handler) OptionsSetter {
+	return func(o *Options) {
+		o.BrokerHandler = value
 	}
 }
 

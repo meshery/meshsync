@@ -17,9 +17,8 @@ const (
 	LogStream         = "log-stream"
 	ExecShell         = "exec-shell"
 	InformerStore     = "informer-store"
-	OutputModeNats    = "nats"
+	OutputModeNats    = "nats" // TODO this is not nats output mode any more, it is "broker" output mode
 	OutputModeFile    = "file"
-	OutputModeChannel = "channel"
 )
 
 // Command line input params
