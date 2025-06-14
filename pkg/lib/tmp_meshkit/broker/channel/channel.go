@@ -107,7 +107,7 @@ func (h *TMPChannelBrokerHandler) Publish(subject string, message *realBroker.Me
 	return nil
 }
 
-// PublishWithChannighthawknel - to publish messages with channel
+// PublishWithChannel - to publish messages with channel
 func (h *TMPChannelBrokerHandler) PublishWithChannel(subject string, msgch chan *realBroker.Message) error {
 	go func() {
 		// as soon as this channel will be closed, for loop will end
@@ -120,6 +120,18 @@ func (h *TMPChannelBrokerHandler) PublishWithChannel(subject string, msgch chan 
 
 // Subscribe - for subscribing messages
 func (h *TMPChannelBrokerHandler) Subscribe(subject, queue string, message []byte) error {
+	// Looks like current version with nats does not seem to be correct
+	// it adds callback which is executed on every message
+	// and if queue is populated with messages it keeps waiting, in the end it returns the last one;
+	// it does not unsubscribe and callback will keep executing and write to local variable, which probably will cause panic;
+
+	// Not supported
+
+	return nil
+}
+
+// SubscribeWithChannel will publish all the messages received to the given channel
+func (h *TMPChannelBrokerHandler) SubscribeWithChannel(subject, queue string, msgch chan *realBroker.Message) error {
 	if h.storage[subject] == nil {
 		h.storage[subject] = make(map[string]chan *realBroker.Message)
 	}
@@ -128,20 +140,22 @@ func (h *TMPChannelBrokerHandler) Subscribe(subject, queue string, message []byt
 		h.storage[subject][queue] = make(chan *realBroker.Message, h.SingleChannelBufferSize)
 	}
 
-	// TODO
+	go func() {
+		// this loopwill terminate when the h.storage[subject][queue] is closed
+		for message := range h.storage[subject][queue] {
+			// this flow is correct as if we have more than one consumer for one queue
+			// only one will receive the message
+			msgch <- message
+		}
+	}()
 
-	return nil
-}
-
-// SubscribeWithChannel will publish all the messages received to the given channel
-func (h *TMPChannelBrokerHandler) SubscribeWithChannel(subject, queue string, msgch chan *realBroker.Message) error {
-	// TODO
 	return nil
 }
 
 // DeepCopyInto is a deepcopy function, copying the receiver, writing into out. in must be non-nil.
 func (h *TMPChannelBrokerHandler) DeepCopyInto(out realBroker.Handler) {
 	// Not supported
+
 	// TODO
 	// it is used in meshery server in operator_helper, check if this is code base which is in use
 }
@@ -160,5 +174,5 @@ func (h *TMPChannelBrokerHandler) DeepCopyObject() *TMPChannelBrokerHandler {
 
 // Check if the connection object is empty
 func (h *TMPChannelBrokerHandler) IsEmpty() bool {
-	return false
+	return len(h.storage) <= 0
 }
