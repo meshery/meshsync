@@ -6,6 +6,7 @@ package channel
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	realBroker "github.com/meshery/meshkit/broker"
@@ -83,33 +84,34 @@ func (h *TMPChannelBrokerHandler) Publish(subject string, message *realBroker.Me
 		return nil
 	}
 
-	// TODO
+	var successList []string
+	var failedList []string
 
-	var result error
+	for queue, ch := range h.storage[subject] {
+		select {
+		case ch <- message:
+			successList = append(successList, queue)
+		case <-time.After(h.PublishToChannelDelay):
+			failedList = append(failedList, queue)
+		}
+	}
 
-	// select {
-	// case h.storage[subject] <- message:
-	// 	result = nil
-	// case <-time.After(h.PublishToChannelDelay):
-	// 	result = ErrPublish(
-	// 		fmt.Errorf(
-	// 			"channel for subject is full, subject [%s], buffer size [%d]",
-	// 			subject,
-	// 			h.PublishToChannelDelay,
-	// 		),
-	// 	)
-	// }
+	if len(failedList) > 0 {
+		return ErrChannelPublish(
+			fmt.Errorf("failed to publish to one or more queue for subject %s", subject),
+			successList,
+			failedList,
+		)
+	}
 
-	return result
+	return nil
 }
 
-// PublishWithChannel - to publish messages with channel
+// PublishWithChannighthawknel - to publish messages with channel
 func (h *TMPChannelBrokerHandler) PublishWithChannel(subject string, msgch chan *realBroker.Message) error {
 	go func() {
 		// as soon as this channel will be closed, for loop will end
 		for msg := range msgch {
-			// TODO
-			// maybe do smth on error
 			h.Publish(subject, msg)
 		}
 	}()
@@ -140,6 +142,8 @@ func (h *TMPChannelBrokerHandler) SubscribeWithChannel(subject, queue string, ms
 // DeepCopyInto is a deepcopy function, copying the receiver, writing into out. in must be non-nil.
 func (h *TMPChannelBrokerHandler) DeepCopyInto(out realBroker.Handler) {
 	// Not supported
+	// TODO
+	// it is used in meshery server in operator_helper, check if this is code base which is in use
 }
 
 // DeepCopy is a deepcopy function, copying the receiver, creating a new Nats.
@@ -149,7 +153,7 @@ func (h *TMPChannelBrokerHandler) DeepCopy() *TMPChannelBrokerHandler {
 }
 
 // DeepCopyObject is a deepcopy function, copying the receiver, creating a new realBroker.Handler.
-func (h *TMPChannelBrokerHandler) DeepCopyObject() realBroker.Handler {
+func (h *TMPChannelBrokerHandler) DeepCopyObject() *TMPChannelBrokerHandler {
 	// Not supported
 	return h
 }
