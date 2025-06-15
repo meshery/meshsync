@@ -70,8 +70,8 @@ func parseFlags() {
 	flag.StringVar(
 		&outputMode,
 		"output",
-		config.OutputModeNats,
-		fmt.Sprintf("output mode: \"%s\" or \"%s\"", config.OutputModeNats, config.OutputModeFile),
+		config.OutputModeBroker,
+		fmt.Sprintf("output mode: \"%s\" or \"%s\"", config.OutputModeBroker, config.OutputModeFile),
 	)
 	flag.StringVar(
 		&outputFileName,

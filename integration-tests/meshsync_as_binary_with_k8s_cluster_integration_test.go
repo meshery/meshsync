@@ -12,21 +12,21 @@ import (
 	"github.com/meshery/meshkit/broker/nats"
 )
 
-var k8sClusterMeshsyncAsBinaryTestCasesData []k8sClusterMeshsyncBinaryTestCaseStruct
+var meshsyncAsBinaryWithK8SClusterTestCasesData []meshsyncBinaryWithK8SClusterTestsCasesStruct
 
 func init() {
-	for _, tcs := range [][]k8sClusterMeshsyncBinaryTestCaseStruct{
-		k8sClusterMeshsyncBinaryTestCasesNatsModeData,
-		k8sClusterMeshsyncBinaryTestCasesFileModeData,
+	for _, tcs := range [][]meshsyncBinaryWithK8SClusterTestsCasesStruct{
+		meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData,
+		meshSyncBinaryWithK8SClusterFileModeTestCasesData,
 	} {
-		k8sClusterMeshsyncAsBinaryTestCasesData = append(
-			k8sClusterMeshsyncAsBinaryTestCasesData,
+		meshsyncAsBinaryWithK8SClusterTestCasesData = append(
+			meshsyncAsBinaryWithK8SClusterTestCasesData,
 			tcs...,
 		)
 	}
 }
 
-func TestWithMeshsyncBinaryAndK8sClusterIntegration(t *testing.T) {
+func TestMeshsyncBinaryWithK8sClusterIntegration(t *testing.T) {
 	if !runIntegrationTest {
 		t.Skip("skipping integration test")
 	}
@@ -43,10 +43,10 @@ func TestWithMeshsyncBinaryAndK8sClusterIntegration(t *testing.T) {
 		t.Fatal("error connecting to nats", err)
 	}
 
-	for i, tc := range k8sClusterMeshsyncAsBinaryTestCasesData {
+	for i, tc := range meshsyncAsBinaryWithK8SClusterTestCasesData {
 		t.Run(
 			tc.name,
-			runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
+			runMeshsyncBinaryWithK8sClusterTestCase(
 				br,
 				i,
 				tc,
@@ -62,10 +62,10 @@ func TestWithMeshsyncBinaryAndK8sClusterIntegration(t *testing.T) {
 // integration-tests/k8s_cluster_integration_test.go:74:1: calculated cyclomatic complexity for function runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase is 11, max is 10 (cyclop)
 //
 //nolint:cyclop
-func runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
+func runMeshsyncBinaryWithK8sClusterTestCase(
 	br broker.Handler,
 	tcIndex int,
-	tc k8sClusterMeshsyncBinaryTestCaseStruct,
+	tc meshsyncBinaryWithK8SClusterTestsCasesStruct,
 ) func(t *testing.T) {
 	return func(t *testing.T) {
 		for _, cleanupHook := range tc.cleanupHooks {
@@ -82,7 +82,7 @@ func runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
 			testMeshsyncTopic,
 			// impotant to have a different queue group per test case
 			// so that every test case receive message for each event
-			fmt.Sprintf("k8s-cluster-meshsync-as-binary-queue-group-%02d", tcIndex),
+			fmt.Sprintf("meshsync-as-binary-queue-group-%02d", tcIndex),
 			out,
 		); err != nil {
 			t.Fatalf("error subscribing to topic: %v", err)
@@ -90,8 +90,8 @@ func runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
 
 		// Step 2: process messages
 		resultData := make(map[string]any)
-		if tc.natsMessageHandler != nil {
-			go tc.natsMessageHandler(t, out, resultData)
+		if tc.brokerMessageHandler != nil {
+			go tc.brokerMessageHandler(t, out, resultData)
 		}
 
 		os.Setenv("BROKER_URL", testMeshsyncNatsURL)
@@ -139,14 +139,14 @@ func runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase(
 func withMeshsyncBinaryPrepareMeshsyncCMD(
 	t *testing.T,
 	tcIndex int,
-	tc k8sClusterMeshsyncBinaryTestCaseStruct,
+	tc meshsyncBinaryWithK8SClusterTestsCasesStruct,
 ) (*exec.Cmd, func()) {
 	cmd := exec.Command(meshsyncBinaryPath, tc.meshsyncCMDArgs...)
 	deferFunc := func() {}
 	// there is quite rich output from meshsync
 	// save to file instead of stdout
 	if saveMeshsyncOutput {
-		meshsyncOutputFileName := fmt.Sprintf("k8s-cluster-meshsync-as-binary-test-case-%02d.meshsync-output.txt", tcIndex)
+		meshsyncOutputFileName := fmt.Sprintf("meshsync-as-binary-with-k8s-cluster-test-case-%02d.meshsync-output.txt", tcIndex)
 		meshsyncOutputFile, err := os.Create(meshsyncOutputFileName)
 		if err != nil {
 			t.Logf("Could not create meshsync output file %s", meshsyncOutputFileName)

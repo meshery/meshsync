@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/meshery/meshkit/broker"
-	"github.com/meshery/meshsync/internal/output"
 	libmeshsync "github.com/meshery/meshsync/pkg/lib/meshsync"
 )
 
@@ -36,15 +35,15 @@ func init() {
 	saveMeshsyncOutput = os.Getenv("SAVE_MESHSYNC_OUTPUT") == "true"
 }
 
-type k8sClusterMeshsyncBinaryTestCaseStruct struct {
+type meshsyncBinaryWithK8SClusterTestsCasesStruct struct {
 	setupHooks          []func()
 	cleanupHooks        []func()
 	name                string
 	meshsyncCMDArgs     []string      // args to pass to meshsync binary
 	waitMeshsyncTimeout time.Duration // if <= 0: waits till meshsync ends execution, otherwise moves  further after specified duration
-	// the reason for resultData map is that natsMessageHandler is processing chan indefinitely
+	// the reason for resultData map is that brokerMessageHandler is processing chan indefinitely
 	// and there is no graceful exit from function;
-	natsMessageHandler func(
+	brokerMessageHandler func(
 		t *testing.T,
 		out chan *broker.Message,
 		resultData map[string]any,
@@ -52,15 +51,15 @@ type k8sClusterMeshsyncBinaryTestCaseStruct struct {
 	finalHandler func(t *testing.T, resultData map[string]any)
 }
 
-type k8sClusterMeshsyncLibraryTestCaseStruct struct {
-	setupHooks            []func()
-	cleanupHooks          []func()
-	name                  string
-	waitMeshsyncTimeout   time.Duration // if <= 0: waits till meshsync ends execution, otherwise moves  further after specified duration
-	meshsyncRunOptions    []libmeshsync.OptionsSetter
-	channelMessageHandler func(
+type meshsyncLibraryWithK8SClusterCustomBrokerTestCaseStruct struct {
+	setupHooks           []func()
+	cleanupHooks         []func()
+	name                 string
+	waitMeshsyncTimeout  time.Duration // if <= 0: waits till meshsync ends execution, otherwise moves  further after specified duration
+	meshsyncRunOptions   []libmeshsync.OptionsSetter
+	brokerMessageHandler func(
 		t *testing.T,
-		out chan *output.ChannelItem,
+		out chan *broker.Message,
 		resultData map[string]any,
 	) // result map is to propagate data between channelMessageHandler and finalHandler
 	finalHandler         func(t *testing.T, resultData map[string]any)

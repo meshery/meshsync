@@ -6,17 +6,17 @@ import (
 	"github.com/meshery/meshsync/pkg/model"
 )
 
-type NatsWriter struct {
+type BrokerWriter struct {
 	br broker.Handler
 }
 
-func NewNatsWriter(br broker.Handler) *NatsWriter {
-	return &NatsWriter{
+func NewBrokerWriter(br broker.Handler) *BrokerWriter {
+	return &BrokerWriter{
 		br: br,
 	}
 }
 
-func (s *NatsWriter) Write(
+func (s *BrokerWriter) Write(
 	obj model.KubernetesResource,
 	evtype broker.EventType,
 	config config.PipelineConfig,
