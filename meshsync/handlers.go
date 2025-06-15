@@ -33,6 +33,13 @@ func debounce(d time.Duration, f func(ch chan struct{})) func(ch chan struct{}) 
 
 func (h *Handler) Run() {
 	pipelineCh := make(chan struct{})
+	defer func() {
+		if !utils.IsClosed(pipelineCh) {
+			h.Log.Info("Closing informer stop channel")
+			close(pipelineCh)
+		}
+	}()
+
 	go h.startDiscovery(pipelineCh)
 
 	debouncedStartDiscovery := debounce(time.Second*5, func(pipelinechannel chan struct{}) {
@@ -50,9 +57,16 @@ func (h *Handler) Run() {
 		h.startDiscovery(pipelineCh)
 
 	})
-	for range h.channelPool[channels.ReSync].(channels.ReSyncChannel) {
-		go debouncedStartDiscovery(pipelineCh)
+loop:
+	for {
+		select {
+		case <-h.channelPool[channels.Stop].(channels.StopChannel):
+			break loop
+		case <-h.channelPool[channels.ReSync].(channels.ReSyncChannel):
+			go debouncedStartDiscovery(pipelineCh)
+		}
 	}
+	h.Log.Info("Stopping Run")
 }
 
 func (h *Handler) UpdateInformer() error {
@@ -64,8 +78,19 @@ func (h *Handler) UpdateInformer() error {
 	if err != nil {
 		return err
 	}
+	if h.informer != nil {
+		h.informer.Shutdown()
+	}
 	h.informer = GetDynamicInformer(h.Config, dynamicClient, listOptionsFunc)
 	return nil
+}
+
+func (h *Handler) ShutdownInformer() {
+	if h.informer != nil {
+		h.Log.Info("Shutting down informer...")
+		h.informer.Shutdown()
+		h.Log.Info("Shutting down informer done.")
+	}
 }
 
 // TODO fix cyclop error
@@ -86,10 +111,10 @@ func (h *Handler) ListenToRequests() {
 		h.Log.Error(ErrSubscribeRequest(err))
 	}
 
-	for request := range reqChan {
+	processRequest := func(request *broker.Message) {
 		if request.Request == nil {
 			h.Log.Error(ErrInvalidRequest)
-			continue
+			return
 		}
 
 		switch request.Request.Entity {
@@ -98,7 +123,7 @@ func (h *Handler) ListenToRequests() {
 			err := h.processLogRequest(request.Request.Payload, listenerConfigs[config.LogStream])
 			if err != nil {
 				h.Log.Error(err)
-				continue
+				return
 			}
 
 			// TODO: Add this to the broker pkg
@@ -108,12 +133,12 @@ func (h *Handler) ListenToRequests() {
 			var payload struct{ Reply string }
 			if err != nil {
 				h.Log.Error(err)
-				continue
+				return
 			}
 			err = json.Unmarshal(d, &payload)
 			if err != nil {
 				h.Log.Error(err)
-				continue
+				return
 			}
 			replySubject := payload.Reply
 			storeObjects := h.listStoreObjects()
@@ -138,14 +163,14 @@ func (h *Handler) ListenToRequests() {
 			err := h.processExecRequest(request.Request.Payload, listenerConfigs[config.ExecShell])
 			if err != nil {
 				h.Log.Error(err)
-				continue
+				return
 			}
 		case broker.ActiveExecEntity:
 			h.Log.Info("Connecting to channel pool")
 			err := h.processActiveExecRequest()
 			if err != nil {
 				h.Log.Error(err)
-				continue
+				return
 			}
 		case "meshsync-meta":
 			h.Log.Info("Publishing MeshSync metadata to the subject")
@@ -154,10 +179,21 @@ func (h *Handler) ListenToRequests() {
 			})
 			if err != nil {
 				h.Log.Error(err)
-				continue
+				return
 			}
 		}
 	}
+
+loop:
+	for {
+		select {
+		case <-h.channelPool[channels.Stop].(channels.StopChannel):
+			break loop
+		case request := <-reqChan:
+			processRequest(request)
+		}
+	}
+	h.Log.Info("Stopping ListenToRequests")
 }
 
 func (h *Handler) listStoreObjects() []model.KubernetesResource {
@@ -179,31 +215,38 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	return parsedObjects
 }
 
+// TODO
+// fix lint error
+// calculated cyclomatic complexity for function WatchCRDs is 11, max is 10 (cyclop)
+//
+//nolint:cyclop
 func (h *Handler) WatchCRDs() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	crdWatcher, err := h.kubeClient.DynamicKubeClient.Resource(schema.GroupVersionResource{
 		Group:    "apiextensions.k8s.io",
 		Version:  "v1",
 		Resource: "customresourcedefinitions",
-	}).Watch(context.Background(), metav1.ListOptions{})
+	}).Watch(ctx, metav1.ListOptions{})
 
 	if err != nil {
 		h.Log.Error(err)
 		return
 	}
 
-	for event := range crdWatcher.ResultChan() {
-
+	processEvent := func(event watch.Event) {
 		crd := &kubernetes.CRDItem{}
 		byt, err := json.Marshal(event.Object)
 		if err != nil {
 			h.Log.Error(err)
-			continue
+			return
 		}
 
 		err = json.Unmarshal(byt, crd)
 		if err != nil {
 			h.Log.Error(err)
-			continue
+			return
 		}
 
 		gvr := kubernetes.GetGVRForCustomResources(crd)
@@ -212,7 +255,7 @@ func (h *Handler) WatchCRDs() {
 		err = h.Config.GetObject(config.ResourcesKey, existingPipelines)
 		if err != nil {
 			h.Log.Error(err)
-			continue
+			return
 		}
 
 		existingPipelineConfigs := existingPipelines[config.GlobalResourceKey]
@@ -241,8 +284,20 @@ func (h *Handler) WatchCRDs() {
 			h.Log.Info("skipping informer resync")
 			return
 		}
+		h.Log.Info("Resyncing informer from watch crd")
 		h.channelPool[channels.ReSync].(channels.ReSyncChannel).ReSyncInformer()
 	}
+
+loop:
+	for {
+		select {
+		case <-h.channelPool[channels.Stop].(channels.StopChannel):
+			break loop
+		case event := <-crdWatcher.ResultChan():
+			processEvent(event)
+		}
+	}
+	h.Log.Info("Stopping WatchCRDs")
 }
 
 // TODO: move this to meshkit
