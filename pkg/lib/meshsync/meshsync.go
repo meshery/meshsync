@@ -119,7 +119,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 			br = brokerHandler
 		}
 		outputProcessor.SetOutput(
-			output.NewNatsWriter(
+			output.NewBrokerWriter(
 				br,
 			),
 		)
