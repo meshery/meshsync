@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-var k8sClusterMeshsyncBinaryTestCasesFileModeData []k8sClusterMeshsyncBinaryTestCaseStruct = []k8sClusterMeshsyncBinaryTestCaseStruct{
+var meshSyncBinaryWithK8SClusterFileModeTestCasesData []meshsyncBinaryWithK8SClusterTestsCasesStruct = []meshsyncBinaryWithK8SClusterTestsCasesStruct{
 	{
 		name: "output mode file: must not receive message from queue",
 		meshsyncCMDArgs: []string{
@@ -28,7 +28,7 @@ var k8sClusterMeshsyncBinaryTestCasesFileModeData []k8sClusterMeshsyncBinaryTest
 				os.RemoveAll("meshery-cluster-snapshot-integration-test-file-mode-00.yaml")
 			},
 		},
-		natsMessageHandler: func(
+		brokerMessageHandler: func(
 			t *testing.T,
 			out chan *broker.Message,
 			resultData map[string]any,

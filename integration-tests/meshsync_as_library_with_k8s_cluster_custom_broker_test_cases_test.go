@@ -7,27 +7,27 @@ import (
 	"testing"
 	"time"
 
+	"github.com/meshery/meshkit/broker"
 	meshkitutils "github.com/meshery/meshkit/utils"
 	mesherykube "github.com/meshery/meshkit/utils/kubernetes"
 	"github.com/meshery/meshsync/internal/config"
-	"github.com/meshery/meshsync/internal/output"
 	libmeshsync "github.com/meshery/meshsync/pkg/lib/meshsync"
 	"github.com/meshery/meshsync/pkg/lib/tmp_meshkit/broker/channel"
 	iutils "github.com/meshery/meshsync/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibraryTestCaseStruct = []k8sClusterMeshsyncLibraryTestCaseStruct{
+var meshsyncLibraryWithK8SClusterCustomBrokerTestCaseData []meshsyncLibraryWithK8SClusterCustomBrokerTestCaseStruct = []meshsyncLibraryWithK8SClusterCustomBrokerTestCaseStruct{
 	{
 		name: "output mode channel: number of messages received from meshsync is greater than zero",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
-			libmeshsync.WithOutputMode(config.OutputModeNats),
+			libmeshsync.WithOutputMode(config.OutputModeBroker),
 			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
 			libmeshsync.WithStopAfterDuration(8 * time.Second),
 		},
-		channelMessageHandler: func(
+		brokerMessageHandler: func(
 			t *testing.T,
-			out chan *output.ChannelItem,
+			out chan *broker.Message,
 			resultData map[string]any,
 		) {
 			count := 0
@@ -56,7 +56,7 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 		name: "output mode channel: must not fail when has nil in options setter",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
 			nil,
-			libmeshsync.WithOutputMode(config.OutputModeNats),
+			libmeshsync.WithOutputMode(config.OutputModeBroker),
 			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
 			libmeshsync.WithStopAfterDuration(0 * time.Second),
 		},
@@ -69,7 +69,7 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 	{
 		name: "output mode channel: can get clusterID from utils function",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
-			libmeshsync.WithOutputMode(config.OutputModeNats),
+			libmeshsync.WithOutputMode(config.OutputModeBroker),
 			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
 			libmeshsync.WithStopAfterDuration(0 * time.Second),
 		},
@@ -86,7 +86,7 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 	{
 		name: "output mode channel: can access cluster when receive kube config from options",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
-			libmeshsync.WithOutputMode(config.OutputModeNats),
+			libmeshsync.WithOutputMode(config.OutputModeBroker),
 			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
 			// read the kube config and provide its content through libmeshsync.WithKubeConfig
 			func() libmeshsync.OptionsSetter {
@@ -109,9 +109,9 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 			}(),
 			libmeshsync.WithStopAfterDuration(8 * time.Second),
 		},
-		channelMessageHandler: func(
+		brokerMessageHandler: func(
 			t *testing.T,
-			out chan *output.ChannelItem,
+			out chan *broker.Message,
 			resultData map[string]any,
 		) {
 			count := 0
@@ -136,7 +136,7 @@ var k8sClusterMeshsyncLibraryTestCasesChannelModeData []k8sClusterMeshsyncLibrar
 	{
 		name: "output mode channel: could not access cluster with invalid kubeconfig",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
-			libmeshsync.WithOutputMode(config.OutputModeNats),
+			libmeshsync.WithOutputMode(config.OutputModeBroker),
 			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
 			libmeshsync.WithKubeConfig([]byte(`fake kube config`)),
 			libmeshsync.WithStopAfterDuration(0 * time.Second),

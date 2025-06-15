@@ -31,7 +31,7 @@ var DefautOptions = Options{
 }
 
 var AllowedOutputModes = []string{
-	config.OutputModeNats,
+	config.OutputModeBroker,
 	config.OutputModeFile,
 }
 

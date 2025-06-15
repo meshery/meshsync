@@ -103,7 +103,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 
 	outputProcessor := output.NewProcessor()
 	var br broker.Handler
-	if options.OutputMode == config.OutputModeNats {
+	if options.OutputMode == config.OutputModeBroker {
 		// take from options, if nil instantiate
 		// this allows ti provide custom implementation of broker.Handler interface
 		br = options.BrokerHandler
@@ -185,10 +185,10 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	go meshsyncHandler.WatchCRDs()
 
 	go meshsyncHandler.Run()
-	if options.OutputMode == config.OutputModeNats {
+	if options.OutputMode == config.OutputModeBroker {
 		// even so the config param name starts with OutputMode
 		// it is not only output but also input
-		// in that case if  OutputMode is not OutputModeNats
+		// in that case if  OutputMode is not OutputModeBroker
 		// there is no nats at all, so we do not subscribe to any topic
 		go meshsyncHandler.ListenToRequests()
 	}

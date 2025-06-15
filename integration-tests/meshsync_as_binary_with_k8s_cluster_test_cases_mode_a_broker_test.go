@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var k8sClusterMeshsyncBinaryTestCasesNatsModeData []k8sClusterMeshsyncBinaryTestCaseStruct = []k8sClusterMeshsyncBinaryTestCaseStruct{
+var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8SClusterTestsCasesStruct = []meshsyncBinaryWithK8SClusterTestsCasesStruct{
 	{
-		name:            "output mode nats: number of messages received from nats is greater than zero",
+		name:            "output mode broker: number of messages received from broker is greater than zero",
 		meshsyncCMDArgs: []string{"--stopAfter", "8s"},
-		natsMessageHandler: func(
+		brokerMessageHandler: func(
 			t *testing.T,
 			out chan *broker.Message,
 			resultData map[string]any,
@@ -38,14 +38,14 @@ var k8sClusterMeshsyncBinaryTestCasesNatsModeData []k8sClusterMeshsyncBinaryTest
 		},
 	},
 	{
-		name: "output mode nats: receive from nats only specified resources",
+		name: "output mode broker: receive from broker only specified resources",
 		meshsyncCMDArgs: []string{
 			"--stopAfter",
 			"8s",
 			"--outputResources",
 			"pod,replicaset",
 		},
-		natsMessageHandler: func(
+		brokerMessageHandler: func(
 			t *testing.T,
 			out chan *broker.Message,
 			resultData map[string]any,
@@ -98,14 +98,14 @@ var k8sClusterMeshsyncBinaryTestCasesNatsModeData []k8sClusterMeshsyncBinaryTest
 		},
 	},
 	{
-		name: "output mode nats: receive from nats only resources from specified namespace",
+		name: "output mode broker: receive from broker only resources from specified namespace",
 		meshsyncCMDArgs: []string{
 			"--stopAfter",
 			"8s",
 			"--outputNamespace",
 			"agile-otter",
 		},
-		natsMessageHandler: func(
+		brokerMessageHandler: func(
 			t *testing.T,
 			out chan *broker.Message,
 			resultData map[string]any,
@@ -158,12 +158,12 @@ var k8sClusterMeshsyncBinaryTestCasesNatsModeData []k8sClusterMeshsyncBinaryTest
 		},
 	},
 	{
-		name: "output mode nats: must not fail with a --broker-url param",
+		name: "output mode broker: must not fail with a --broker-url param",
 		meshsyncCMDArgs: []string{
 			"--broker-url", "10.96.235.19:4222",
 			"--stopAfter", "8s",
 		},
-		natsMessageHandler: func(
+		brokerMessageHandler: func(
 			t *testing.T,
 			out chan *broker.Message,
 			resultData map[string]any,
