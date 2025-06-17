@@ -24,7 +24,7 @@ type TMPChannelBrokerHandler struct {
 }
 
 func NewTMPChannelBrokerHandler(optsSetters ...OptionsSetter) *TMPChannelBrokerHandler {
-	options := DefautOptions
+	options := DefaultOptions
 	for _, setOptions := range optsSetters {
 		if setOptions != nil {
 			setOptions(&options)
