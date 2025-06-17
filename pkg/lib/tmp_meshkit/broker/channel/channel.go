@@ -4,7 +4,6 @@ package channel
 
 // TODO
 // put this under meshkit
-// as this is required for both meshsync and server
 
 import (
 	"fmt"
@@ -15,7 +14,7 @@ import (
 	"github.com/meshery/meshkit/utils"
 )
 
-type TMPChannelBrokerHandler struct {
+type ChannelBrokerHandler struct {
 	Options
 	name string
 	// this structure represents [subject] => [queue] => channel
@@ -23,14 +22,14 @@ type TMPChannelBrokerHandler struct {
 	storage map[string]map[string]chan *realBroker.Message
 }
 
-func NewTMPChannelBrokerHandler(optsSetters ...OptionsSetter) *TMPChannelBrokerHandler {
+func NewChannelBrokerHandler(optsSetters ...OptionsSetter) *ChannelBrokerHandler {
 	options := DefaultOptions
 	for _, setOptions := range optsSetters {
 		if setOptions != nil {
 			setOptions(&options)
 		}
 	}
-	return &TMPChannelBrokerHandler{
+	return &ChannelBrokerHandler{
 		name: fmt.Sprintf(
 			"channel-broker-handler--%s",
 			uuid.New().String(),
@@ -40,7 +39,7 @@ func NewTMPChannelBrokerHandler(optsSetters ...OptionsSetter) *TMPChannelBrokerH
 	}
 }
 
-func (h *TMPChannelBrokerHandler) ConnectedEndpoints() (endpoints []string) {
+func (h *ChannelBrokerHandler) ConnectedEndpoints() (endpoints []string) {
 	// return subjects::queue list intead of connection endpoints
 	list := make([]string, 0, len(h.storage))
 	for subject, qstorage := range h.storage {
@@ -62,12 +61,12 @@ func (h *TMPChannelBrokerHandler) ConnectedEndpoints() (endpoints []string) {
 	return list
 }
 
-func (h *TMPChannelBrokerHandler) Info() string {
+func (h *ChannelBrokerHandler) Info() string {
 	// return name because nats implementation returns name
 	return h.name
 }
 
-func (h *TMPChannelBrokerHandler) CloseConnection() {
+func (h *ChannelBrokerHandler) CloseConnection() {
 	for subject, qstorage := range h.storage {
 		for queue, ch := range qstorage {
 			if !utils.IsClosed(ch) {
@@ -80,7 +79,7 @@ func (h *TMPChannelBrokerHandler) CloseConnection() {
 }
 
 // Publish - to publish messages
-func (h *TMPChannelBrokerHandler) Publish(subject string, message *realBroker.Message) error {
+func (h *ChannelBrokerHandler) Publish(subject string, message *realBroker.Message) error {
 	if len(h.storage[subject]) <= 0 {
 		// nobody is listening => not publishing
 		return nil
@@ -110,10 +109,11 @@ func (h *TMPChannelBrokerHandler) Publish(subject string, message *realBroker.Me
 }
 
 // PublishWithChannel - to publish messages with channel
-func (h *TMPChannelBrokerHandler) PublishWithChannel(subject string, msgch chan *realBroker.Message) error {
+func (h *ChannelBrokerHandler) PublishWithChannel(subject string, msgch chan *realBroker.Message) error {
 	go func() {
 		// as soon as this channel will be closed, for loop will end
 		for msg := range msgch {
+			// TODO handle returned error
 			h.Publish(subject, msg)
 		}
 	}()
@@ -121,7 +121,7 @@ func (h *TMPChannelBrokerHandler) PublishWithChannel(subject string, msgch chan 
 }
 
 // Subscribe - for subscribing messages
-func (h *TMPChannelBrokerHandler) Subscribe(subject, queue string, message []byte) error {
+func (h *ChannelBrokerHandler) Subscribe(subject, queue string, message []byte) error {
 	// Looks like current version with nats does not seem to be correct
 	// it adds callback which is executed on every message
 	// and if queue is populated with messages it keeps waiting, in the end it returns the last one;
@@ -133,7 +133,7 @@ func (h *TMPChannelBrokerHandler) Subscribe(subject, queue string, message []byt
 }
 
 // SubscribeWithChannel will publish all the messages received to the given channel
-func (h *TMPChannelBrokerHandler) SubscribeWithChannel(subject, queue string, msgch chan *realBroker.Message) error {
+func (h *ChannelBrokerHandler) SubscribeWithChannel(subject, queue string, msgch chan *realBroker.Message) error {
 	if h.storage[subject] == nil {
 		h.storage[subject] = make(map[string]chan *realBroker.Message)
 	}
@@ -155,7 +155,7 @@ func (h *TMPChannelBrokerHandler) SubscribeWithChannel(subject, queue string, ms
 }
 
 // DeepCopyInto is a deepcopy function, copying the receiver, writing into out. in must be non-nil.
-func (h *TMPChannelBrokerHandler) DeepCopyInto(out realBroker.Handler) {
+func (h *ChannelBrokerHandler) DeepCopyInto(out realBroker.Handler) {
 	// Not supported
 
 	// TODO
@@ -163,18 +163,18 @@ func (h *TMPChannelBrokerHandler) DeepCopyInto(out realBroker.Handler) {
 }
 
 // DeepCopy is a deepcopy function, copying the receiver, creating a new Nats.
-func (h *TMPChannelBrokerHandler) DeepCopy() realBroker.Handler {
+func (h *ChannelBrokerHandler) DeepCopy() realBroker.Handler {
 	// Not supported
 	return h
 }
 
 // DeepCopyObject is a deepcopy function, copying the receiver, creating a new realBroker.Handler.
-func (h *TMPChannelBrokerHandler) DeepCopyObject() realBroker.Handler {
+func (h *ChannelBrokerHandler) DeepCopyObject() realBroker.Handler {
 	// Not supported
 	return h
 }
 
 // Check if the connection object is empty
-func (h *TMPChannelBrokerHandler) IsEmpty() bool {
+func (h *ChannelBrokerHandler) IsEmpty() bool {
 	return len(h.storage) <= 0
 }

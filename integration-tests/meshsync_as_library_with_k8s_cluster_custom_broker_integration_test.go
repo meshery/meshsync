@@ -21,7 +21,7 @@ func TestMeshsyncLibraryWithK8sClusterCustomBrokerIntegration(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	br := channel.NewTMPChannelBrokerHandler()
+	br := channel.NewChannelBrokerHandler()
 
 	for i, tc := range meshsyncLibraryWithK8SClusterCustomBrokerTestCaseData {
 		t.Run(

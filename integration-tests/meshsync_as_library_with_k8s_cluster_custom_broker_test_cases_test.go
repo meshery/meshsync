@@ -22,7 +22,7 @@ var meshsyncLibraryWithK8SClusterCustomBrokerTestCaseData []meshsyncLibraryWithK
 		name: "output mode channel: number of messages received from meshsync is greater than zero",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
 			libmeshsync.WithOutputMode(config.OutputModeBroker),
-			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
+			libmeshsync.WithBrokerHandler(channel.NewChannelBrokerHandler()),
 			libmeshsync.WithStopAfterDuration(8 * time.Second),
 		},
 		brokerMessageHandler: func(
@@ -57,7 +57,7 @@ var meshsyncLibraryWithK8SClusterCustomBrokerTestCaseData []meshsyncLibraryWithK
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
 			nil,
 			libmeshsync.WithOutputMode(config.OutputModeBroker),
-			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
+			libmeshsync.WithBrokerHandler(channel.NewChannelBrokerHandler()),
 			libmeshsync.WithStopAfterDuration(0 * time.Second),
 		},
 	},
@@ -70,7 +70,7 @@ var meshsyncLibraryWithK8SClusterCustomBrokerTestCaseData []meshsyncLibraryWithK
 		name: "output mode channel: can get clusterID from utils function",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
 			libmeshsync.WithOutputMode(config.OutputModeBroker),
-			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
+			libmeshsync.WithBrokerHandler(channel.NewChannelBrokerHandler()),
 			libmeshsync.WithStopAfterDuration(0 * time.Second),
 		},
 		finalHandler: func(t *testing.T, resultData map[string]any) {
@@ -87,7 +87,7 @@ var meshsyncLibraryWithK8SClusterCustomBrokerTestCaseData []meshsyncLibraryWithK
 		name: "output mode channel: can access cluster when receive kube config from options",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
 			libmeshsync.WithOutputMode(config.OutputModeBroker),
-			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
+			libmeshsync.WithBrokerHandler(channel.NewChannelBrokerHandler()),
 			// read the kube config and provide its content through libmeshsync.WithKubeConfig
 			func() libmeshsync.OptionsSetter {
 				kubeConfigFilePath := os.Getenv("KUBECONFIG")
@@ -137,7 +137,7 @@ var meshsyncLibraryWithK8SClusterCustomBrokerTestCaseData []meshsyncLibraryWithK
 		name: "output mode channel: could not access cluster with invalid kubeconfig",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
 			libmeshsync.WithOutputMode(config.OutputModeBroker),
-			libmeshsync.WithBrokerHandler(channel.NewTMPChannelBrokerHandler()),
+			libmeshsync.WithBrokerHandler(channel.NewChannelBrokerHandler()),
 			libmeshsync.WithKubeConfig([]byte(`fake kube config`)),
 			libmeshsync.WithStopAfterDuration(0 * time.Second),
 		},
