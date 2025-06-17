@@ -99,7 +99,7 @@ func (h *TMPChannelBrokerHandler) Publish(subject string, message *realBroker.Me
 	}
 
 	if len(failedList) > 0 {
-		return ErrChannelPublish(
+		return NewErrChannelBrokerPublish(
 			fmt.Errorf("failed to publish to one or more queue for subject %s", subject),
 			successList,
 			failedList,
