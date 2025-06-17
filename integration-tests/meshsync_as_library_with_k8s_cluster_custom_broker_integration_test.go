@@ -8,35 +8,26 @@ import (
 	"testing"
 	"time"
 
+	"github.com/meshery/meshkit/broker"
 	"github.com/meshery/meshkit/logger"
-	"github.com/meshery/meshsync/internal/output"
 	libmeshsync "github.com/meshery/meshsync/pkg/lib/meshsync"
+	"github.com/meshery/meshsync/pkg/lib/tmp_meshkit/broker/channel"
 	"github.com/sirupsen/logrus"
 	"gotest.tools/v3/assert"
 )
 
-var k8sClusterMeshsyncAsLibraryTestCasesData []k8sClusterMeshsyncLibraryTestCaseStruct
-
-func init() {
-	for _, tcs := range [][]k8sClusterMeshsyncLibraryTestCaseStruct{
-		k8sClusterMeshsyncLibraryTestCasesChannelModeData,
-	} {
-		k8sClusterMeshsyncAsLibraryTestCasesData = append(
-			k8sClusterMeshsyncAsLibraryTestCasesData,
-			tcs...,
-		)
-	}
-}
-
-func TestWithMeshsyncLibraryAndK8sClusterIntegration(t *testing.T) {
+func TestMeshsyncLibraryWithK8sClusterCustomBrokerIntegration(t *testing.T) {
 	if !runIntegrationTest {
 		t.Skip("skipping integration test")
 	}
 
-	for i, tc := range k8sClusterMeshsyncAsLibraryTestCasesData {
+	br := channel.NewChannelBrokerHandler()
+
+	for i, tc := range meshsyncLibraryWithK8SClusterCustomBrokerTestCaseData {
 		t.Run(
 			tc.name,
-			runWithMeshsyncLibraryAndk8sClusterTestCase(
+			runWithMeshsyncLibraryAndk8sClusterCustomBrokerTestCase(
+				br,
 				i,
 				tc,
 			),
@@ -48,9 +39,10 @@ func TestWithMeshsyncLibraryAndK8sClusterIntegration(t *testing.T) {
 // integration-tests/k8s_cluster_meshsync_as_library_integration_test.go:47:1: calculated cyclomatic complexity for function runWithMeshsyncLibraryAndk8sClusterTestCase is 15, max is 10 (cyclop)
 //
 //nolint:cyclop
-func runWithMeshsyncLibraryAndk8sClusterTestCase(
+func runWithMeshsyncLibraryAndk8sClusterCustomBrokerTestCase(
+	br broker.Handler,
 	tcIndex int,
-	tc k8sClusterMeshsyncLibraryTestCaseStruct,
+	tc meshsyncLibraryWithK8SClusterCustomBrokerTestCaseStruct,
 ) func(t *testing.T) {
 	return func(t *testing.T) {
 		for _, cleanupHook := range tc.cleanupHooks {
@@ -61,7 +53,7 @@ func runWithMeshsyncLibraryAndk8sClusterTestCase(
 			setupHook()
 		}
 
-		loggerOptions, deferFunc := withMeshsyncLibraryPrepareMeshsyncLoggerOptions(t, tcIndex)
+		loggerOptions, deferFunc := withMeshsyncLibraryAndk8sClusterCustomBrokerPrepareMeshsyncLoggerOptions(t, tcIndex)
 		defer deferFunc()
 
 		// Initialize Logger instance
@@ -73,21 +65,31 @@ func runWithMeshsyncLibraryAndk8sClusterTestCase(
 			t.Fatal("must not end with error when creating logger", errLoggerNew)
 		}
 
-		// prepare transport and error channels, result map
-		transportCh := make(chan *output.ChannelItem, 1024)
 		errCh := make(chan error)
-		resultData := make(map[string]any)
+		out := make(chan *broker.Message)
 
-		// Step 1: run meshsync channel message handler
-		if tc.channelMessageHandler != nil {
-			go tc.channelMessageHandler(t, transportCh, resultData)
+		// Step 1: subscribe to the queue
+		if err := br.SubscribeWithChannel(
+			testMeshsyncTopic,
+			// impotant to have a different queue group per test case
+			// so that every test case receive message for each event
+			fmt.Sprintf("meshsync-as-library-queue-group-%02d", tcIndex),
+			out,
+		); err != nil {
+			t.Fatalf("error subscribing to topic: %v", err)
 		}
 
-		// Step 2: run meshsync library
+		// Step 2: process messages
+		resultData := make(map[string]any)
+		if tc.brokerMessageHandler != nil {
+			go tc.brokerMessageHandler(t, out, resultData)
+		}
+
+		// Step 3: run meshsync library
 		go func(errCh0 chan<- error) {
 			runOptions := make([]libmeshsync.OptionsSetter, 0, len(tc.meshsyncRunOptions))
 			runOptions = append(runOptions, tc.meshsyncRunOptions...)
-			runOptions = append(runOptions, libmeshsync.WithTransportChannel(transportCh))
+			runOptions = append(runOptions, libmeshsync.WithBrokerHandler(br))
 
 			errCh0 <- libmeshsync.Run(
 				log,
@@ -95,7 +97,7 @@ func runWithMeshsyncLibraryAndk8sClusterTestCase(
 			)
 		}(errCh)
 
-		// intentionally big timeout to wait till the cmd execution ended
+		// intentionally big timeout to wait till the run execution ended
 		timeout := time.Duration(time.Hour * 24)
 		if tc.waitMeshsyncTimeout > 0 {
 			timeout = tc.waitMeshsyncTimeout
@@ -125,7 +127,7 @@ func runWithMeshsyncLibraryAndk8sClusterTestCase(
 			t.Logf("processing after timeout %d", timeout)
 		}
 
-		// Step 3: do final assertion, if any
+		// Step 4: do final assertion, if any
 		if tc.finalHandler != nil {
 			tc.finalHandler(t, resultData)
 		}
@@ -134,7 +136,7 @@ func runWithMeshsyncLibraryAndk8sClusterTestCase(
 	}
 }
 
-func withMeshsyncLibraryPrepareMeshsyncLoggerOptions(
+func withMeshsyncLibraryAndk8sClusterCustomBrokerPrepareMeshsyncLoggerOptions(
 	t *testing.T,
 	tcIndex int,
 ) (logger.Options, func()) {
@@ -146,7 +148,7 @@ func withMeshsyncLibraryPrepareMeshsyncLoggerOptions(
 	// there is quite rich output from meshsync
 	// save to file instead of stdout
 	if saveMeshsyncOutput {
-		meshsyncOutputFileName := fmt.Sprintf("k8s-cluster-meshsync-as-library-test-case-%02d.meshsync-output.txt", tcIndex)
+		meshsyncOutputFileName := fmt.Sprintf("meshsync-as-library-with-k8s-cluster-custom-broker-test-case-%02d.meshsync-output.txt", tcIndex)
 		meshsyncOutputFile, err := os.Create(meshsyncOutputFileName)
 		if err != nil {
 			t.Logf("Could not create meshsync output file %s", meshsyncOutputFileName)

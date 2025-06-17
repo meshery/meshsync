@@ -17,9 +17,8 @@ const (
 	LogStream         = "log-stream"
 	ExecShell         = "exec-shell"
 	InformerStore     = "informer-store"
-	OutputModeNats    = "nats"
+	OutputModeBroker  = "broker"
 	OutputModeFile    = "file"
-	OutputModeChannel = "channel"
 )
 
 // Command line input params
