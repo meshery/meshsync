@@ -104,8 +104,8 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	outputProcessor := output.NewProcessor()
 	var br broker.Handler
 	if options.OutputMode == config.OutputModeBroker {
-		// take from options, if nil instantiate
-		// this allows ti provide custom implementation of broker.Handler interface
+		// take from options; if nil, instantiate;
+		// this allows to provide custom implementation of broker.Handler interface
 		br = options.BrokerHandler
 		if br == nil {
 			brokerHandler, errNatsNew := createNatsBrokerHandler(
