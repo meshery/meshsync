@@ -249,7 +249,14 @@ func (h *Handler) WatchCRDs() {
 			return
 		}
 
-		gvr := kubernetes.GetGVRForCustomResources(crd)
+		if len(crd.Spec.Versions) == 0 {
+			h.Log.Warnf(
+				"received crd watch event with runtime.Object which has empty spec.Versions %s",
+				string(byt),
+			)
+		}
+
+		gvr := tmpGetGVRForCustomResources(crd)
 
 		existingPipelines := config.Pipelines
 		err = h.Config.GetObject(config.ResourcesKey, existingPipelines)
@@ -321,4 +328,23 @@ func splitIntoMultipleSlices(s []model.KubernetesResource, maxItmsPerSlice int) 
 	}
 
 	return result
+}
+
+// TODO: this is temp fix, original is here
+// https://github.com/meshery/meshkit/blob/master/utils/kubernetes/crd.go#L49C6-L49C30
+// it is panics if crd.Spec.Versions is empty
+func tmpGetGVRForCustomResources(crd *kubernetes.CRDItem) *schema.GroupVersionResource {
+	if crd == nil {
+		return nil
+	}
+
+	if len(crd.Spec.Versions) > 0 {
+		return kubernetes.GetGVRForCustomResources(crd)
+	}
+
+	return &schema.GroupVersionResource{
+		Group:    crd.Spec.Group,
+		Version:  "",
+		Resource: crd.Spec.Names.ResourceName,
+	}
 }
