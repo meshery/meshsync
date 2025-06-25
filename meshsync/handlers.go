@@ -249,7 +249,7 @@ func (h *Handler) WatchCRDs() {
 			return
 		}
 
-		if len(crd.Spec.Versions) <= 0 {
+		if len(crd.Spec.Versions) == 0 {
 			h.Log.Warnf(
 				"received crd watch event with runtime.Object which has empty spec.Versions %s",
 				string(byt),
@@ -330,7 +330,7 @@ func splitIntoMultipleSlices(s []model.KubernetesResource, maxItmsPerSlice int) 
 	return result
 }
 
-// this is temp fix, original is here
+// TODO: this is temp fix, original is here
 // https://github.com/meshery/meshkit/blob/master/utils/kubernetes/crd.go#L49C6-L49C30
 // it is panics if crd.Spec.Versions is empty
 func tmpGetGVRForCustomResources(crd *kubernetes.CRDItem) *schema.GroupVersionResource {
