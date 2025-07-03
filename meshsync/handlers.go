@@ -3,6 +3,7 @@ package meshsync
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/meshery/meshkit/broker"
@@ -20,67 +21,134 @@ import (
 )
 
 func debounce(d time.Duration, f func(ch chan struct{})) func(ch chan struct{}) {
-	timer := time.NewTimer(d)
+	var timer *time.Timer // The single timer instance for this debounce setup.
+
 	return func(pipelineCh chan struct{}) {
-		timer.Stop()
-		timer = time.NewTimer(d)
+		// If a timer already exists, stop it.
+		// This ensures that any previous pending execution is cancelled.
+		if timer != nil {
+			if !timer.Stop() {
+				// If Stop returns false, the timer may have already fired
+				// and its channel might still have a value. Drain it.
+				// This is to prevent a stale signal from being processed by a later <-timer.C.
+				select {
+				case <-timer.C: // Drain the channel.
+				default: // Channel was already empty or Stop closed it before send.
+				}
+			}
+		}
+
+		// (Re)set the timer for duration d.
+		// If timer was nil (first call), this creates it.
+		// If it existed and was stopped, it's reset.
+		if timer == nil {
+			timer = time.NewTimer(d)
+		} else {
+			timer.Reset(d) // Reset the existing timer for the new duration.
+		}
+
+		// Wait for the timer to fire.
+		// This select is only waiting on one channel, so it's equivalent to a direct read.
+		// No other paths for this select. If timer is stopped externally before firing,
+		// this read will block until the channel is closed (which timers don't do on Stop)
+		// or until a value is sent (which Stop prevents).
+		// This implies that Stop must be effective from this same debounced function logic.
 		<-timer.C
+		// The timer has fired. Execute the function.
+		// After firing, the timer is inactive. It will be Reset on the next call.
 		f(pipelineCh)
-		timer.Reset(d)
-		timer.Stop()
 	}
 }
 
 func (h *Handler) Run() {
-	pipelineCh := make(chan struct{})
-	defer func() {
-		if !utils.IsClosed(pipelineCh) {
-			h.Log.Info("Closing informer stop channel")
-			close(pipelineCh)
+	var currentPipelineCh chan struct{} // Will be initialized before first use
+	var discoveryWg sync.WaitGroup
+
+	// Helper to start discovery and manage WaitGroup
+	startAndTrackDiscovery := func() {
+		currentPipelineCh = make(chan struct{}) // Create a new channel for each discovery instance
+		discoveryWg.Add(1)
+		go func(ch chan struct{}) {
+			defer discoveryWg.Done()
+			h.Log.Debugf("h.startDiscovery starting with channel %p", ch)
+			h.startDiscovery(ch)
+			h.Log.Debugf("h.startDiscovery completed for channel %p", ch)
+		}(currentPipelineCh)
+	}
+
+	// Initial start of the discovery process
+	startAndTrackDiscovery()
+
+	// This debounced function is responsible for stopping the old discovery
+	// and starting a new one.
+	debouncedRestartDiscovery := debounce(time.Second*5, func(prevPipelineCh chan struct{}) {
+		h.Log.Info("Debounce triggered: attempting to restart discovery.")
+
+		// Close the previous channel to signal its discovery goroutine to stop
+		if prevPipelineCh != nil && !utils.IsClosed(prevPipelineCh) {
+			h.Log.Infof("Closing previous pipelineCh (%p) to stop existing discovery.", prevPipelineCh)
+			close(prevPipelineCh)
+		} else {
+			h.Log.Info("Previous pipelineCh is nil or already closed.")
 		}
+
+		// Wait for the previous discovery goroutine to finish
+		h.Log.Info("Waiting for existing discovery goroutine to complete...")
+		discoveryWg.Wait() // This waits for all Add(1) calls that haven't been Done()
+		h.Log.Info("Existing discovery goroutine completed.")
+
+		// Update informer before starting new discovery
+		if err := h.UpdateInformer(); err != nil {
+			// TODO: Define ErrUpdateInformer or use a more generic error log
+			h.Log.Error(fmt.Errorf("failed to update informer: %w", err))
+		}
+
+		h.Log.Info("Starting new discovery process...")
+		startAndTrackDiscovery() // This will create and use a new currentPipelineCh
+	})
+
+	defer func() {
+		h.Log.Info("Run: defer function executing.")
+		if currentPipelineCh != nil && !utils.IsClosed(currentPipelineCh) {
+			h.Log.Infof("Run: Closing current pipelineCh (%p) in defer.", currentPipelineCh)
+			close(currentPipelineCh)
+		}
+		h.Log.Info("Run: Waiting for final discovery goroutine to complete...")
+		discoveryWg.Wait() // Ensure the last discovery goroutine also finishes
+		h.Log.Info("Run: Final discovery goroutine completed.")
 	}()
 
-	go h.startDiscovery(pipelineCh)
-
-	debouncedStartDiscovery := debounce(time.Second*5, func(pipelinechannel chan struct{}) {
-		if !utils.IsClosed[struct{}](pipelinechannel) {
-			h.Log.Info("closing previous instance ")
-			close(pipelinechannel)
-		}
-		pipelineCh = make(chan struct{})
-
-		err := h.UpdateInformer()
-		if err != nil {
-			h.Log.Error(err)
-		}
-		h.Log.Info("starting over")
-		h.startDiscovery(pipelineCh)
-
-	})
 loop:
 	for {
 		select {
 		case <-h.channelPool[channels.Stop].(channels.StopChannel):
+			h.Log.Info("Run: Received stop signal. Breaking loop.")
 			break loop
 		case <-h.channelPool[channels.ReSync].(channels.ReSyncChannel):
-			go debouncedStartDiscovery(pipelineCh)
+			h.Log.Info("Run: Received ReSync signal.")
+			// The debounced function will operate on the `currentPipelineCh`
+			// that was active when the ReSync signal was received.
+			go debouncedRestartDiscovery(currentPipelineCh)
 		}
 	}
-	h.Log.Info("Stopping Run")
+	h.Log.Info("Stopping Run function.")
 }
 
 func (h *Handler) UpdateInformer() error {
 	dynamicClient, err := dynamic.NewForConfig(&h.kubeClient.RestConfig)
 	if err != nil {
-		return ErrNewInformer(err)
+		// TODO: Define ErrNewInformer or use a more generic error
+		return fmt.Errorf("failed to create new dynamic client for informer: %w", err)
 	}
 	listOptionsFunc, err := GetListOptionsFunc(h.Config)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get list options func for informer: %w", err)
 	}
 	if h.informer != nil {
+		h.Log.Info("Shutting down existing informer before update.")
 		h.informer.Shutdown()
 	}
+	h.Log.Info("Creating new dynamic shared informer factory.")
 	h.informer = GetDynamicInformer(h.Config, dynamicClient, listOptionsFunc)
 	return nil
 }
