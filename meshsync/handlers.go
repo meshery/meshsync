@@ -20,43 +20,20 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
+var mu sync.Mutex
+var timer *time.Timer
+
 func debounce(d time.Duration, f func(ch chan struct{})) func(ch chan struct{}) {
-	var timer *time.Timer // The single timer instance for this debounce setup.
-
 	return func(pipelineCh chan struct{}) {
-		// If a timer already exists, stop it.
-		// This ensures that any previous pending execution is cancelled.
+		mu.Lock()
+		defer mu.Unlock()
+
 		if timer != nil {
-			if !timer.Stop() {
-				// If Stop returns false, the timer may have already fired
-				// and its channel might still have a value. Drain it.
-				// This is to prevent a stale signal from being processed by a later <-timer.C.
-				select {
-				case <-timer.C: // Drain the channel.
-				default: // Channel was already empty or Stop closed it before send.
-				}
-			}
+			timer.Stop()
 		}
-
-		// (Re)set the timer for duration d.
-		// If timer was nil (first call), this creates it.
-		// If it existed and was stopped, it's reset.
-		if timer == nil {
-			timer = time.NewTimer(d)
-		} else {
-			timer.Reset(d) // Reset the existing timer for the new duration.
-		}
-
-		// Wait for the timer to fire.
-		// This select is only waiting on one channel, so it's equivalent to a direct read.
-		// No other paths for this select. If timer is stopped externally before firing,
-		// this read will block until the channel is closed (which timers don't do on Stop)
-		// or until a value is sent (which Stop prevents).
-		// This implies that Stop must be effective from this same debounced function logic.
-		<-timer.C
-		// The timer has fired. Execute the function.
-		// After firing, the timer is inactive. It will be Reset on the next call.
-		f(pipelineCh)
+		timer = time.AfterFunc(d, func() {
+			f(pipelineCh)
+		})
 	}
 }
 
