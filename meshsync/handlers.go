@@ -285,7 +285,7 @@ func (h *Handler) WatchCRDs() {
 		if event.Object == nil {
 			// TODO
 			// https://github.com/meshery/meshsync/issues/434
-			h.Log.Info("Handler::WatchCRDs::processEvent event.Object is nil, skipping")
+			h.Log.Debug("Handler::WatchCRDs::processEvent event.Object is nil, skipping")
 			return
 		}
 		byt, err := json.Marshal(event.Object)
@@ -301,7 +301,7 @@ func (h *Handler) WatchCRDs() {
 		}
 
 		if len(crd.Spec.Versions) == 0 {
-			h.Log.Warnf(
+			h.Log.Debugf(
 				"Handler::WatchCRDs::processEvent: event.Object has empty spec.Versions [%s]",
 				string(byt),
 			)
