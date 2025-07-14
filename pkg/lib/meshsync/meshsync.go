@@ -182,7 +182,9 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	}
 	defer meshsyncHandler.ShutdownInformer()
 
-	go meshsyncHandler.WatchCRDs()
+	if useCRDFlag {
+		go meshsyncHandler.WatchCRDs()
+	}
 
 	go meshsyncHandler.Run()
 	if options.OutputMode == config.OutputModeBroker {
