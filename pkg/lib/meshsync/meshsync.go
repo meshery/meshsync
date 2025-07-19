@@ -10,7 +10,6 @@ import (
 	"path"
 	"slices"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -210,24 +209,16 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	// Handle graceful shutdown
 	signal.Notify(chPool[channels.OS].(channels.OSChannel), syscall.SIGTERM, os.Interrupt)
 
-	// close stop channel (and ensure to close it only once),
-	// as there are many goroutines which wait for channels.Stop to be closed to stop their execution
-	var closeOnce sync.Once
 	select {
 	case <-chTimeout:
-		closeOnce.Do(func() {
-			close(chPool[channels.Stop].(channels.StopChannel))
-		})
 	case <-chPool[channels.OS].(channels.OSChannel):
-		closeOnce.Do(func() {
-			close(chPool[channels.Stop].(channels.StopChannel))
-		})
 	case <-options.Context.Done():
 		log.Info("meshsync: cancellation signal received from client code")
-		closeOnce.Do(func() {
-			close(chPool[channels.Stop].(channels.StopChannel))
-		})
 	}
+
+	// close stop channel
+	// as there are many goroutines which wait for channels.Stop to be closed to stop their execution
+	close(chPool[channels.Stop].(channels.StopChannel))
 
 	log.Info("meshsync: shutting down")
 
