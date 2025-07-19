@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-24.04]
-        go-version: [1.23.x]
+        go-version: [1.24.x]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Check out code
@@ -39,7 +39,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.23.x'
+          go-version: '1.24.x'
       - name: Run unit tests
         run: go test --short ./... -race -coverprofile=coverage.txt -covermode=atomic
       - name: Upload coverage to Codecov
@@ -58,6 +58,6 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.23.x'
+          go-version: '1.24.x'
       - name: Build
         run: make build
