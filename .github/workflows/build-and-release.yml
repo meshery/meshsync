@@ -20,7 +20,7 @@ jobs:
     - name: Setup Go
       uses: actions/setup-go@main
       with:
-        go-version: '1.23'
+        go-version: '1.24'
         check-latest: 'true'
     - run: GOPROXY=direct GOSUMDB=off GO111MODULE=on go build -o meshery-meshsync . 
   docker:
@@ -34,7 +34,7 @@ jobs:
     - name: Setup go
       uses: actions/setup-go@main
       with:
-        go-version: '1.23'
+        go-version: '1.24'
         check-latest: 'true'
     - name: Docker login
       uses: docker/login-action@v2
