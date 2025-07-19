@@ -10,7 +10,6 @@ import (
 	"path"
 	"slices"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -57,7 +56,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	crdConfigs, errGetMeshsyncCRDConfigs := getMeshsyncCRDConfigs(useCRDFlag, kubeClient)
 	if errGetMeshsyncCRDConfigs != nil {
 		// no configs found from meshsync CRD log warning
-		log.Warn(err)
+		log.Warnf("meshsync: %v", errGetMeshsyncCRDConfigs)
 	}
 	// Config init and seed
 	cfg, err := config.New(options.MeshkitConfigProvider)
@@ -72,9 +71,9 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	}
 
 	if useCRDFlag {
-		// this patch only make sense when CRD is present in cluster
+		// this patch only make sense when CRD is present when in cluster
 		if errPatchCRVersion := config.PatchCRVersion(&kubeClient.RestConfig); errPatchCRVersion != nil {
-			log.Warn(errPatchCRVersion)
+			log.Warnf("meshsync: %v", errPatchCRVersion)
 		}
 	}
 
@@ -186,7 +185,9 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		go meshsyncHandler.WatchCRDs()
 	}
 
+	// Start the main meshsync run
 	go meshsyncHandler.Run()
+
 	if options.OutputMode == config.OutputModeBroker {
 		// even so the config param name starts with OutputMode
 		// it is not only output but also input
@@ -199,30 +200,27 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	if options.StopAfterDuration > -1 {
 		go func(ch chan struct{}) {
 			<-time.After(options.StopAfterDuration)
-			log.Infof("Stopping after %s", options.StopAfterDuration)
+			log.Infof("meshsync: stopping after %s", options.StopAfterDuration)
 			close(chTimeout)
 		}(chTimeout)
 	}
 
-	log.Info("MeshSync run started")
+	log.Info("meshsync: run started")
 	// Handle graceful shutdown
 	signal.Notify(chPool[channels.OS].(channels.OSChannel), syscall.SIGTERM, os.Interrupt)
 
-	// close stop channel (and ensure to close it only once),
-	// as there are many goroutines which wait for channels.Stop to be closed to stop their execution
-	var closeOnce sync.Once
 	select {
 	case <-chTimeout:
-		closeOnce.Do(func() {
-			close(chPool[channels.Stop].(channels.StopChannel))
-		})
 	case <-chPool[channels.OS].(channels.OSChannel):
-		closeOnce.Do(func() {
-			close(chPool[channels.Stop].(channels.StopChannel))
-		})
+	case <-options.Context.Done():
+		log.Info("meshsync: cancellation signal received from client code")
 	}
 
-	log.Info("MeshSync run shutting down")
+	// close stop channel
+	// as there are many goroutines which wait for channels.Stop to be closed to stop their execution
+	close(chPool[channels.Stop].(channels.StopChannel))
+
+	log.Info("meshsync: shutting down")
 
 	return nil
 }
@@ -237,14 +235,14 @@ func connectivityTest(log logger.Handler, pingEndpoint string, url string) error
 	for {
 		resp, err := http.Get(pingURL) //nolint
 		if err != nil {
-			log.Info("could not connect to broker: " + err.Error() + " retrying...")
+			log.Info("meshsync: could not connect to broker: " + err.Error() + " retrying...")
 			time.Sleep(1 * time.Second)
 			continue
 		}
 		if resp.StatusCode == http.StatusOK {
 			break
 		}
-		log.Info("could not receive OK response from broker: "+pingURL, " retrying...")
+		log.Info("meshsync: could not receive OK response from broker: "+pingURL, " retrying...")
 		time.Sleep(1 * time.Second)
 	}
 
@@ -282,12 +280,12 @@ func determineUseCRDFlag(
 	useCRDFlag := crd != nil && errGetMeshsyncCRD == nil
 	if useCRDFlag {
 		log.Infof(
-			"running in %s output mode and meshsync CRD is present in the cluster",
+			"meshsync: running in %s output mode and meshsync CRD is present in the cluster",
 			options.OutputMode,
 		)
 	} else {
 		log.Infof(
-			"running in %s mode and NO meshsync CRD is present in the cluster",
+			"meshsync: running in %s mode and NO meshsync CRD is present in the cluster",
 			options.OutputMode,
 		)
 	}

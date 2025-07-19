@@ -1,6 +1,7 @@
 package meshsync
 
 import (
+	"context"
 	"time"
 
 	"github.com/meshery/meshkit/broker"
@@ -14,6 +15,7 @@ type Options struct {
 	KubeConfig        []byte
 	OutputFileName    string
 	BrokerHandler     broker.Handler
+	Context           context.Context
 
 	Version               string
 	PingEndpoint          string
@@ -24,6 +26,7 @@ var DefautOptions = Options{
 	StopAfterDuration: -1,  // -1 turns it off
 	KubeConfig:        nil, // if nil, truies to detekt kube config by the means of github.com/meshery/meshkit/utils/kubernetes/client.go:DetectKubeConfig
 	BrokerHandler:     nil, // if nil, will instantiate broker connection itself
+	Context:           context.Background(),
 
 	Version:               "Not Set",
 	PingEndpoint:          ":8222/connz",
@@ -66,6 +69,12 @@ func WithOutputFileName(value string) OptionsSetter {
 func WithBrokerHandler(value broker.Handler) OptionsSetter {
 	return func(o *Options) {
 		o.BrokerHandler = value
+	}
+}
+
+func WithContext(value context.Context) OptionsSetter {
+	return func(o *Options) {
+		o.Context = value
 	}
 }
 
