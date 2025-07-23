@@ -2,20 +2,22 @@ module github.com/meshery/meshsync
 
 replace vbom.ml/util => github.com/fvbommel/util v0.0.0-20180919145318-efcd4e0f9787
 
+replace github.com/meshery/meshkit => ../meshkit
+
 go 1.24.0
 
 require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/google/uuid v1.6.0
 	github.com/meshery/meshery-operator v0.8.7
-	github.com/meshery/meshkit v0.8.32
+	github.com/meshery/meshkit v0.8.33
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/net v0.40.0
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.30.0
 	gotest.tools/v3 v3.4.0
 	k8s.io/api v0.33.2
 	k8s.io/apimachinery v0.33.2
@@ -100,7 +102,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mattn/go-sqlite3 v1.14.24 // indirect
-	github.com/meshery/schemas v0.8.22 // indirect
+	github.com/meshery/schemas v0.8.34 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
