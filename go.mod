@@ -2,6 +2,8 @@ module github.com/meshery/meshsync
 
 replace vbom.ml/util => github.com/fvbommel/util v0.0.0-20180919145318-efcd4e0f9787
 
+// TODO: Remove this replace directive after meshkit PR #764 is merged
+// This is needed for local development until the channel broker is available in the remote meshkit repo
 replace github.com/meshery/meshkit => ../meshkit
 
 go 1.24.0
