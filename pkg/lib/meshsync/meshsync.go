@@ -138,38 +138,55 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		if ext == "" {
 			ext = "." + defaultFormat
 		}
-		// this is a file which contains all messages from nats
-		// (hence it also contains more than one yaml manifest for the same entity)
-		fw, errNewYAMLWriter := file.NewYAMLWriter(
-			fmt.Sprintf(
-				"%s-extended%s",
-				strings.TrimSuffix(filename, ext),
-				ext,
-			),
-		)
-		if errNewYAMLWriter != nil {
-			return errNewYAMLWriter
-		}
-		defer fw.Close()
 
-		// this is a file which contains only unique resource's messages from nats
-		// it filters out duplicates and writes only latest message from nats per resource
-		fw2, errNewYAMLWriter2 := file.NewYAMLWriter(filename)
-		if errNewYAMLWriter2 != nil {
-			return errNewYAMLWriter2
+		writerPool := make([]output.Writer, 0, 2)
+
+		if options.OutputExtendedFile {
+			// this is a file which contains all messages from nats
+			// (hence it also contains more than one yaml manifest for the same entity)
+			fw, errNewYAMLWriter := file.NewYAMLWriter(
+				fmt.Sprintf(
+					"%s-extended%s",
+					strings.TrimSuffix(filename, ext),
+					ext,
+				),
+			)
+			if errNewYAMLWriter != nil {
+				return errNewYAMLWriter
+			}
+			// if you do refactoring and move this in a separate function
+			// be sure this Close is called in the end of Run() function
+			defer fw.Close()
+
+			writerPool = append(
+				writerPool,
+				output.NewFileWriter(fw),
+			)
 		}
-		// this one not written immediately,
-		// but collects in memory and flushes in the end
-		outputInMemoryDeduplicatorWriter := output.NewInMemoryDeduplicatorWriter(
-			output.NewFileWriter(fw2),
-		)
-		// ensure to flush
-		defer outputInMemoryDeduplicatorWriter.Flush()
+
+		{
+			// this is a file which contains only unique resource's messages from nats
+			// it filters out duplicates and writes only latest message from nats per resource
+			fw, errNewYAMLWriter := file.NewYAMLWriter(filename)
+			if errNewYAMLWriter != nil {
+				return errNewYAMLWriter
+			}
+			// this one not written immediately,
+			// but collects in memory and flushes in the end
+			outputInMemoryDeduplicatorWriter := output.NewInMemoryDeduplicatorWriter(
+				output.NewFileWriter(fw),
+			)
+			// ensure to flush
+			// if you do refactoring and move this in a separate function
+			// be sure this Flush is called in the end of Run() function
+			defer outputInMemoryDeduplicatorWriter.Flush()
+
+			writerPool = append(writerPool, outputInMemoryDeduplicatorWriter)
+		}
 
 		outputProcessor.SetOutput(
 			output.NewCompositeWriter(
-				output.NewFileWriter(fw),
-				outputInMemoryDeduplicatorWriter,
+				writerPool...,
 			),
 		)
 	}
