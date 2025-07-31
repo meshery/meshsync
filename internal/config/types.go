@@ -83,7 +83,7 @@ func NewOutputNamespaceSet(namespaces ...string) OutputNamespaceSet {
 }
 
 func (s OutputNamespaceSet) Contains(value string) bool {
-	return len(s) > 0 && s[value]
+	return s[value]
 }
 
 type OutputResourceSet map[string]bool
