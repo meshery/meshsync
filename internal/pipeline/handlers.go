@@ -3,7 +3,6 @@ package pipeline
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/meshery/meshkit/broker"
 	internalconfig "github.com/meshery/meshsync/internal/config"
@@ -74,6 +73,11 @@ func (ri *RegisterInformer) registerHandlers(s cache.SharedIndexInformer) {
 }
 
 func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype broker.EventType, config internalconfig.PipelineConfig) error {
+	if obj == nil {
+		// skip nik resource
+		ri.log.Debug("RegisterInformer::publishItem: skipping nil resource for even type ", evtype)
+		return nil
+	}
 
 	// if the event is not supported skip
 	if !slices.Contains(ri.config.Events, string(evtype)) {
@@ -81,21 +85,9 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 	}
 	k8sResource := model.ParseList(*obj, evtype, ri.clusterID)
 
-	mustSkip := false
-
-	if internalconfig.OutputNamespace != "" &&
-		obj.GetNamespace() != internalconfig.OutputNamespace {
-		mustSkip = true
-	}
-
-	if internalconfig.OutputOnlySpecifiedResources &&
-		!internalconfig.OutputResourcesSet[strings.ToLower(k8sResource.Kind)] {
-		mustSkip = true
-	}
-
-	if mustSkip {
+	if ri.checkMustSkip(obj) {
 		// skip this resource
-		ri.log.Info("Skipping resource: ", obj.GetName(), "/", obj.GetNamespace(), " of kind: ", k8sResource.Kind)
+		ri.log.Info("RegisterInformer::publishItem: skipping resource: ", obj.GetName(), "/", obj.GetNamespace(), " of kind: ", k8sResource.Kind)
 		return nil
 
 	}
@@ -110,4 +102,25 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 	}
 
 	return nil
+}
+
+func (ri *RegisterInformer) checkMustSkip(obj *unstructured.Unstructured) bool {
+	if obj == nil {
+		return true
+	}
+
+	conditions := []func() bool{
+		func() bool {
+			return len(ri.outputFiltration.NamespaceSet) > 0 &&
+				!ri.outputFiltration.NamespaceSet.Contains(obj.GetNamespace())
+		},
+	}
+
+	for _, condition := range conditions {
+		if condition() {
+			return true
+		}
+	}
+
+	return false
 }
