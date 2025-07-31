@@ -87,11 +87,6 @@ func shouldFilterOutByName(name string, resourcesSet internalconfig.OutputResour
 	}
 
 	parts := strings.Split(name, ".")
-	if len(parts) == 0 {
-		// this is probably some invalid configuration,
-		// but it is not related to our filtration, so do not filter out
-		return false
-	}
 
 	return !resourcesSet.Contains(parts[0])
 }
