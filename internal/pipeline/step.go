@@ -14,11 +14,12 @@ import (
 
 type RegisterInformer struct {
 	pipeline.StepContext
-	log          logger.Handler
-	informer     dynamicinformer.DynamicSharedInformerFactory
-	config       internalconfig.PipelineConfig
-	outputWriter output.Writer
-	clusterID    string
+	log              logger.Handler
+	informer         dynamicinformer.DynamicSharedInformerFactory
+	config           internalconfig.PipelineConfig
+	outputWriter     output.Writer
+	clusterID        string
+	outputFiltration internalconfig.OutputFiltrationContainer
 }
 
 func newRegisterInformerStep(
@@ -27,13 +28,15 @@ func newRegisterInformerStep(
 	config internalconfig.PipelineConfig,
 	ow output.Writer,
 	clusterID string,
+	outputFiltration internalconfig.OutputFiltrationContainer,
 ) *RegisterInformer {
 	return &RegisterInformer{
-		log:          log,
-		informer:     informer,
-		config:       config,
-		outputWriter: ow,
-		clusterID:    clusterID,
+		log:              log,
+		informer:         informer,
+		config:           config,
+		outputWriter:     ow,
+		clusterID:        clusterID,
+		outputFiltration: outputFiltration, // this is a hack, should subscribe to only necessary informer instead
 	}
 }
 

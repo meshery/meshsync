@@ -62,7 +62,7 @@ var meshSyncBinaryWithK8SClusterFileModeTestCasesData []meshsyncBinaryWithK8SClu
 			"--stopAfter", "8s",
 			"--output", "file",
 			"--outputResources", "pod,deployment",
-			"--outputNamespace", "agile-otter",
+			"--outputNamespaces", "agile-otter",
 			"--outputFile", "meshery-cluster-snapshot-integration-test-file-mode-01.yaml",
 		},
 		setupHooks: []func(){

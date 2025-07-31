@@ -21,14 +21,6 @@ const (
 	OutputModeFile    = "file"
 )
 
-// Command line input params
-// TODO do not have global config variables
-var (
-	OutputNamespace              string
-	OutputResourcesSet           map[string]bool
-	OutputOnlySpecifiedResources bool
-)
-
 type PipelineConfigs []PipelineConfig
 
 func (p PipelineConfigs) Add(pc PipelineConfig) PipelineConfigs {
@@ -74,4 +66,51 @@ type MeshsyncConfig struct {
 type ResourceConfig struct {
 	Resource string
 	Events   []string
+}
+
+type OutputNamespaceSet map[string]bool
+
+func NewOutputNamespaceSet(namespaces ...string) OutputNamespaceSet {
+	set := make(OutputNamespaceSet, len(namespaces))
+
+	for _, namespace := range namespaces {
+		set[namespace] = true
+	}
+
+	return set
+}
+
+func (s OutputNamespaceSet) Contains(value string) bool {
+	return len(s) > 0 && s[value]
+}
+
+type OutputResourceSet map[string]bool
+
+func (s OutputResourceSet) Contains(value string) bool {
+	return len(s) > 0 && s[value]
+}
+
+func NewOutputResourceSet(resources []string) OutputResourceSet {
+	set := make(OutputResourceSet, len(resources))
+
+	for _, resource := range resources {
+		set[resource] = true
+	}
+
+	return set
+}
+
+type OutputFiltrationContainer struct {
+	NamespaceSet OutputNamespaceSet
+	ResourceSet  OutputResourceSet
+}
+
+func NewOutputFiltrationContainer(
+	namespaceSet OutputNamespaceSet,
+	resourceSet OutputResourceSet,
+) OutputFiltrationContainer {
+	return OutputFiltrationContainer{
+		NamespaceSet: namespaceSet,
+		ResourceSet:  resourceSet,
+	}
 }

@@ -36,19 +36,20 @@ func New(
 	plConfigs map[string]internalconfig.PipelineConfigs,
 	stopChan chan struct{},
 	clusterID string,
+	outputFiltration internalconfig.OutputFiltrationContainer,
 ) *pipeline.Pipeline {
 	// Global discovery
 	gdstage := GlobalDiscoveryStage
 	configs := plConfigs[gdstage.Name]
 	for _, config := range configs {
-		gdstage.AddStep(newRegisterInformerStep(log, informer, config, ow, clusterID)) // Register the informers for different resources
+		gdstage.AddStep(newRegisterInformerStep(log, informer, config, ow, clusterID, outputFiltration)) // Register the informers for different resources
 	}
 
 	// Local discovery
 	ldstage := LocalDiscoveryStage
 	configs = plConfigs[ldstage.Name]
 	for _, config := range configs {
-		ldstage.AddStep(newRegisterInformerStep(log, informer, config, ow, clusterID)) // Register the informers for different resources
+		ldstage.AddStep(newRegisterInformerStep(log, informer, config, ow, clusterID, outputFiltration)) // Register the informers for different resources
 	}
 
 	// Start informers

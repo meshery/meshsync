@@ -6,6 +6,7 @@ import (
 	"github.com/meshery/meshkit/logger"
 	mesherykube "github.com/meshery/meshkit/utils/kubernetes"
 	"github.com/meshery/meshsync/internal/channels"
+	internalconfig "github.com/meshery/meshsync/internal/config"
 	"github.com/meshery/meshsync/internal/output"
 	iutils "github.com/meshery/meshsync/pkg/utils"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,12 +22,13 @@ type Handler struct {
 	Log    logger.Handler
 	Broker broker.Handler
 
-	clusterID    string
-	informer     dynamicinformer.DynamicSharedInformerFactory
-	kubeClient   *mesherykube.Client
-	channelPool  map[string]channels.GenericChannel
-	stores       map[string]cache.Store
-	outputWriter output.Writer
+	clusterID        string
+	informer         dynamicinformer.DynamicSharedInformerFactory
+	kubeClient       *mesherykube.Client
+	channelPool      map[string]channels.GenericChannel
+	stores           map[string]cache.Store
+	outputWriter     output.Writer
+	outputFiltration internalconfig.OutputFiltrationContainer
 }
 
 func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
@@ -57,6 +59,7 @@ func New(
 	br broker.Handler,
 	ow output.Writer,
 	pool map[string]channels.GenericChannel,
+	outputFiltration internalconfig.OutputFiltrationContainer,
 ) (*Handler, error) {
 	listOptionsFunc, err := GetListOptionsFunc(config)
 	if err != nil {
@@ -67,14 +70,15 @@ func New(
 	informer := GetDynamicInformer(config, kubeClient.DynamicKubeClient, listOptionsFunc)
 
 	return &Handler{
-		Config:       config,
-		Log:          log,
-		Broker:       br,
-		outputWriter: ow,
-		informer:     informer,
-		kubeClient:   kubeClient,
-		clusterID:    clusterID,
-		channelPool:  pool,
+		Config:           config,
+		Log:              log,
+		Broker:           br,
+		outputWriter:     ow,
+		informer:         informer,
+		kubeClient:       kubeClient,
+		clusterID:        clusterID,
+		channelPool:      pool,
+		outputFiltration: outputFiltration,
 	}, nil
 }
 
