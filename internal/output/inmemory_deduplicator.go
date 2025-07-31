@@ -2,6 +2,7 @@ package output
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/meshery/meshkit/broker"
 	"github.com/meshery/meshsync/internal/config"
@@ -13,6 +14,9 @@ import (
 // and write to output only on program exit
 type InMemoryDeduplicatorWriter struct {
 	realWritter Writer
+
+	mu sync.Mutex
+
 	// for this entities for which model.KubernetesResource.KubernetesResourceMeta != nil
 	storage map[string]*inMemoryDeduplicatorContainer
 	// as model.KubernetesResource.KubernetesResourceMeta could be nil
@@ -45,6 +49,9 @@ func (w *InMemoryDeduplicatorWriter) Write(
 		config: config,
 	}
 
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
 	if uid != "" {
 		w.storage[uid] = entity
 	} else {
@@ -55,6 +62,9 @@ func (w *InMemoryDeduplicatorWriter) Write(
 }
 
 func (w *InMemoryDeduplicatorWriter) Flush() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
 	errs := make([]error, 0, len(w.storage)+len(w.storageIfNoMetaUid))
 
 	for _, v := range w.storage {
