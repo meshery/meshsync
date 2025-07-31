@@ -2,6 +2,7 @@ package output
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/meshery/meshkit/broker"
 	"github.com/meshery/meshsync/internal/config"
@@ -13,6 +14,9 @@ import (
 // and write to output only on program exit
 type InMemoryDeduplicatorWriter struct {
 	realWritter Writer
+
+	mu sync.Mutex
+
 	// for this entities for which model.KubernetesResource.KubernetesResourceMeta != nil
 	storage map[string]*inMemoryDeduplicatorContainer
 	// as model.KubernetesResource.KubernetesResourceMeta could be nil
@@ -45,6 +49,9 @@ func (w *InMemoryDeduplicatorWriter) Write(
 		config: config,
 	}
 
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
 	if uid != "" {
 		w.storage[uid] = entity
 	} else {
@@ -55,15 +62,24 @@ func (w *InMemoryDeduplicatorWriter) Write(
 }
 
 func (w *InMemoryDeduplicatorWriter) Flush() error {
-	errs := make([]error, 0, len(w.storage)+len(w.storageIfNoMetaUid))
+	w.mu.Lock()
+	// Quickly copy the data and reset the maps under lock.
+	storageToFlush := w.storage
+	storageIfNoMetaUidToFlush := w.storageIfNoMetaUid
+	w.storage = make(map[string]*inMemoryDeduplicatorContainer)
+	w.storageIfNoMetaUid = make([]*inMemoryDeduplicatorContainer, 0)
+	w.mu.Unlock()
 
-	for _, v := range w.storage {
+	errs := make([]error, 0, len(storageToFlush)+len(storageIfNoMetaUidToFlush))
+
+	// Perform slow I/O operations on the copied data without holding the lock.
+	for _, v := range storageToFlush {
 		if err := w.realWritter.Write(v.obj, v.evtype, v.config); err != nil {
 			errs = append(errs, err)
 		}
 	}
 
-	for _, v := range w.storageIfNoMetaUid {
+	for _, v := range storageIfNoMetaUidToFlush {
 		if err := w.realWritter.Write(v.obj, v.evtype, v.config); err != nil {
 			errs = append(errs, err)
 		}
