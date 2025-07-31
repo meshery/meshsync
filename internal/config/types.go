@@ -1,6 +1,8 @@
 package config
 
 import (
+	"strings"
+
 	"golang.org/x/exp/slices"
 )
 
@@ -94,7 +96,9 @@ func NewOutputResourceSet(resources []string) OutputResourceSet {
 	set := make(OutputResourceSet, len(resources))
 
 	for _, resource := range resources {
-		set[resource] = true
+		resourceToLower := strings.ToLower(resource)
+		set[resourceToLower] = true
+		set[pluralize(resourceToLower)] = true
 	}
 
 	return set

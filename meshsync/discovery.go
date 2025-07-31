@@ -15,6 +15,8 @@
 package meshsync
 
 import (
+	"fmt"
+
 	"github.com/meshery/meshsync/internal/config"
 	"github.com/meshery/meshsync/internal/pipeline"
 	"k8s.io/client-go/tools/cache"
@@ -31,8 +33,17 @@ func (h *Handler) startDiscovery(pipelineCh chan struct{}) {
 	h.Log.Info("Pipeline started")
 	pl := pipeline.New(h.Log, h.informer, h.outputWriter, pipelineConfigs, pipelineCh, h.clusterID, h.outputFiltration)
 	result := pl.Run()
-	h.stores = result.Data.(map[string]cache.Store)
 	if result.Error != nil {
 		h.Log.Error(ErrNewPipeline(result.Error))
+		return
 	}
+
+	data, ok := result.Data.(map[string]cache.Store)
+	if !ok || data == nil {
+		// handle error: type mismatch or nil
+		h.Log.Error(ErrNewPipeline(fmt.Errorf("unexpected type or nil data for result.Data")))
+		return
+	}
+
+	h.stores = data
 }

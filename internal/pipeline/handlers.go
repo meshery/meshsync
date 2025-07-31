@@ -3,7 +3,6 @@ package pipeline
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/meshery/meshkit/broker"
 	internalconfig "github.com/meshery/meshsync/internal/config"
@@ -114,10 +113,6 @@ func (ri *RegisterInformer) checkMustSkip(obj *unstructured.Unstructured, k8sRes
 		func() bool {
 			return len(ri.outputFiltration.NamespaceSet) > 0 &&
 				!ri.outputFiltration.NamespaceSet.Contains(obj.GetNamespace())
-		},
-		func() bool {
-			return len(ri.outputFiltration.ResourceSet) > 0 &&
-				!ri.outputFiltration.ResourceSet.Contains(strings.ToLower(k8sResource.Kind))
 		},
 	}
 
