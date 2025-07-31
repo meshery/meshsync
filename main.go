@@ -95,7 +95,7 @@ func parseFlags() {
 		&outputResourcesString,
 		"outputResources",
 		"",
-		"k8s resources for which limit the output, coma separated case insensitive list of k8s resources, f.e. \"pod,deployment,service\", applicable for both nats and file output mode",
+		"k8s resources for which limit the output, comma separated case insensitive list of k8s resources, f.e. \"pod,deployment,service\", applicable for both nats and file output mode",
 	)
 	flag.DurationVar(
 		&stopAfterDuration,
