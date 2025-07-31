@@ -104,7 +104,7 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 	return nil
 }
 
-func (ri *RegisterInformer) checkMustSkip(obj *unstructured.Unstructured, k8sResource model.KubernetesResource) bool {
+func (ri *RegisterInformer) checkMustSkip(obj *unstructured.Unstructured) bool {
 	if obj == nil {
 		return true
 	}
