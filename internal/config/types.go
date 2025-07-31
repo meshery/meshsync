@@ -89,7 +89,7 @@ func (s OutputNamespaceSet) Contains(value string) bool {
 type OutputResourceSet map[string]bool
 
 func (s OutputResourceSet) Contains(value string) bool {
-	return len(s) > 0 && s[value]
+	return s[value]
 }
 
 func NewOutputResourceSet(resources []string) OutputResourceSet {
