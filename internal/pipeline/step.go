@@ -36,7 +36,7 @@ func newRegisterInformerStep(
 		config:           config,
 		outputWriter:     ow,
 		clusterID:        clusterID,
-		outputFiltration: outputFiltration, // this is a hack, should subscribe to only necessary informer instead
+		outputFiltration: outputFiltration,
 	}
 }
 
