@@ -80,7 +80,7 @@ func New(
 	return clusterPipeline
 }
 
-func shouldFiletrOutByName(name string, resourcesSet internalconfig.OutputResourceSet) bool {
+func shouldFilterOutByName(name string, resourcesSet internalconfig.OutputResourceSet) bool {
 	if len(resourcesSet) == 0 {
 		// only filter out if there are resources restriction provided
 		return false
