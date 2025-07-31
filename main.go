@@ -88,7 +88,7 @@ func parseFlags() {
 		&outputNamespacesString,
 		"outputNamespaces",
 		"",
-		"k8s namespaces for which limit the output, comma separated case insensitive list f.e. \"default,agile-otter\", applicable for both nats and file output mode",
+		"k8s namespaces for which limit the output, comma separated list f.e. \"default,agile-otter\", applicable for both nats and file output mode",
 	)
 	var outputResourcesString string
 	flag.StringVar(
