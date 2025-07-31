@@ -85,7 +85,7 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 	}
 	k8sResource := model.ParseList(*obj, evtype, ri.clusterID)
 
-	if ri.checkMustSkip(obj, k8sResource) {
+	if ri.checkMustSkip(obj) {
 		// skip this resource
 		ri.log.Info("RegisterInformer::publishItem: skipping resource: ", obj.GetName(), "/", obj.GetNamespace(), " of kind: ", k8sResource.Kind)
 		return nil
