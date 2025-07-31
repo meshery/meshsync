@@ -44,7 +44,7 @@ func New(
 	gdstage := GlobalDiscoveryStage
 	configs := plConfigs[gdstage.Name]
 	for _, config := range configs {
-		if shouldFiletrOutByName(config.Name, outputFiltration.ResourceSet) {
+		if shouldFilterOutByName(config.Name, outputFiltration.ResourceSet) {
 			// do not register informer for this config
 			continue
 		}
@@ -55,7 +55,7 @@ func New(
 	ldstage := LocalDiscoveryStage
 	configs = plConfigs[ldstage.Name]
 	for _, config := range configs {
-		if shouldFiletrOutByName(config.Name, outputFiltration.ResourceSet) {
+		if shouldFilterOutByName(config.Name, outputFiltration.ResourceSet) {
 			// do not register informer for this config
 			continue
 		}
