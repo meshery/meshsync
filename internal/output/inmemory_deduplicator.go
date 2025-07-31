@@ -63,17 +63,23 @@ func (w *InMemoryDeduplicatorWriter) Write(
 
 func (w *InMemoryDeduplicatorWriter) Flush() error {
 	w.mu.Lock()
-	defer w.mu.Unlock()
+	// Quickly copy the data and reset the maps under lock.
+	storageToFlush := w.storage
+	storageIfNoMetaUidToFlush := w.storageIfNoMetaUid
+	w.storage = make(map[string]*inMemoryDeduplicatorContainer)
+	w.storageIfNoMetaUid = make([]*inMemoryDeduplicatorContainer, 0)
+	w.mu.Unlock()
 
-	errs := make([]error, 0, len(w.storage)+len(w.storageIfNoMetaUid))
+	errs := make([]error, 0, len(storageToFlush)+len(storageIfNoMetaUidToFlush))
 
-	for _, v := range w.storage {
+	// Perform slow I/O operations on the copied data without holding the lock.
+	for _, v := range storageToFlush {
 		if err := w.realWritter.Write(v.obj, v.evtype, v.config); err != nil {
 			errs = append(errs, err)
 		}
 	}
 
-	for _, v := range w.storageIfNoMetaUid {
+	for _, v := range storageIfNoMetaUidToFlush {
 		if err := w.realWritter.Write(v.obj, v.evtype, v.config); err != nil {
 			errs = append(errs, err)
 		}
