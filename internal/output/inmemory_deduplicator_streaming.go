@@ -18,7 +18,7 @@ type InMemoryDeduplicatorStreamingWriter struct {
 	seenNoMetaUIDs []model.KubernetesResource // for resources with no UID (assumed unique)
 }
 
-// NewImmediateDeduplicatorWriter creates a deduplicator that writes immediately and filters repeats
+// NewInMemoryDeduplicatorStreamingWriter creates a deduplicator that writes immediately and filters repeats
 func NewInMemoryDeduplicatorStreamingWriter(realWriter Writer) *InMemoryDeduplicatorStreamingWriter {
 	return &InMemoryDeduplicatorStreamingWriter{
 		realWriter:     realWriter,
