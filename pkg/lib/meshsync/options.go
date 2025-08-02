@@ -17,6 +17,8 @@ type Options struct {
 	OutputExtendedFile bool
 	BrokerHandler      broker.Handler
 	Context            context.Context
+	OnlyK8sNamespaces  []string
+	OnlyK8sResources   []string
 
 	Version               string
 	PingEndpoint          string
@@ -83,6 +85,18 @@ func WithBrokerHandler(value broker.Handler) OptionsSetter {
 func WithContext(value context.Context) OptionsSetter {
 	return func(o *Options) {
 		o.Context = value
+	}
+}
+
+func WithOnlyK8sNamespaces(value ...string) OptionsSetter {
+	return func(o *Options) {
+		o.OnlyK8sNamespaces = value
+	}
+}
+
+func WithOnlyK8sResources(value []string) OptionsSetter {
+	return func(o *Options) {
+		o.OnlyK8sResources = value
 	}
 }
 

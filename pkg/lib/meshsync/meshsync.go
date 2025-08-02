@@ -188,7 +188,18 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	}
 
 	chPool := channels.NewChannelPool()
-	meshsyncHandler, err := meshsync.New(cfg, kubeClient, log, br, outputProcessor, chPool)
+	meshsyncHandler, err := meshsync.New(
+		cfg,
+		kubeClient,
+		log,
+		br,
+		outputProcessor,
+		chPool,
+		config.NewOutputFiltrationContainer(
+			config.NewOutputNamespaceSet(options.OnlyK8sNamespaces...),
+			config.NewOutputResourceSet(options.OnlyK8sResources),
+		),
+	)
 	if err != nil {
 		return err
 	}
