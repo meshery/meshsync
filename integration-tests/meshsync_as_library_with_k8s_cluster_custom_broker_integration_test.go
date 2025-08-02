@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshkit/broker/channel"
 	"github.com/meshery/meshkit/logger"
 	libmeshsync "github.com/meshery/meshsync/pkg/lib/meshsync"
-	"github.com/meshery/meshsync/pkg/lib/tmp_meshkit/broker/channel"
 	"github.com/sirupsen/logrus"
 	"gotest.tools/v3/assert"
 )
