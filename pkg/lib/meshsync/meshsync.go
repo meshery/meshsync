@@ -166,13 +166,11 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 
 		{
 			// this is a file which contains only unique resource's messages from nats
-			// it filters out duplicates and writes only latest message from nats per resource
+			// it filters out duplicates and writes only unique message from nats per resource
 			fw, errNewYAMLWriter := file.NewYAMLWriter(filename)
 			if errNewYAMLWriter != nil {
 				return errNewYAMLWriter
 			}
-			// this one not written immediately,
-			// but collects in memory and flushes in the end
 			outputInMemoryDeduplicatorWriter := output.NewInMemoryDeduplicatorStreamingWriter(
 				output.NewFileWriter(fw),
 			)
