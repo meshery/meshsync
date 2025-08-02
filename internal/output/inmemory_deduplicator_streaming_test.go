@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestImmediateDeduplicatorWriter(t *testing.T) {
+func TestInMemoryDeduplicatorStreamingWriter(t *testing.T) {
 	mock := &mockWriter{}
 	writer := NewInMemoryDeduplicatorStreamingWriter(mock)
 
