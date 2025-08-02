@@ -173,13 +173,9 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 			}
 			// this one not written immediately,
 			// but collects in memory and flushes in the end
-			outputInMemoryDeduplicatorWriter := output.NewInMemoryDeduplicatorWriter(
+			outputInMemoryDeduplicatorWriter := output.NewInMemoryDeduplicatorStreamingWriter(
 				output.NewFileWriter(fw),
 			)
-			// ensure to flush
-			// if you do refactoring and move this in a separate function
-			// be sure this Flush is called in the end of Run() function
-			defer outputInMemoryDeduplicatorWriter.Flush()
 
 			writerPool = append(writerPool, outputInMemoryDeduplicatorWriter)
 		}
