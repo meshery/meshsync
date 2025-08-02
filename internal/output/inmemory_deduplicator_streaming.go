@@ -13,17 +13,15 @@ type InMemoryDeduplicatorStreamingWriter struct {
 	realWriter Writer
 
 	// deduplication storage
-	mu             sync.Mutex
-	seenUIDs       map[string]struct{}
-	seenNoMetaUIDs []model.KubernetesResource // for resources with no UID (assumed unique)
+	mu       sync.Mutex
+	seenUIDs map[string]struct{}
 }
 
 // NewInMemoryDeduplicatorStreamingWriter creates a deduplicator that writes immediately and filters repeats
 func NewInMemoryDeduplicatorStreamingWriter(realWriter Writer) *InMemoryDeduplicatorStreamingWriter {
 	return &InMemoryDeduplicatorStreamingWriter{
-		realWriter:     realWriter,
-		seenUIDs:       make(map[string]struct{}),
-		seenNoMetaUIDs: make([]model.KubernetesResource, 0, 128),
+		realWriter: realWriter,
+		seenUIDs:   make(map[string]struct{}),
 	}
 }
 
