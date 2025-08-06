@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"strings"
+
 	"github.com/meshery/meshkit/logger"
 	internalconfig "github.com/meshery/meshsync/internal/config"
 	"github.com/meshery/meshsync/internal/output"
@@ -36,19 +38,29 @@ func New(
 	plConfigs map[string]internalconfig.PipelineConfigs,
 	stopChan chan struct{},
 	clusterID string,
+	outputFiltration internalconfig.OutputFiltrationContainer,
 ) *pipeline.Pipeline {
 	// Global discovery
 	gdstage := GlobalDiscoveryStage
 	configs := plConfigs[gdstage.Name]
 	for _, config := range configs {
-		gdstage.AddStep(newRegisterInformerStep(log, informer, config, ow, clusterID)) // Register the informers for different resources
+		if shouldFilterOutByName(config.Name, outputFiltration.ResourceSet) {
+			// do not register informer for this config
+			continue
+		}
+		gdstage.AddStep(newRegisterInformerStep(log, informer, config, ow, clusterID, outputFiltration)) // Register the informers for different resources
 	}
 
 	// Local discovery
 	ldstage := LocalDiscoveryStage
 	configs = plConfigs[ldstage.Name]
 	for _, config := range configs {
-		ldstage.AddStep(newRegisterInformerStep(log, informer, config, ow, clusterID)) // Register the informers for different resources
+		if shouldFilterOutByName(config.Name, outputFiltration.ResourceSet) {
+			// do not register informer for this config
+			continue
+		}
+
+		ldstage.AddStep(newRegisterInformerStep(log, informer, config, ow, clusterID, outputFiltration)) // Register the informers for different resources
 	}
 
 	// Start informers
@@ -57,9 +69,24 @@ func New(
 
 	// Create Pipeline
 	clusterPipeline := pipeline.New(Name, 1000)
-	clusterPipeline.AddStage(gdstage)
-	clusterPipeline.AddStage(ldstage)
+	if len(gdstage.Steps) > 0 {
+		clusterPipeline.AddStage(gdstage)
+	}
+	if len(ldstage.Steps) > 0 {
+		clusterPipeline.AddStage(ldstage)
+	}
 	clusterPipeline.AddStage(strtInfmrs)
 
 	return clusterPipeline
+}
+
+func shouldFilterOutByName(name string, resourcesSet internalconfig.OutputResourceSet) bool {
+	if len(resourcesSet) == 0 {
+		// only filter out if there are resources restriction provided
+		return false
+	}
+
+	parts := strings.Split(name, ".")
+
+	return !resourcesSet.Contains(parts[0])
 }

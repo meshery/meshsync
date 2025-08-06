@@ -1,6 +1,8 @@
 package config
 
 import (
+	"strings"
+
 	"golang.org/x/exp/slices"
 )
 
@@ -19,14 +21,6 @@ const (
 	InformerStore     = "informer-store"
 	OutputModeBroker  = "broker"
 	OutputModeFile    = "file"
-)
-
-// Command line input params
-// TODO do not have global config variables
-var (
-	OutputNamespace              string
-	OutputResourcesSet           map[string]bool
-	OutputOnlySpecifiedResources bool
 )
 
 type PipelineConfigs []PipelineConfig
@@ -74,4 +68,53 @@ type MeshsyncConfig struct {
 type ResourceConfig struct {
 	Resource string
 	Events   []string
+}
+
+type OutputNamespaceSet map[string]bool
+
+func NewOutputNamespaceSet(namespaces ...string) OutputNamespaceSet {
+	set := make(OutputNamespaceSet, len(namespaces))
+
+	for _, namespace := range namespaces {
+		set[namespace] = true
+	}
+
+	return set
+}
+
+func (s OutputNamespaceSet) Contains(value string) bool {
+	return s[value]
+}
+
+type OutputResourceSet map[string]bool
+
+func (s OutputResourceSet) Contains(value string) bool {
+	return s[value]
+}
+
+func NewOutputResourceSet(resources []string) OutputResourceSet {
+	set := make(OutputResourceSet, len(resources))
+
+	for _, resource := range resources {
+		resourceToLower := strings.ToLower(resource)
+		set[resourceToLower] = true
+		set[pluralize(resourceToLower)] = true
+	}
+
+	return set
+}
+
+type OutputFiltrationContainer struct {
+	NamespaceSet OutputNamespaceSet
+	ResourceSet  OutputResourceSet
+}
+
+func NewOutputFiltrationContainer(
+	namespaceSet OutputNamespaceSet,
+	resourceSet OutputResourceSet,
+) OutputFiltrationContainer {
+	return OutputFiltrationContainer{
+		NamespaceSet: namespaceSet,
+		ResourceSet:  resourceSet,
+	}
 }

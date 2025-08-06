@@ -10,12 +10,15 @@ import (
 )
 
 type Options struct {
-	OutputMode        string
-	StopAfterDuration time.Duration
-	KubeConfig        []byte
-	OutputFileName    string
-	BrokerHandler     broker.Handler
-	Context           context.Context
+	OutputMode         string
+	StopAfterDuration  time.Duration
+	KubeConfig         []byte
+	OutputFileName     string
+	OutputExtendedFile bool
+	BrokerHandler      broker.Handler
+	Context            context.Context
+	OnlyK8sNamespaces  []string
+	OnlyK8sResources   []string
 
 	Version               string
 	PingEndpoint          string
@@ -23,10 +26,11 @@ type Options struct {
 }
 
 var DefautOptions = Options{
-	StopAfterDuration: -1,  // -1 turns it off
-	KubeConfig:        nil, // if nil, truies to detekt kube config by the means of github.com/meshery/meshkit/utils/kubernetes/client.go:DetectKubeConfig
-	BrokerHandler:     nil, // if nil, will instantiate broker connection itself
-	Context:           context.Background(),
+	StopAfterDuration:  -1,    // -1 turns it off
+	KubeConfig:         nil,   // if nil, truies to detekt kube config by the means of github.com/meshery/meshkit/utils/kubernetes/client.go:DetectKubeConfig
+	OutputExtendedFile: false, // if true, then extended output file is generated in addition to general one
+	BrokerHandler:      nil,   // if nil, will instantiate broker connection itself
+	Context:            context.Background(),
 
 	Version:               "Not Set",
 	PingEndpoint:          ":8222/connz",
@@ -66,6 +70,12 @@ func WithOutputFileName(value string) OptionsSetter {
 	}
 }
 
+func WithOutputExtendedFile(value bool) OptionsSetter {
+	return func(o *Options) {
+		o.OutputExtendedFile = value
+	}
+}
+
 func WithBrokerHandler(value broker.Handler) OptionsSetter {
 	return func(o *Options) {
 		o.BrokerHandler = value
@@ -75,6 +85,18 @@ func WithBrokerHandler(value broker.Handler) OptionsSetter {
 func WithContext(value context.Context) OptionsSetter {
 	return func(o *Options) {
 		o.Context = value
+	}
+}
+
+func WithOnlyK8sNamespaces(value ...string) OptionsSetter {
+	return func(o *Options) {
+		o.OnlyK8sNamespaces = value
+	}
+}
+
+func WithOnlyK8sResources(value []string) OptionsSetter {
+	return func(o *Options) {
+		o.OnlyK8sResources = value
 	}
 }
 

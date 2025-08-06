@@ -102,7 +102,7 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 		meshsyncCMDArgs: []string{
 			"--stopAfter",
 			"8s",
-			"--outputNamespace",
+			"--outputNamespaces",
 			"agile-otter",
 		},
 		brokerMessageHandler: func(

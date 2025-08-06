@@ -27,6 +27,8 @@ var (
 var (
 	outputMode        string
 	outputFileName    string
+	outputNamespaces  []string
+	outputResources   []string
 	stopAfterDuration time.Duration
 )
 
@@ -49,6 +51,8 @@ func main() {
 		log,
 		libmeshsync.WithOutputMode(outputMode),
 		libmeshsync.WithOutputFileName(outputFileName),
+		libmeshsync.WithOnlyK8sNamespaces(outputNamespaces...),
+		libmeshsync.WithOnlyK8sResources(outputResources),
 		libmeshsync.WithStopAfterDuration(stopAfterDuration),
 		libmeshsync.WithVersion(version),
 		libmeshsync.WithPingEndpoint(pingEndpoint),
@@ -79,18 +83,19 @@ func parseFlags() {
 		"",
 		"output file where to put the meshsync events (cluster snapshot), only applicable for file output mode (default \"./meshery-cluster-snapshot-YYYYMMDD-00.yaml\")",
 	)
+	var outputNamespacesString string
 	flag.StringVar(
-		&config.OutputNamespace,
-		"outputNamespace",
+		&outputNamespacesString,
+		"outputNamespaces",
 		"",
-		"k8s namespace for which limit the output, f.e. \"default\", applicable for both nats and file output mode",
+		"k8s namespaces for which limit the output, comma separated list f.e. \"default,agile-otter\", applicable for both nats and file output mode",
 	)
 	var outputResourcesString string
 	flag.StringVar(
 		&outputResourcesString,
 		"outputResources",
 		"",
-		"k8s resources for which limit the output, coma separated case insensitive list of k8s resources, f.e. \"pod,deployment,service\", applicable for both nats and file output mode",
+		"k8s resources for which limit the output, comma separated case insensitive list of k8s resources, f.e. \"pod,deployment,service\", applicable for both nats and file output mode",
 	)
 	flag.DurationVar(
 		&stopAfterDuration,
@@ -102,12 +107,13 @@ func parseFlags() {
 	// Parse the command=line flags to get the output mode
 	flag.Parse()
 
-	config.OutputResourcesSet = make(map[string]bool)
+	outputNamespacesString = strings.TrimSpace((outputNamespacesString))
+	if outputNamespacesString != "" {
+		outputNamespaces = strings.Split(outputNamespacesString, ",")
+	}
+
+	outputResourcesString = strings.TrimSpace((outputResourcesString))
 	if outputResourcesString != "" {
-		config.OutputOnlySpecifiedResources = true
-		outputResourcesList := strings.Split(outputResourcesString, ",")
-		for _, item := range outputResourcesList {
-			config.OutputResourcesSet[strings.ToLower(item)] = true
-		}
+		outputResources = strings.Split(outputResourcesString, ",")
 	}
 }
