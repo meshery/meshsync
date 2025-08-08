@@ -236,6 +236,8 @@ github.com/mattn/go-sqlite3 v1.14.24 h1:tpSp2G2KyMnnQu99ngJ47EIkWVmliIizyZBfPrBW
 github.com/mattn/go-sqlite3 v1.14.24/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
 github.com/meshery/meshery-operator v0.8.7 h1:SsiyDiPEcibYtoHlYyziwvCcBVfZOCJxq4HgMPLZKMM=
 github.com/meshery/meshery-operator v0.8.7/go.mod h1:hQEtFKKa5Fr/Mskk6bV5ip3bQ0+3F0u1voYS3XisBp4=
+github.com/meshery/meshkit v0.8.38 h1:Ivnd0eYu1eyaZBUVUMEeMm4NcTOcUE/u9UDoQNl3PtU=
+github.com/meshery/meshkit v0.8.38/go.mod h1:RGZmBTRNMXQs2rdJNF5m7tlQRvOBn/9l5hAxNq8bFA0=
 github.com/meshery/schemas v0.8.34 h1:RiD5JWWQE92d8nkEWy7Lt0guZRAG3XQstX07spfPw7w=
 github.com/meshery/schemas v0.8.34/go.mod h1:6BxRPapEnbH4ATuneUVLb7lOAWSdr8gyvNp1zAgmyKA=
 github.com/miekg/dns v1.1.57 h1:Jzi7ApEIzwEPLHWRcafCN9LZSBbqQpxjt/wpgvg7wcM=
