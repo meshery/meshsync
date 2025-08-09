@@ -16,7 +16,7 @@ require (
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/net v0.43.0
 	gorm.io/gorm v1.30.1
-	gotest.tools/v3 v3.4.0
+	gotest.tools/v3 v3.5.2
 	k8s.io/api v0.33.2
 	k8s.io/apimachinery v0.33.2
 	k8s.io/client-go v0.33.2
