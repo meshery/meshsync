@@ -260,12 +260,30 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	return parsedObjects
 }
 
+func (h *Handler) WatchCRDs() {
+	h.Log.Info("meshsync::Handler::WatchCRDs: starting WatchCRDs")
+loop:
+	for {
+		// watchCRDsIteration will return if the stop channel is closed.
+		h.watchCRDsIteration()
+
+		// After an iteration, wait before the next, but also listen for a stop signal
+		// to ensure a fast shutdown.
+		select {
+		case <-h.channelPool[channels.Stop].(channels.StopChannel):
+			break loop
+		case <-time.After(2 * time.Second):
+		}
+	}
+	h.Log.Info("meshsync::Handler::WatchCRDs: stopping WatchCRDs")
+}
+
 // TODO
 // fix lint error
-// calculated cyclomatic complexity for function WatchCRDs is 11, max is 10 (cyclop)
+// calculated cyclomatic complexity for function watchCRDsIteration is 14, max is 10 (cyclop)
 //
 //nolint:cyclop
-func (h *Handler) WatchCRDs() {
+func (h *Handler) watchCRDsIteration() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -283,8 +301,6 @@ func (h *Handler) WatchCRDs() {
 	processEvent := func(event watch.Event) {
 		crd := &kubernetes.CRDItem{}
 		if event.Object == nil {
-			// TODO
-			// https://github.com/meshery/meshsync/issues/434
 			h.Log.Debug("Handler::WatchCRDs::processEvent event.Object is nil, skipping")
 			return
 		}
@@ -351,11 +367,14 @@ loop:
 		select {
 		case <-h.channelPool[channels.Stop].(channels.StopChannel):
 			break loop
-		case event := <-crdWatcher.ResultChan():
+		case event, ok := <-crdWatcher.ResultChan():
+			if !ok {
+				h.Log.Debug("meshsync::Handler::watchCRDsIteration crdWatcher.ResultChan() was closed")
+				break loop
+			}
 			processEvent(event)
 		}
 	}
-	h.Log.Info("Stopping WatchCRDs")
 }
 
 // TODO: move this to meshkit
