@@ -301,8 +301,6 @@ func (h *Handler) watchCRDsIteration() {
 	processEvent := func(event watch.Event) {
 		crd := &kubernetes.CRDItem{}
 		if event.Object == nil {
-			// TODO
-			// https://github.com/meshery/meshsync/issues/434
 			h.Log.Debug("Handler::WatchCRDs::processEvent event.Object is nil, skipping")
 			return
 		}
