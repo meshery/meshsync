@@ -7,7 +7,7 @@ go 1.24.0
 require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/google/uuid v1.6.0
-	github.com/meshery/meshery-operator v0.8.7
+	github.com/meshery/meshery-operator v0.8.9
 	github.com/meshery/meshkit v0.8.32
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/sirupsen/logrus v1.9.3
@@ -15,7 +15,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/exp v0.0.0-20250106191152-7588d65b2ba8
 	golang.org/x/net v0.40.0
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.30.1
 	gotest.tools/v3 v3.4.0
 	k8s.io/api v0.33.2
 	k8s.io/apimachinery v0.33.2
