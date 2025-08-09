@@ -264,15 +264,15 @@ func (h *Handler) WatchCRDs() {
 	h.Log.Info("meshsync::Handler::WatchCRDs: starting WatchCRDs")
 loop:
 	for {
+		// watchCRDsIteration will return if the stop channel is closed.
+		h.watchCRDsIteration()
+
+		// After an iteration, wait before the next, but also listen for a stop signal
+		// to ensure a fast shutdown.
 		select {
 		case <-h.channelPool[channels.Stop].(channels.StopChannel):
 			break loop
-		default:
-			// this set up will resubscribe to watch crds if initial watch channel is closed
-			// and will stop execution if stop channel is closed
-			h.watchCRDsIteration()
-			// small delay before retry
-			<-time.After(2 * time.Second)
+		case <-time.After(2 * time.Second):
 		}
 	}
 	h.Log.Info("meshsync::Handler::WatchCRDs: stopping WatchCRDs")
