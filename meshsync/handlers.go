@@ -260,12 +260,30 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	return parsedObjects
 }
 
+func (h *Handler) WatchCRDs() {
+	h.Log.Info("meshsync::Handler::WatchCRDs: starting WatchCRDs")
+loop:
+	for {
+		select {
+		case <-h.channelPool[channels.Stop].(channels.StopChannel):
+			break loop
+		default:
+			// this set up will resubscribe to watch crds if initial watch channel is closed
+			// and will stop execution if stop channel is closed
+			h.watchCRDsIteration()
+			// small delay before retry
+			<-time.After(2 * time.Second)
+		}
+	}
+	h.Log.Info("meshsync::Handler::WatchCRDs: stopping WatchCRDs")
+}
+
 // TODO
 // fix lint error
-// calculated cyclomatic complexity for function WatchCRDs is 11, max is 10 (cyclop)
+// calculated cyclomatic complexity for function watchCRDsIteration is 14, max is 10 (cyclop)
 //
 //nolint:cyclop
-func (h *Handler) WatchCRDs() {
+func (h *Handler) watchCRDsIteration() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -351,11 +369,14 @@ loop:
 		select {
 		case <-h.channelPool[channels.Stop].(channels.StopChannel):
 			break loop
-		case event := <-crdWatcher.ResultChan():
+		case event, ok := <-crdWatcher.ResultChan():
+			if !ok {
+				h.Log.Debug("meshsync::Handler::watchCRDsIteration crdWatcher.ResultChan() was closed")
+				break loop
+			}
 			processEvent(event)
 		}
 	}
-	h.Log.Info("Stopping WatchCRDs")
 }
 
 // TODO: move this to meshkit
