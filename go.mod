@@ -8,7 +8,7 @@ require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/google/uuid v1.6.0
 	github.com/meshery/meshery-operator v0.8.9
-	github.com/meshery/meshkit v0.8.32
+	github.com/meshery/meshkit v0.8.38
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.19.0
@@ -100,7 +100,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mattn/go-sqlite3 v1.14.24 // indirect
-	github.com/meshery/schemas v0.8.22 // indirect
+	github.com/meshery/schemas v0.8.34 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect

@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshkit/broker/channel"
 	meshkitutils "github.com/meshery/meshkit/utils"
 	mesherykube "github.com/meshery/meshkit/utils/kubernetes"
 	"github.com/meshery/meshsync/internal/config"
 	libmeshsync "github.com/meshery/meshsync/pkg/lib/meshsync"
-	"github.com/meshery/meshsync/pkg/lib/tmp_meshkit/broker/channel"
 	iutils "github.com/meshery/meshsync/pkg/utils"
 	"github.com/stretchr/testify/assert"
 )
