@@ -5,7 +5,8 @@ on:
       - "master"
     paths:
       - "**.go"
-      - "**.golden"
+      - "go.mod"
+      - "go.sum"
       - "Makefile"
       - ".github/workflows/integration-tests-ci.yml"
   pull_request:
@@ -13,7 +14,8 @@ on:
       - "master"
     paths:
       - "**.go"
-      - "**.golden"
+      - "go.mod"
+      - "go.sum"
       - "Makefile"
       - ".github/workflows/integration-tests-ci.yml"
   workflow_dispatch:
