@@ -235,8 +235,8 @@ github.com/mattn/go-runewidth v0.0.16/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh
 github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
 github.com/mattn/go-sqlite3 v1.14.24 h1:tpSp2G2KyMnnQu99ngJ47EIkWVmliIizyZBfPrBWDRM=
 github.com/mattn/go-sqlite3 v1.14.24/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
-github.com/meshery/meshery-operator v0.8.9 h1:JhASVAQeqWBmwMfClHVAuMeoxSDWPvJas9SqZy0ldj4=
-github.com/meshery/meshery-operator v0.8.9/go.mod h1:hQEtFKKa5Fr/Mskk6bV5ip3bQ0+3F0u1voYS3XisBp4=
+github.com/meshery/meshery-operator v0.8.11 h1:eDo2Sw0jjVrXsvvhF8LenADM58pK+7Z68ROPVIejTPc=
+github.com/meshery/meshery-operator v0.8.11/go.mod h1:hQEtFKKa5Fr/Mskk6bV5ip3bQ0+3F0u1voYS3XisBp4=
 github.com/meshery/meshkit v0.8.38 h1:Ivnd0eYu1eyaZBUVUMEeMm4NcTOcUE/u9UDoQNl3PtU=
 github.com/meshery/meshkit v0.8.38/go.mod h1:RGZmBTRNMXQs2rdJNF5m7tlQRvOBn/9l5hAxNq8bFA0=
 github.com/meshery/schemas v0.8.34 h1:RiD5JWWQE92d8nkEWy7Lt0guZRAG3XQstX07spfPw7w=
