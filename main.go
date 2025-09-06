@@ -39,7 +39,7 @@ func main() {
 
 	// Initialize Logger instance
 	logLevel := int(logrus.InfoLevel)
-	if os.Getenv("DEBUG") != "" {
+if strings.ToLower(os.Getenv("DEBUG")) == "true" {
 		logLevel = int(logrus.DebugLevel)
 	}
 
