@@ -42,7 +42,7 @@ func main() {
 	if os.Getenv("DEBUG") != "" {
 		logLevel = int(logrus.DebugLevel)
 	}
-	
+
 	log, errLoggerNew := logger.New(serviceName, logger.Options{
 		Format:   logger.SyslogLogFormat,
 		LogLevel: logLevel,
