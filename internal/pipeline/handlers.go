@@ -15,11 +15,12 @@ import (
 func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			err := ri.publishItem(obj.(*unstructured.Unstructured), broker.Add, ri.config)
+			objCasted := obj.(*unstructured.Unstructured)
+			err := ri.publishItem(objCasted, broker.Add, ri.config)
 			if err != nil {
 				ri.log.Error(err)
 			}
-			ri.log.Debugf("Received ADD event for: %s/%s of kind: %s", obj.(*unstructured.Unstructured).GetName(), obj.(*unstructured.Unstructured).GetNamespace(), obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
+			ri.log.Debugf("Received ADD event for: %s/%s of kind: %s", objCasted.GetName(), objCasted.GetNamespace(), objCasted.GroupVersionKind().Kind)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldObjCasted := oldObj.(*unstructured.Unstructured)
@@ -29,7 +30,7 @@ func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 			newRV, _ := strconv.ParseInt(objCasted.GetResourceVersion(), 0, 64)
 
 			if oldRV < newRV {
-				err := ri.publishItem(obj.(*unstructured.Unstructured), broker.Update, ri.config)
+				err := ri.publishItem(objCasted, broker.Update, ri.config)
 
 				if err != nil {
 					ri.log.Error(err)
