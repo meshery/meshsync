@@ -63,7 +63,7 @@ ri.log.Debugf("Received UPDATE event for: %s/%s of kind: %s", objCasted.GetName(
 			if err != nil {
 				ri.log.Error(err)
 			}
-			ri.log.Debug("Received DELETE event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " of kind: ", obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
+ri.log.Debugf("Received DELETE event for: %s/%s of kind: %s", objCasted.GetName(), objCasted.GetNamespace(), objCasted.GroupVersionKind().Kind)
 		},
 	}
 }
