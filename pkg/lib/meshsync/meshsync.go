@@ -264,7 +264,7 @@ log.Debugf("meshsync: could not connect to broker: %v retrying...", err)
 		if resp.StatusCode == http.StatusOK {
 			break
 		}
-		log.Debug("meshsync: could not receive OK response from broker: "+pingURL, " retrying...")
+log.Debugf("meshsync: could not receive OK response from broker: %s retrying...", pingURL)
 		time.Sleep(1 * time.Second)
 	}
 
