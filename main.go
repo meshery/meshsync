@@ -38,9 +38,14 @@ func main() {
 	viper.SetDefault("COMMITSHA", commitsha)
 
 	// Initialize Logger instance
+	logLevel := int(logrus.InfoLevel)
+	if os.Getenv("DEBUG") != "" {
+		logLevel = int(logrus.DebugLevel)
+	}
+	
 	log, errLoggerNew := logger.New(serviceName, logger.Options{
 		Format:   logger.SyslogLogFormat,
-		LogLevel: int(logrus.InfoLevel),
+		LogLevel: logLevel,
 	})
 	if errLoggerNew != nil {
 		fmt.Println(errLoggerNew)

@@ -59,20 +59,20 @@ func (h *Handler) Run() {
 	// This debounced function is responsible for stopping the old discovery
 	// and starting a new one.
 	debouncedRestartDiscovery := debounce(time.Second*5, func(prevPipelineCh chan struct{}) {
-		h.Log.Info("Debounce triggered: attempting to restart discovery.")
+		h.Log.Debug("Debounce triggered: attempting to restart discovery.")
 
 		// Close the previous channel to signal its discovery goroutine to stop
 		if prevPipelineCh != nil && !utils.IsClosed(prevPipelineCh) {
-			h.Log.Infof("Closing previous pipelineCh (%p) to stop existing discovery.", prevPipelineCh)
+			h.Log.Debugf("Closing previous pipelineCh (%p) to stop existing discovery.", prevPipelineCh)
 			close(prevPipelineCh)
 		} else {
-			h.Log.Info("Previous pipelineCh is nil or already closed.")
+			h.Log.Debug("Previous pipelineCh is nil or already closed.")
 		}
 
 		// Wait for the previous discovery goroutine to finish
-		h.Log.Info("Waiting for existing discovery goroutine to complete...")
+		h.Log.Debug("Waiting for existing discovery goroutine to complete...")
 		discoveryWg.Wait() // This waits for all Add(1) calls that haven't been Done()
-		h.Log.Info("Existing discovery goroutine completed.")
+		h.Log.Debug("Existing discovery goroutine completed.")
 
 		// Update informer before starting new discovery
 		if err := h.UpdateInformer(); err != nil {
@@ -80,35 +80,35 @@ func (h *Handler) Run() {
 			h.Log.Error(fmt.Errorf("failed to update informer: %w", err))
 		}
 
-		h.Log.Info("Starting new discovery process...")
+		h.Log.Debug("Starting new discovery process...")
 		startAndTrackDiscovery() // This will create and use a new currentPipelineCh
 	})
 
 	defer func() {
-		h.Log.Info("Run: defer function executing.")
+		h.Log.Debug("Run: defer function executing.")
 		if currentPipelineCh != nil && !utils.IsClosed(currentPipelineCh) {
-			h.Log.Infof("Run: Closing current pipelineCh (%p) in defer.", currentPipelineCh)
+			h.Log.Debugf("Run: Closing current pipelineCh (%p) in defer.", currentPipelineCh)
 			close(currentPipelineCh)
 		}
-		h.Log.Info("Run: Waiting for final discovery goroutine to complete...")
+		h.Log.Debug("Run: Waiting for final discovery goroutine to complete...")
 		discoveryWg.Wait() // Ensure the last discovery goroutine also finishes
-		h.Log.Info("Run: Final discovery goroutine completed.")
+		h.Log.Debug("Run: Final discovery goroutine completed.")
 	}()
 
 loop:
 	for {
 		select {
 		case <-h.channelPool[channels.Stop].(channels.StopChannel):
-			h.Log.Info("Run: Received stop signal. Breaking loop.")
+			h.Log.Debug("Run: Received stop signal. Breaking loop.")
 			break loop
 		case <-h.channelPool[channels.ReSync].(channels.ReSyncChannel):
-			h.Log.Info("Run: Received ReSync signal.")
+			h.Log.Debug("Run: Received ReSync signal.")
 			// The debounced function will operate on the `currentPipelineCh`
 			// that was active when the ReSync signal was received.
 			go debouncedRestartDiscovery(currentPipelineCh)
 		}
 	}
-	h.Log.Info("Stopping Run function.")
+	h.Log.Debug("Stopping Run function.")
 }
 
 func (h *Handler) UpdateInformer() error {
@@ -122,19 +122,19 @@ func (h *Handler) UpdateInformer() error {
 		return fmt.Errorf("failed to get list options func for informer: %w", err)
 	}
 	if h.informer != nil {
-		h.Log.Info("Shutting down existing informer before update.")
+		h.Log.Debug("Shutting down existing informer before update.")
 		h.informer.Shutdown()
 	}
-	h.Log.Info("Creating new dynamic shared informer factory.")
+	h.Log.Debug("Creating new dynamic shared informer factory.")
 	h.informer = GetDynamicInformer(h.Config, dynamicClient, listOptionsFunc)
 	return nil
 }
 
 func (h *Handler) ShutdownInformer() {
 	if h.informer != nil {
-		h.Log.Info("Shutting down informer...")
+		h.Log.Debug("Shutting down informer...")
 		h.informer.Shutdown()
-		h.Log.Info("Shutting down informer done.")
+		h.Log.Debug("Shutting down informer done.")
 	}
 }
 
@@ -149,7 +149,7 @@ func (h *Handler) ListenToRequests() {
 		h.Log.Error(ErrGetObject(err))
 	}
 
-	h.Log.Info("Listening for requests in: ", listenerConfigs[config.RequestStream].SubscribeTo)
+	h.Log.Debug("Listening for requests in: ", listenerConfigs[config.RequestStream].SubscribeTo)
 	reqChan := make(chan *broker.Message)
 	err = h.Broker.SubscribeWithChannel(listenerConfigs[config.RequestStream].SubscribeTo, listenerConfigs[config.RequestStream].ConnectionName, reqChan)
 	if err != nil {
@@ -164,7 +164,7 @@ func (h *Handler) ListenToRequests() {
 
 		switch request.Request.Entity {
 		case broker.LogRequestEntity:
-			h.Log.Info("Starting log session")
+			h.Log.Debug("Starting log session")
 			err := h.processLogRequest(request.Request.Payload, listenerConfigs[config.LogStream])
 			if err != nil {
 				h.Log.Error(err)
@@ -189,7 +189,7 @@ func (h *Handler) ListenToRequests() {
 			storeObjects := h.listStoreObjects()
 			splitSlices := splitIntoMultipleSlices(storeObjects, 5) //  performance of NATS is bound to degrade if huge messages are sent
 
-			h.Log.Info("Publishing the data from informer stores to the subject: ", replySubject)
+			h.Log.Debug("Publishing the data from informer stores to the subject: ", replySubject)
 			for _, val := range splitSlices {
 				err = h.Broker.Publish(replySubject, &broker.Message{
 					Object: val,
@@ -201,24 +201,24 @@ func (h *Handler) ListenToRequests() {
 			}
 
 		case broker.ReSyncDiscoveryEntity:
-			h.Log.Info("Resyncing")
+			h.Log.Debug("Resyncing")
 			h.channelPool[channels.ReSync].(channels.ReSyncChannel) <- struct{}{}
 		case broker.ExecRequestEntity:
-			h.Log.Info("Starting interactive session")
+			h.Log.Debug("Starting interactive session")
 			err := h.processExecRequest(request.Request.Payload, listenerConfigs[config.ExecShell])
 			if err != nil {
 				h.Log.Error(err)
 				return
 			}
 		case broker.ActiveExecEntity:
-			h.Log.Info("Connecting to channel pool")
+			h.Log.Debug("Connecting to channel pool")
 			err := h.processActiveExecRequest()
 			if err != nil {
 				h.Log.Error(err)
 				return
 			}
 		case "meshsync-meta":
-			h.Log.Info("Publishing MeshSync metadata to the subject")
+			h.Log.Debug("Publishing MeshSync metadata to the subject")
 			err := h.Broker.Publish("meshsync-meta", &broker.Message{
 				Object: config.Server["version"],
 			})
@@ -238,7 +238,7 @@ loop:
 			processRequest(request)
 		}
 	}
-	h.Log.Info("Stopping ListenToRequests")
+	h.Log.Debug("Stopping ListenToRequests")
 }
 
 func (h *Handler) listStoreObjects() []model.KubernetesResource {
@@ -261,7 +261,7 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 }
 
 func (h *Handler) WatchCRDs() {
-	h.Log.Info("meshsync::Handler::WatchCRDs: starting WatchCRDs")
+	h.Log.Debug("meshsync::Handler::WatchCRDs: starting WatchCRDs")
 loop:
 	for {
 		// watchCRDsIteration will return if the stop channel is closed.
@@ -275,7 +275,7 @@ loop:
 		case <-time.After(2 * time.Second):
 		}
 	}
-	h.Log.Info("meshsync::Handler::WatchCRDs: stopping WatchCRDs")
+	h.Log.Debug("meshsync::Handler::WatchCRDs: stopping WatchCRDs")
 }
 
 // TODO
@@ -355,10 +355,10 @@ func (h *Handler) watchCRDsIteration() {
 		err = h.Config.SetObject(config.ResourcesKey, existingPipelines)
 		if err != nil {
 			h.Log.Error(err)
-			h.Log.Info("skipping informer resync")
+			h.Log.Debug("skipping informer resync")
 			return
 		}
-		h.Log.Info("Resyncing informer from watch crd")
+		h.Log.Debug("Resyncing informer from watch crd")
 		h.channelPool[channels.ReSync].(channels.ReSyncChannel).ReSyncInformer()
 	}
 

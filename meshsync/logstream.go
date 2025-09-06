@@ -64,7 +64,7 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 
 	go func() {
 		<-h.channelPool[id].(channels.StructChannel)
-		h.Log.Info("Closing", id)
+		h.Log.Debug("Closing", id)
 		delete(h.channelPool, id)
 		resp.Close()
 	}()

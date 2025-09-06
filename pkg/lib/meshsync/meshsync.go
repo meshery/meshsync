@@ -222,12 +222,12 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	if options.StopAfterDuration > -1 {
 		go func(ch chan struct{}) {
 			<-time.After(options.StopAfterDuration)
-			log.Infof("meshsync: stopping after %s", options.StopAfterDuration)
+			log.Debugf("meshsync: stopping after %s", options.StopAfterDuration)
 			close(chTimeout)
 		}(chTimeout)
 	}
 
-	log.Info("meshsync: run started")
+	log.Debug("meshsync: run started")
 	// Handle graceful shutdown
 	signal.Notify(chPool[channels.OS].(channels.OSChannel), syscall.SIGTERM, os.Interrupt)
 
@@ -235,14 +235,14 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	case <-chTimeout:
 	case <-chPool[channels.OS].(channels.OSChannel):
 	case <-options.Context.Done():
-		log.Info("meshsync: cancellation signal received from client code")
+		log.Debug("meshsync: cancellation signal received from client code")
 	}
 
 	// close stop channel
 	// as there are many goroutines which wait for channels.Stop to be closed to stop their execution
 	close(chPool[channels.Stop].(channels.StopChannel))
 
-	log.Info("meshsync: shutting down")
+	log.Debug("meshsync: shutting down")
 
 	return nil
 }
@@ -257,14 +257,14 @@ func connectivityTest(log logger.Handler, pingEndpoint string, url string) error
 	for {
 		resp, err := http.Get(pingURL) //nolint
 		if err != nil {
-			log.Info("meshsync: could not connect to broker: " + err.Error() + " retrying...")
+			log.Debug("meshsync: could not connect to broker: " + err.Error() + " retrying...")
 			time.Sleep(1 * time.Second)
 			continue
 		}
 		if resp.StatusCode == http.StatusOK {
 			break
 		}
-		log.Info("meshsync: could not receive OK response from broker: "+pingURL, " retrying...")
+		log.Debug("meshsync: could not receive OK response from broker: "+pingURL, " retrying...")
 		time.Sleep(1 * time.Second)
 	}
 
@@ -301,12 +301,12 @@ func determineUseCRDFlag(
 	crd, errGetMeshsyncCRD := config.GetMeshsyncCRD(kubeClient.DynamicKubeClient)
 	useCRDFlag := crd != nil && errGetMeshsyncCRD == nil
 	if useCRDFlag {
-		log.Infof(
+		log.Debugf(
 			"meshsync: running in %s output mode and meshsync CRD is present in the cluster",
 			options.OutputMode,
 		)
 	} else {
-		log.Infof(
+		log.Debugf(
 			"meshsync: running in %s mode and NO meshsync CRD is present in the cluster",
 			options.OutputMode,
 		)
