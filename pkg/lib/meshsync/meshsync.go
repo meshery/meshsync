@@ -227,7 +227,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		}(chTimeout)
 	}
 
-	log.Debug("meshsync: run started")
+	log.Info("meshsync: run started")
 	// Handle graceful shutdown
 	signal.Notify(chPool[channels.OS].(channels.OSChannel), syscall.SIGTERM, os.Interrupt)
 
@@ -242,7 +242,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	// as there are many goroutines which wait for channels.Stop to be closed to stop their execution
 	close(chPool[channels.Stop].(channels.StopChannel))
 
-	log.Debug("meshsync: shutting down")
+	log.Info("meshsync: shutting down")
 
 	return nil
 }
