@@ -87,7 +87,7 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 
 	if ri.checkMustSkip(obj) {
 		// skip this resource
-		ri.log.Debug("RegisterInformer::publishItem: skipping resource: ", obj.GetName(), "/", obj.GetNamespace(), " of kind: ", k8sResource.Kind)
+ri.log.Debugf("RegisterInformer::publishItem: skipping resource: %s/%s of kind: %s", obj.GetName(), obj.GetNamespace(), k8sResource.Kind)
 		return nil
 
 	}
