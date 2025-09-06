@@ -149,7 +149,7 @@ func (h *Handler) ListenToRequests() {
 		h.Log.Error(ErrGetObject(err))
 	}
 
-h.Log.Debugf("Listening for requests in: %s", listenerConfigs[config.RequestStream].SubscribeTo)
+	h.Log.Debugf("Listening for requests in: %s", listenerConfigs[config.RequestStream].SubscribeTo)
 	reqChan := make(chan *broker.Message)
 	err = h.Broker.SubscribeWithChannel(listenerConfigs[config.RequestStream].SubscribeTo, listenerConfigs[config.RequestStream].ConnectionName, reqChan)
 	if err != nil {
@@ -189,7 +189,7 @@ h.Log.Debugf("Listening for requests in: %s", listenerConfigs[config.RequestStre
 			storeObjects := h.listStoreObjects()
 			splitSlices := splitIntoMultipleSlices(storeObjects, 5) //  performance of NATS is bound to degrade if huge messages are sent
 
-h.Log.Debugf("Publishing the data from informer stores to the subject: %s", replySubject)
+			h.Log.Debugf("Publishing the data from informer stores to the subject: %s", replySubject)
 			for _, val := range splitSlices {
 				err = h.Broker.Publish(replySubject, &broker.Message{
 					Object: val,

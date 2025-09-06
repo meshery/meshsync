@@ -257,14 +257,14 @@ func connectivityTest(log logger.Handler, pingEndpoint string, url string) error
 	for {
 		resp, err := http.Get(pingURL) //nolint
 		if err != nil {
-log.Debugf("meshsync: could not connect to broker: %v retrying...", err)
+			log.Debugf("meshsync: could not connect to broker: %v retrying...", err)
 			time.Sleep(1 * time.Second)
 			continue
 		}
 		if resp.StatusCode == http.StatusOK {
 			break
 		}
-log.Debugf("meshsync: could not receive OK response from broker: %s retrying...", pingURL)
+		log.Debugf("meshsync: could not receive OK response from broker: %s retrying...", pingURL)
 		time.Sleep(1 * time.Second)
 	}
 

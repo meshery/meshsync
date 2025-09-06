@@ -19,7 +19,7 @@ func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 			if err != nil {
 				ri.log.Error(err)
 			}
-ri.log.Debugf("Received ADD event for: %s/%s of kind: %s", obj.(*unstructured.Unstructured).GetName(), obj.(*unstructured.Unstructured).GetNamespace(), obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
+			ri.log.Debugf("Received ADD event for: %s/%s of kind: %s", obj.(*unstructured.Unstructured).GetName(), obj.(*unstructured.Unstructured).GetNamespace(), obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldObjCasted := oldObj.(*unstructured.Unstructured)
@@ -34,7 +34,7 @@ ri.log.Debugf("Received ADD event for: %s/%s of kind: %s", obj.(*unstructured.Un
 				if err != nil {
 					ri.log.Error(err)
 				}
-ri.log.Debugf("Received UPDATE event for: %s/%s of kind: %s", objCasted.GetName(), objCasted.GetNamespace(), objCasted.GroupVersionKind().Kind)
+				ri.log.Debugf("Received UPDATE event for: %s/%s of kind: %s", objCasted.GetName(), objCasted.GetNamespace(), objCasted.GroupVersionKind().Kind)
 			} else {
 				ri.log.Debug(fmt.Sprintf(
 					"Skipping UPDATE event for: %s => [No changes detected]: %d %d",
@@ -63,7 +63,7 @@ ri.log.Debugf("Received UPDATE event for: %s/%s of kind: %s", objCasted.GetName(
 			if err != nil {
 				ri.log.Error(err)
 			}
-ri.log.Debugf("Received DELETE event for: %s/%s of kind: %s", objCasted.GetName(), objCasted.GetNamespace(), objCasted.GroupVersionKind().Kind)
+			ri.log.Debugf("Received DELETE event for: %s/%s of kind: %s", objCasted.GetName(), objCasted.GetNamespace(), objCasted.GroupVersionKind().Kind)
 		},
 	}
 }
@@ -87,7 +87,7 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 
 	if ri.checkMustSkip(obj) {
 		// skip this resource
-ri.log.Debugf("RegisterInformer::publishItem: skipping resource: %s/%s of kind: %s", obj.GetName(), obj.GetNamespace(), k8sResource.Kind)
+		ri.log.Debugf("RegisterInformer::publishItem: skipping resource: %s/%s of kind: %s", obj.GetName(), obj.GetNamespace(), k8sResource.Kind)
 		return nil
 
 	}
