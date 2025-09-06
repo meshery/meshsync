@@ -44,8 +44,9 @@ func main() {
 	}
 
 	log, errLoggerNew := logger.New(serviceName, logger.Options{
-		Format:   logger.SyslogLogFormat,
-		LogLevel: logLevel,
+		Format:           logger.SyslogLogFormat,
+		LogLevel:         logLevel,
+		EnableCallerInfo: logLevel == int(logrus.DebugLevel),
 	})
 	if errLoggerNew != nil {
 		fmt.Println(errLoggerNew)
