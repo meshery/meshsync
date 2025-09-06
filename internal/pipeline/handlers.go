@@ -19,7 +19,7 @@ func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 			if err != nil {
 				ri.log.Error(err)
 			}
-			ri.log.Debug("Received ADD event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " of kind: ", obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
+ri.log.Debugf("Received ADD event for: %s/%s of kind: %s", obj.(*unstructured.Unstructured).GetName(), obj.(*unstructured.Unstructured).GetNamespace(), obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldObjCasted := oldObj.(*unstructured.Unstructured)
