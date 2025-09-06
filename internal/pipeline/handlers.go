@@ -15,11 +15,12 @@ import (
 func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			err := ri.publishItem(obj.(*unstructured.Unstructured), broker.Add, ri.config)
+			objCasted := obj.(*unstructured.Unstructured)
+			err := ri.publishItem(objCasted, broker.Add, ri.config)
 			if err != nil {
 				ri.log.Error(err)
 			}
-			ri.log.Info("Received ADD event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " of kind: ", obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
+			ri.log.Debugf("Received ADD event for: %s/%s of kind: %s", objCasted.GetName(), objCasted.GetNamespace(), objCasted.GroupVersionKind().Kind)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldObjCasted := oldObj.(*unstructured.Unstructured)
@@ -29,12 +30,12 @@ func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 			newRV, _ := strconv.ParseInt(objCasted.GetResourceVersion(), 0, 64)
 
 			if oldRV < newRV {
-				err := ri.publishItem(obj.(*unstructured.Unstructured), broker.Update, ri.config)
+				err := ri.publishItem(objCasted, broker.Update, ri.config)
 
 				if err != nil {
 					ri.log.Error(err)
 				}
-				ri.log.Info("Received UPDATE event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " of kind: ", obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
+				ri.log.Debugf("Received UPDATE event for: %s/%s of kind: %s", objCasted.GetName(), objCasted.GetNamespace(), objCasted.GroupVersionKind().Kind)
 			} else {
 				ri.log.Debug(fmt.Sprintf(
 					"Skipping UPDATE event for: %s => [No changes detected]: %d %d",
@@ -63,7 +64,7 @@ func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 			if err != nil {
 				ri.log.Error(err)
 			}
-			ri.log.Info("Received DELETE event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " of kind: ", obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
+			ri.log.Debugf("Received DELETE event for: %s/%s of kind: %s", objCasted.GetName(), objCasted.GetNamespace(), objCasted.GroupVersionKind().Kind)
 		},
 	}
 }
@@ -87,7 +88,7 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 
 	if ri.checkMustSkip(obj) {
 		// skip this resource
-		ri.log.Info("RegisterInformer::publishItem: skipping resource: ", obj.GetName(), "/", obj.GetNamespace(), " of kind: ", k8sResource.Kind)
+		ri.log.Debugf("RegisterInformer::publishItem: skipping resource: %s/%s of kind: %s", obj.GetName(), obj.GetNamespace(), k8sResource.Kind)
 		return nil
 
 	}

@@ -30,7 +30,7 @@ func (h *Handler) startDiscovery(pipelineCh chan struct{}) {
 		return
 	}
 
-	h.Log.Info("Pipeline started")
+	h.Log.Debug("Pipeline started")
 	pl := pipeline.New(h.Log, h.informer, h.outputWriter, pipelineConfigs, pipelineCh, h.clusterID, h.outputFiltration)
 	result := pl.Run()
 	if result.Error != nil {

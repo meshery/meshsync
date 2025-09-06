@@ -222,7 +222,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	if options.StopAfterDuration > -1 {
 		go func(ch chan struct{}) {
 			<-time.After(options.StopAfterDuration)
-			log.Infof("meshsync: stopping after %s", options.StopAfterDuration)
+			log.Debugf("meshsync: stopping after %s", options.StopAfterDuration)
 			close(chTimeout)
 		}(chTimeout)
 	}
@@ -235,7 +235,7 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	case <-chTimeout:
 	case <-chPool[channels.OS].(channels.OSChannel):
 	case <-options.Context.Done():
-		log.Info("meshsync: cancellation signal received from client code")
+		log.Debug("meshsync: cancellation signal received from client code")
 	}
 
 	// close stop channel
@@ -257,14 +257,14 @@ func connectivityTest(log logger.Handler, pingEndpoint string, url string) error
 	for {
 		resp, err := http.Get(pingURL) //nolint
 		if err != nil {
-			log.Info("meshsync: could not connect to broker: " + err.Error() + " retrying...")
+			log.Debugf("meshsync: could not connect to broker: %v retrying...", err)
 			time.Sleep(1 * time.Second)
 			continue
 		}
 		if resp.StatusCode == http.StatusOK {
 			break
 		}
-		log.Info("meshsync: could not receive OK response from broker: "+pingURL, " retrying...")
+		log.Debugf("meshsync: could not receive OK response from broker: %s retrying...", pingURL)
 		time.Sleep(1 * time.Second)
 	}
 
@@ -301,12 +301,12 @@ func determineUseCRDFlag(
 	crd, errGetMeshsyncCRD := config.GetMeshsyncCRD(kubeClient.DynamicKubeClient)
 	useCRDFlag := crd != nil && errGetMeshsyncCRD == nil
 	if useCRDFlag {
-		log.Infof(
+		log.Debugf(
 			"meshsync: running in %s output mode and meshsync CRD is present in the cluster",
 			options.OutputMode,
 		)
 	} else {
-		log.Infof(
+		log.Debugf(
 			"meshsync: running in %s mode and NO meshsync CRD is present in the cluster",
 			options.OutputMode,
 		)
