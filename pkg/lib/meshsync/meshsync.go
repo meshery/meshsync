@@ -257,7 +257,7 @@ func connectivityTest(log logger.Handler, pingEndpoint string, url string) error
 	for {
 		resp, err := http.Get(pingURL) //nolint
 		if err != nil {
-			log.Debug("meshsync: could not connect to broker: " + err.Error() + " retrying...")
+log.Debugf("meshsync: could not connect to broker: %v retrying...", err)
 			time.Sleep(1 * time.Second)
 			continue
 		}
