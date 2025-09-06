@@ -34,7 +34,7 @@ func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 				if err != nil {
 					ri.log.Error(err)
 				}
-				ri.log.Debug("Received UPDATE event for: ", obj.(*unstructured.Unstructured).GetName(), "/", obj.(*unstructured.Unstructured).GetNamespace(), " of kind: ", obj.(*unstructured.Unstructured).GroupVersionKind().Kind)
+ri.log.Debugf("Received UPDATE event for: %s/%s of kind: %s", objCasted.GetName(), objCasted.GetNamespace(), objCasted.GroupVersionKind().Kind)
 			} else {
 				ri.log.Debug(fmt.Sprintf(
 					"Skipping UPDATE event for: %s => [No changes detected]: %d %d",
