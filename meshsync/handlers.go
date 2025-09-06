@@ -189,7 +189,7 @@ func (h *Handler) ListenToRequests() {
 			storeObjects := h.listStoreObjects()
 			splitSlices := splitIntoMultipleSlices(storeObjects, 5) //  performance of NATS is bound to degrade if huge messages are sent
 
-			h.Log.Debug("Publishing the data from informer stores to the subject: ", replySubject)
+h.Log.Debugf("Publishing the data from informer stores to the subject: %s", replySubject)
 			for _, val := range splitSlices {
 				err = h.Broker.Publish(replySubject, &broker.Message{
 					Object: val,
