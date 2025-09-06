@@ -149,7 +149,7 @@ func (h *Handler) ListenToRequests() {
 		h.Log.Error(ErrGetObject(err))
 	}
 
-	h.Log.Debug("Listening for requests in: ", listenerConfigs[config.RequestStream].SubscribeTo)
+h.Log.Debugf("Listening for requests in: %s", listenerConfigs[config.RequestStream].SubscribeTo)
 	reqChan := make(chan *broker.Message)
 	err = h.Broker.SubscribeWithChannel(listenerConfigs[config.RequestStream].SubscribeTo, listenerConfigs[config.RequestStream].ConnectionName, reqChan)
 	if err != nil {
