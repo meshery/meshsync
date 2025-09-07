@@ -234,7 +234,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 				}
 			}
 		case <-h.channelPool[id].(channels.StructChannel):
-			h.Log.Debug("Closing", id)
+			h.Log.Debugf("Closing session %s", id)
 			delete(h.channelPool, id)
 		}
 	}
