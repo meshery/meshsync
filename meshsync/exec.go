@@ -221,7 +221,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 
 	for {
 		if _, ok := h.channelPool[id]; !ok {
-			h.Log.Debug("Session closed for: ", id)
+			h.Log.Debugf("Session closed for: %s", id)
 			return
 		}
 
