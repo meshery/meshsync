@@ -58,7 +58,7 @@ func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig)
 			// Subscribing the first time
 			if !bool(req.Stop) {
 				h.channelPool[id] = channels.NewStructChannel()
-				h.Log.Info("Starting session")
+				h.Log.Debug("Starting session")
 
 				err := h.Broker.Publish("active_sessions.exec", &broker.Message{
 					ObjectType: broker.ActiveExecObject,
@@ -118,7 +118,7 @@ func (h *Handler) streamChannelPool() {
 				publish()
 			}
 		}
-		h.Log.Info("Stopping streamChannelPool")
+		h.Log.Debug("Stopping streamChannelPool")
 	}()
 }
 
@@ -221,7 +221,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 
 	for {
 		if _, ok := h.channelPool[id]; !ok {
-			h.Log.Info("Session closed for: ", id)
+			h.Log.Debugf("Session closed for: %s", id)
 			return
 		}
 
@@ -234,7 +234,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 				}
 			}
 		case <-h.channelPool[id].(channels.StructChannel):
-			h.Log.Info("Closing", id)
+			h.Log.Debugf("Closing session %s", id)
 			delete(h.channelPool, id)
 		}
 	}
