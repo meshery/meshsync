@@ -17,10 +17,10 @@ require (
 	golang.org/x/net v0.43.0
 	gorm.io/gorm v1.31.0
 	gotest.tools/v3 v3.5.2
-	k8s.io/api v0.34.0
-	k8s.io/apimachinery v0.34.0
-	k8s.io/client-go v0.34.0
-	k8s.io/kubectl v0.34.0
+	k8s.io/api v0.34.1
+	k8s.io/apimachinery v0.34.1
+	k8s.io/client-go v0.34.1
+	k8s.io/kubectl v0.34.1
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -160,8 +160,8 @@ require (
 	helm.sh/helm/v3 v3.18.5 // indirect
 	k8s.io/apiextensions-apiserver v0.33.3 // indirect
 	k8s.io/apiserver v0.33.3 // indirect
-	k8s.io/cli-runtime v0.34.0 // indirect
-	k8s.io/component-base v0.34.0 // indirect
+	k8s.io/cli-runtime v0.34.1 // indirect
+	k8s.io/component-base v0.34.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
