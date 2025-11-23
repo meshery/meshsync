@@ -21,6 +21,9 @@ var meshsyncLibraryWithK8SClusterCustomBrokerTestCaseData []meshsyncLibraryWithK
 	{
 		name: "output mode channel: number of messages received from meshsync is greater than zero",
 		meshsyncRunOptions: []libmeshsync.OptionsSetter{
+			// adding nil to options to test that meshsync can handle nil options setter
+			// must not fail when has nil in options setter
+			nil,
 			libmeshsync.WithOutputMode(config.OutputModeBroker),
 			libmeshsync.WithBrokerHandler(channel.NewChannelBrokerHandler()),
 			libmeshsync.WithStopAfterDuration(8 * time.Second),
@@ -47,18 +50,6 @@ var meshsyncLibraryWithK8SClusterCustomBrokerTestCaseData []meshsyncLibraryWithK
 				assert.True(t, count > 0, "must receive messages from meshsync")
 			}
 
-		},
-	},
-	// TODO
-	// remove this as a separate test case,
-	// add nil to []libmeshsync.OptionsSetter in the previous test case with a comment
-	{
-		name: "output mode channel: must not fail when has nil in options setter",
-		meshsyncRunOptions: []libmeshsync.OptionsSetter{
-			nil,
-			libmeshsync.WithOutputMode(config.OutputModeBroker),
-			libmeshsync.WithBrokerHandler(channel.NewChannelBrokerHandler()),
-			libmeshsync.WithStopAfterDuration(0 * time.Second),
 		},
 	},
 	// TODO
