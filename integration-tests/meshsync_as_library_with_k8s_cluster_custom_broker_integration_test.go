@@ -35,10 +35,6 @@ func TestMeshsyncLibraryWithK8sClusterCustomBrokerIntegration(t *testing.T) {
 	}
 }
 
-// TODO fix cyclop error
-// integration-tests/k8s_cluster_meshsync_as_library_integration_test.go:47:1: calculated cyclomatic complexity for function runWithMeshsyncLibraryAndk8sClusterTestCase is 15, max is 10 (cyclop)
-//
-//nolint:cyclop
 func runWithMeshsyncLibraryAndk8sClusterCustomBrokerTestCase(
 	br broker.Handler,
 	tcIndex int,
@@ -87,7 +83,7 @@ func runWithMeshsyncLibraryAndk8sClusterCustomBrokerTestCase(
 
 		// Step 3: run meshsync library
 		runMeshsyncLibraryAsync(br, log, tc, errCh)
-		
+
 		// intentionally big timeout to wait till the run execution ended
 		timeout := time.Duration(time.Hour * 24)
 		if tc.waitMeshsyncTimeout > 0 {
@@ -95,7 +91,7 @@ func runWithMeshsyncLibraryAndk8sClusterCustomBrokerTestCase(
 		}
 
 		handleLibraryCompletion(t, errCh, timeout, tc)
-		
+
 		// Step 4: do final assertion, if any
 		if tc.finalHandler != nil {
 			tc.finalHandler(t, resultData)
@@ -143,11 +139,11 @@ func runMeshsyncLibraryAsync(
 	errCh chan<- error,
 ) {
 	go func() {
-    runOptions := make([]libmeshsync.OptionsSetter, 0, len(tc.meshsyncRunOptions))
-    runOptions = append(runOptions, tc.meshsyncRunOptions...)
-    runOptions = append(runOptions, libmeshsync.WithBrokerHandler(br))
+		runOptions := make([]libmeshsync.OptionsSetter, 0, len(tc.meshsyncRunOptions)+1)
+		runOptions = append(runOptions, tc.meshsyncRunOptions...)
+		runOptions = append(runOptions, libmeshsync.WithBrokerHandler(br))
 
-    errCh <- libmeshsync.Run(log, runOptions...)
+		errCh <- libmeshsync.Run(log, runOptions...)
 	}()
 }
 
@@ -193,5 +189,3 @@ func validateErrorOutcome(
 		t.Fatalf("must end with error")
 	}
 }
-
-

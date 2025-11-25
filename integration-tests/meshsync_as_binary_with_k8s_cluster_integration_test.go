@@ -55,10 +55,6 @@ func TestMeshsyncBinaryWithK8sClusterIntegration(t *testing.T) {
 	}
 }
 
-// TODO fix cyclop error
-// integration-tests/k8s_cluster_integration_test.go:74:1: calculated cyclomatic complexity for function runWithMeshsyncBinaryAndk8sClusterMeshsyncBinaryTestCase is 11, max is 10 (cyclop)
-//
-//nolint:cyclop
 func runMeshsyncBinaryWithK8sClusterTestCase(
 	br broker.Handler,
 	tcIndex int,
@@ -107,7 +103,7 @@ func runMeshsyncBinaryWithK8sClusterTestCase(
 			timeout = tc.waitMeshsyncTimeout
 		}
 
-        waitForMeshsync(t, cmd, timeout)
+		waitForMeshsync(t, cmd, timeout)
 
 		// Step 4: do final assertion, if any
 		if tc.finalHandler != nil {
@@ -151,28 +147,26 @@ func withMeshsyncBinaryPrepareMeshsyncCMD(
 }
 
 func waitForMeshsync(
-    t *testing.T,
-    cmd *exec.Cmd,
-    timeout time.Duration,
+	t *testing.T,
+	cmd *exec.Cmd,
+	timeout time.Duration,
 ) {
-    errCh := make(chan error)
+	errCh := make(chan error)
 
-	go func(cmd0 *exec.Cmd, errCh0 chan<- error) {
-			errCh0 <- cmd0.Wait()
-		}(cmd, errCh)
+	go func() {
+		errCh <- cmd.Wait()
+	}()
 
-    select {
-    case err := <-errCh:
-        if err != nil {
-            t.Fatalf("error running binary: %v", err)
-        }
-    case <-time.After(timeout):
-        if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
-            t.Fatalf("error terminating meshsync command: %v", err)
-        }
+	select {
+	case err := <-errCh:
+		if err != nil {
+			t.Fatalf("error running binary: %v", err)
+		}
+	case <-time.After(timeout):
+		if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
+			t.Fatalf("error terminating meshsync command: %v", err)
+		}
 		t.Logf("processing after timeout %d", timeout)
 
-    }
+	}
 }
-
-
