@@ -35,10 +35,6 @@ func TestMeshsyncLibraryWithK8sClusterCustomBrokerIntegration(t *testing.T) {
 	}
 }
 
-// TODO fix cyclop error
-// integration-tests/k8s_cluster_meshsync_as_library_integration_test.go:47:1: calculated cyclomatic complexity for function runWithMeshsyncLibraryAndk8sClusterTestCase is 15, max is 10 (cyclop)
-//
-//nolint:cyclop
 func runWithMeshsyncLibraryAndk8sClusterCustomBrokerTestCase(
 	br broker.Handler,
 	tcIndex int,
@@ -86,16 +82,7 @@ func runWithMeshsyncLibraryAndk8sClusterCustomBrokerTestCase(
 		}
 
 		// Step 3: run meshsync library
-		go func(errCh0 chan<- error) {
-			runOptions := make([]libmeshsync.OptionsSetter, 0, len(tc.meshsyncRunOptions))
-			runOptions = append(runOptions, tc.meshsyncRunOptions...)
-			runOptions = append(runOptions, libmeshsync.WithBrokerHandler(br))
-
-			errCh0 <- libmeshsync.Run(
-				log,
-				runOptions...,
-			)
-		}(errCh)
+		runMeshsyncLibraryAsync(br, log, tc, errCh)
 
 		// intentionally big timeout to wait till the run execution ended
 		timeout := time.Duration(time.Hour * 24)
@@ -103,29 +90,7 @@ func runWithMeshsyncLibraryAndk8sClusterCustomBrokerTestCase(
 			timeout = tc.waitMeshsyncTimeout
 		}
 
-		select {
-		case err := <-errCh:
-			if err != nil {
-				if !tc.expectError {
-					t.Fatal("must not end with error", err)
-				}
-				assert.ErrorContains(t, err, tc.expectedErrorMessage, "must end with expected error")
-			} else if tc.expectError {
-				if tc.expectedErrorMessage != "" {
-					t.Fatalf("must end with expected error message %s", tc.expectedErrorMessage)
-				}
-				t.Fatalf("must end with error")
-			}
-		case <-time.After(timeout):
-			self, err := os.FindProcess(os.Getpid())
-			if err != nil {
-				t.Fatalf("could not find self process: %v", err)
-			}
-			if err := self.Signal(syscall.SIGTERM); err != nil {
-				t.Fatalf("error terminating meshsync library: %v", err)
-			}
-			t.Logf("processing after timeout %d", timeout)
-		}
+		handleLibraryCompletion(t, errCh, timeout, tc)
 
 		// Step 4: do final assertion, if any
 		if tc.finalHandler != nil {
@@ -136,6 +101,7 @@ func runWithMeshsyncLibraryAndk8sClusterCustomBrokerTestCase(
 	}
 }
 
+// introduced these below function to decrease cyclomatic complexity
 func withMeshsyncLibraryAndk8sClusterCustomBrokerPrepareMeshsyncLoggerOptions(
 	t *testing.T,
 	tcIndex int,
@@ -164,4 +130,62 @@ func withMeshsyncLibraryAndk8sClusterCustomBrokerPrepareMeshsyncLoggerOptions(
 	}
 
 	return options, deferFunc
+}
+
+func runMeshsyncLibraryAsync(
+	br broker.Handler,
+	log logger.Handler,
+	tc meshsyncLibraryWithK8SClusterCustomBrokerTestCaseStruct,
+	errCh chan<- error,
+) {
+	go func() {
+		runOptions := make([]libmeshsync.OptionsSetter, 0, len(tc.meshsyncRunOptions)+1)
+		runOptions = append(runOptions, tc.meshsyncRunOptions...)
+		runOptions = append(runOptions, libmeshsync.WithBrokerHandler(br))
+
+		errCh <- libmeshsync.Run(log, runOptions...)
+	}()
+}
+
+func handleLibraryCompletion(
+	t *testing.T,
+	errCh <-chan error,
+	timeout time.Duration,
+	tc meshsyncLibraryWithK8SClusterCustomBrokerTestCaseStruct,
+) {
+	select {
+	case err := <-errCh:
+		validateErrorOutcome(t, err, tc)
+	case <-time.After(timeout):
+		self, findErr := os.FindProcess(os.Getpid())
+		if findErr != nil {
+			t.Fatalf("could not find self process: %v", findErr)
+		}
+		if err := self.Signal(syscall.SIGTERM); err != nil {
+			t.Fatalf("error terminating meshsync library: %v", err)
+		}
+		t.Logf("processing after timeout %d", timeout)
+	}
+}
+
+func validateErrorOutcome(
+	t *testing.T,
+	err error,
+	tc meshsyncLibraryWithK8SClusterCustomBrokerTestCaseStruct,
+) {
+	if err != nil {
+		if !tc.expectError {
+			t.Fatal("must not end with error", err)
+		}
+		assert.ErrorContains(t, err, tc.expectedErrorMessage, "must end with expected error")
+		return
+	}
+
+	// err == nil
+	if tc.expectError {
+		if tc.expectedErrorMessage != "" {
+			t.Fatalf("must end with expected error message %s", tc.expectedErrorMessage)
+		}
+		t.Fatalf("must end with error")
+	}
 }
