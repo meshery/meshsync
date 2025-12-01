@@ -45,6 +45,7 @@ type meshsyncBinaryWithK8SClusterTestsCasesStruct struct {
 	// and there is no graceful exit from function;
 	brokerMessageHandler func(
 		t *testing.T,
+		br broker.Handler,
 		out chan *broker.Message,
 		resultData map[string]any,
 	)
