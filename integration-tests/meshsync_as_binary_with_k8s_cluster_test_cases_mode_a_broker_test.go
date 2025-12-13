@@ -11,11 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	resyncSuccessThreshold        = 5
-	minExpectedObjectsAfterResync = 3
-)
-
 var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8SClusterTestsCasesStruct = []meshsyncBinaryWithK8SClusterTestsCasesStruct{
 	{
 		name:            "output mode broker: number of messages received from broker is greater than zero",
@@ -64,10 +59,6 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 			errCh := make(chan error)
 			go func(errCh0 chan<- error) {
 				for message := range out {
-					// Skip non-resource messages like DiscoveryComplete
-					if message.EventType == broker.DiscoveryComplete {
-						continue
-					}
 					k8sResource, err := unmarshalObject(message.Object)
 					if err != nil {
 						errCh0 <- fmt.Errorf(
@@ -129,10 +120,6 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 			errCh := make(chan error)
 			go func(errCh0 chan<- error) {
 				for message := range out {
-					// Skip non-resource messages like DiscoveryComplete
-					if message.EventType == broker.DiscoveryComplete {
-						continue
-					}
 					k8sResource, err := unmarshalObject(message.Object)
 					if err != nil {
 						errCh0 <- fmt.Errorf(
@@ -207,44 +194,6 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 		},
 	},
 	{
-		name:            "meshsync fires DiscoveryComplete event after initial discovery",
-		meshsyncCMDArgs: []string{"--stopAfter", "20s"},
-
-		brokerMessageHandler: func(t *testing.T, br broker.Handler, out chan *broker.Message, resultData map[string]any) {
-			t.Helper()
-
-			timeout := time.After(25 * time.Second)
-
-			for {
-				select {
-				case <-timeout:
-					resultData["discovery_complete"] = false
-					return
-
-				case msg, ok := <-out:
-					if !ok || msg == nil {
-						continue
-					}
-
-					if msg.EventType == broker.DiscoveryComplete {
-						resultData["discovery_complete"] = true
-						return
-					}
-				}
-			}
-		},
-
-		finalHandler: func(t *testing.T, resultData map[string]any) {
-			complete := false
-
-			if v, ok := resultData["discovery_complete"].(bool); ok {
-				complete = v
-			}
-
-			assert.True(t, complete, "meshsync must publish DiscoveryComplete event after initial discovery")
-		},
-	},
-	{
 		name:            "meshsync handles ReSync request and republishes cluster data",
 		meshsyncCMDArgs: []string{"--stopAfter", "25s"},
 
@@ -253,6 +202,23 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 
 			beforeResync := make(map[string]bool)
 			afterResync := make(map[string]bool)
+
+			const resyncSuccessThreshold = 5
+			var (
+				debounceTimer *time.Timer
+				discoveryDone bool
+			)
+
+			const discoveryDebounce = 1000 * time.Millisecond
+
+			resetDebounce := func() {
+				if debounceTimer != nil {
+					debounceTimer.Stop()
+				}
+				debounceTimer = time.AfterFunc(discoveryDebounce, func() {
+					discoveryDone = true
+				})
+			}
 
 			resyncRequested := false
 
@@ -273,15 +239,17 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 							if err == nil && kr.Kind != "" {
 								key := kr.Kind + ":" + kr.KubernetesResourceMeta.Name
 								beforeResync[key] = true
+								resetDebounce()
 							}
 						}
 					}
 				}
 
 				//  2. wait for initial discovery complete & trigger resync
-				if !resyncRequested && msg.EventType == broker.DiscoveryComplete {
+				if !resyncRequested && discoveryDone {
+
 					t.Logf(
-						"Initial discovery complete (%d objects). Triggering ReSync…",
+						"Initial discovery quiesced (%d objects). Triggering ReSync…",
 						len(beforeResync),
 					)
 
@@ -346,6 +314,7 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 		},
 
 		finalHandler: func(t *testing.T, resultData map[string]any) {
+			const minExpectedObjectsAfterResync = 3
 			count := 0
 			if c, ok := resultData["count"].(int); ok {
 				count = c
