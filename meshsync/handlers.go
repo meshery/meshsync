@@ -50,7 +50,6 @@ func (h *Handler) Run() {
 			h.Log.Debugf("h.startDiscovery starting with channel %p", ch)
 			h.startDiscovery(ch)
 			h.Log.Debugf("h.startDiscovery completed for channel %p", ch)
-
 		}(currentPipelineCh)
 	}
 
