@@ -40,7 +40,6 @@ func debounce(d time.Duration, f func(ch chan struct{})) func(ch chan struct{}) 
 func (h *Handler) Run() {
 	var currentPipelineCh chan struct{} // Will be initialized before first use
 	var discoveryWg sync.WaitGroup
-	var discoveryOnce sync.Once
 
 	// Helper to start discovery and manage WaitGroup
 	startAndTrackDiscovery := func() {
@@ -51,10 +50,6 @@ func (h *Handler) Run() {
 			h.Log.Debugf("h.startDiscovery starting with channel %p", ch)
 			h.startDiscovery(ch)
 			h.Log.Debugf("h.startDiscovery completed for channel %p", ch)
-
-			discoveryOnce.Do(func() {
-				h.publishDiscoveryCompleteEvent()
-			})
 
 		}(currentPipelineCh)
 	}
@@ -141,27 +136,6 @@ func (h *Handler) ShutdownInformer() {
 		h.Log.Debug("Shutting down informer...")
 		h.informer.Shutdown()
 		h.Log.Debug("Shutting down informer done.")
-	}
-}
-func (h *Handler) publishDiscoveryCompleteEvent() {
-	if h == nil || h.Broker == nil {
-		h.Log.Debugf("Skipping DiscoveryComplete event: Broker not initialized")
-		return
-	}
-
-	err := h.Broker.Publish(config.DefaultPublishingSubject, &broker.Message{
-		EventType: broker.DiscoveryComplete,
-		Object: map[string]string{
-			"clusterID": h.clusterID,
-			"status":    "complete",
-			"timestamp": time.Now().Format(time.RFC3339),
-		},
-	})
-
-	if err != nil {
-		h.Log.Error(fmt.Errorf("failed to publish discovery complete event: %w", err))
-	} else {
-		h.Log.Debug("Successfully published DISCOVERY_COMPLETE event")
 	}
 }
 
