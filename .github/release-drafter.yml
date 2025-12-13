@@ -27,3 +27,5 @@ template: |
   
   Thank you to our contributors for making this release possible:
   $CONTRIBUTORS
+
+no-duplicate-categories: true
