@@ -30,6 +30,7 @@ var meshSyncBinaryWithK8SClusterFileModeTestCasesData []meshsyncBinaryWithK8SClu
 		},
 		brokerMessageHandler: func(
 			t *testing.T,
+			br broker.Handler,
 			out chan *broker.Message,
 			resultData map[string]any,
 		) {
