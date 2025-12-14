@@ -223,6 +223,7 @@ func (h *Handler) handleLogRequest(
 		listenerConfigs[config.LogStream],
 	); err != nil {
 		h.Log.Error(err)
+		return
 	}
 }
 
@@ -266,6 +267,7 @@ func (h *Handler) handleExecRequest(
 		listenerConfigs[config.ExecShell],
 	); err != nil {
 		h.Log.Error(err)
+		return
 	}
 }
 
@@ -273,6 +275,7 @@ func (h *Handler) handleActiveExecRequest() {
 	h.Log.Debug("Connecting to channel pool")
 	if err := h.processActiveExecRequest(); err != nil {
 		h.Log.Error(err)
+		return
 	}
 }
 
@@ -368,17 +371,16 @@ func (h *Handler) handleCRDEvent(event watch.Event) {
 		return
 	}
 
-	crd, err := parseCRDEvent(event)
+	crd, data, err := parseCRDEvent(event)
 	if err != nil {
 		h.Log.Error(err)
 		return
 	}
 
 	if len(crd.Spec.Versions) == 0 {
-		byt, _ := json.Marshal(event.Object)
 		h.Log.Debugf(
 			"Handler::WatchCRDs::processEvent: event.Object has empty spec.Versions [%s]",
-			string(byt),
+			string(data),
 		)
 	}
 
@@ -397,18 +399,18 @@ func (h *Handler) handleCRDEvent(event watch.Event) {
 	h.channelPool[channels.ReSync].(channels.ReSyncChannel).ReSyncInformer()
 }
 
-func parseCRDEvent(event watch.Event) (*kubernetes.CRDItem, error) {
+func parseCRDEvent(event watch.Event) (*kubernetes.CRDItem, []byte, error) {
 	data, err := json.Marshal(event.Object)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	crd := &kubernetes.CRDItem{}
 	if err := json.Unmarshal(data, crd); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return crd, nil
+	return crd, data, nil
 }
 
 func (h *Handler) updatePipelineConfig(
@@ -416,7 +418,7 @@ func (h *Handler) updatePipelineConfig(
 	gvr *schema.GroupVersionResource,
 ) error {
 
-	existing := config.Pipelines
+	existing := make(map[string]config.PipelineConfigs)
 	if err := h.Config.GetObject(config.ResourcesKey, &existing); err != nil {
 		return err
 	}
