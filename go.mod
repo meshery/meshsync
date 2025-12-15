@@ -2,7 +2,7 @@ module github.com/meshery/meshsync
 
 replace vbom.ml/util => github.com/fvbommel/util v0.0.0-20180919145318-efcd4e0f9787
 
-go 1.24.0
+go 1.25.0
 
 require (
 	github.com/buger/jsonparser v1.1.1
