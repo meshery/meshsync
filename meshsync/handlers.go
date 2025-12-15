@@ -138,95 +138,14 @@ func (h *Handler) ShutdownInformer() {
 	}
 }
 
-// TODO fix cyclop error
-// Error: meshsync/handlers.go:71:1: calculated cyclomatic complexity for function ListenToRequests is 19, max is 10 (cyclop)
-//
-//nolint:cyclop
 func (h *Handler) ListenToRequests() {
-	listenerConfigs := make(map[string]config.ListenerConfig, 10)
-	err := h.Config.GetObject(config.ListenersKey, &listenerConfigs)
+	listenerConfigs, err := h.loadListenerConfigs()
 	if err != nil {
-		h.Log.Error(ErrGetObject(err))
+		h.Log.Error(err)
 	}
-
-	h.Log.Debugf("Listening for requests in: %s", listenerConfigs[config.RequestStream].SubscribeTo)
-	reqChan := make(chan *broker.Message)
-	err = h.Broker.SubscribeWithChannel(listenerConfigs[config.RequestStream].SubscribeTo, listenerConfigs[config.RequestStream].ConnectionName, reqChan)
+	reqChan, err := h.initRequestListener(listenerConfigs)
 	if err != nil {
 		h.Log.Error(ErrSubscribeRequest(err))
-	}
-
-	processRequest := func(request *broker.Message) {
-		if request.Request == nil {
-			h.Log.Error(ErrInvalidRequest)
-			return
-		}
-
-		switch request.Request.Entity {
-		case broker.LogRequestEntity:
-			h.Log.Debug("Starting log session")
-			err := h.processLogRequest(request.Request.Payload, listenerConfigs[config.LogStream])
-			if err != nil {
-				h.Log.Error(err)
-				return
-			}
-
-			// TODO: Add this to the broker pkg
-		case "informer-store":
-			d, err := json.Marshal(request.Request.Payload)
-			// TODO: Update broker pkg in Meshkit to include Reply types
-			var payload struct{ Reply string }
-			if err != nil {
-				h.Log.Error(err)
-				return
-			}
-			err = json.Unmarshal(d, &payload)
-			if err != nil {
-				h.Log.Error(err)
-				return
-			}
-			replySubject := payload.Reply
-			storeObjects := h.listStoreObjects()
-			splitSlices := splitIntoMultipleSlices(storeObjects, 5) //  performance of NATS is bound to degrade if huge messages are sent
-
-			h.Log.Debugf("Publishing the data from informer stores to the subject: %s", replySubject)
-			for _, val := range splitSlices {
-				err = h.Broker.Publish(replySubject, &broker.Message{
-					Object: val,
-				})
-				if err != nil {
-					h.Log.Error(err)
-					continue
-				}
-			}
-
-		case broker.ReSyncDiscoveryEntity:
-			h.Log.Debug("Resyncing")
-			h.channelPool[channels.ReSync].(channels.ReSyncChannel) <- struct{}{}
-		case broker.ExecRequestEntity:
-			h.Log.Debug("Starting interactive session")
-			err := h.processExecRequest(request.Request.Payload, listenerConfigs[config.ExecShell])
-			if err != nil {
-				h.Log.Error(err)
-				return
-			}
-		case broker.ActiveExecEntity:
-			h.Log.Debug("Connecting to channel pool")
-			err := h.processActiveExecRequest()
-			if err != nil {
-				h.Log.Error(err)
-				return
-			}
-		case "meshsync-meta":
-			h.Log.Debug("Publishing MeshSync metadata to the subject")
-			err := h.Broker.Publish("meshsync-meta", &broker.Message{
-				Object: config.Server["version"],
-			})
-			if err != nil {
-				h.Log.Error(err)
-				return
-			}
-		}
 	}
 
 loop:
@@ -235,10 +154,140 @@ loop:
 		case <-h.channelPool[channels.Stop].(channels.StopChannel):
 			break loop
 		case request := <-reqChan:
-			processRequest(request)
+			h.handleRequest(request, listenerConfigs)
 		}
 	}
 	h.Log.Debug("Stopping ListenToRequests")
+}
+
+func (h *Handler) loadListenerConfigs() (map[string]config.ListenerConfig, error) {
+	listenerConfigs := make(map[string]config.ListenerConfig, 10)
+	if err := h.Config.GetObject(config.ListenersKey, &listenerConfigs); err != nil {
+		return nil, ErrGetObject(err)
+	}
+	return listenerConfigs, nil
+}
+
+func (h *Handler) initRequestListener(
+	listenerConfigs map[string]config.ListenerConfig,
+) (chan *broker.Message, error) {
+
+	reqChan := make(chan *broker.Message)
+	cfg := listenerConfigs[config.RequestStream]
+
+	h.Log.Debugf("Listening for requests in: %s", cfg.SubscribeTo)
+	return reqChan, h.Broker.SubscribeWithChannel(
+		cfg.SubscribeTo,
+		cfg.ConnectionName,
+		reqChan,
+	)
+}
+
+func (h *Handler) handleRequest(
+	request *broker.Message,
+	listenerConfigs map[string]config.ListenerConfig,
+) {
+	if request.Request == nil {
+		h.Log.Error(ErrInvalidRequest)
+		return
+	}
+
+	switch request.Request.Entity {
+	case broker.LogRequestEntity:
+		h.handleLogRequest(request, listenerConfigs)
+
+	case "informer-store":
+		h.handleInformerStoreRequest(request)
+
+	case broker.ReSyncDiscoveryEntity:
+		h.handleResyncRequest()
+
+	case broker.ExecRequestEntity:
+		h.handleExecRequest(request, listenerConfigs)
+
+	case broker.ActiveExecEntity:
+		h.handleActiveExecRequest()
+
+	case "meshsync-meta":
+		h.publishMeshSyncMeta()
+	}
+}
+
+func (h *Handler) handleLogRequest(
+	request *broker.Message,
+	listenerConfigs map[string]config.ListenerConfig,
+) {
+	h.Log.Debug("Starting log session")
+	if err := h.processLogRequest(
+		request.Request.Payload,
+		listenerConfigs[config.LogStream],
+	); err != nil {
+		h.Log.Error(err)
+		return
+	}
+}
+
+// TODO: Add this to the broker pkg
+func (h *Handler) handleInformerStoreRequest(request *broker.Message) {
+	// TODO: Update broker pkg in Meshkit to include Reply types
+	var payload struct{ Reply string }
+
+	data, err := json.Marshal(request.Request.Payload)
+	if err != nil {
+		h.Log.Error(err)
+		return
+	}
+	if err := json.Unmarshal(data, &payload); err != nil {
+		h.Log.Error(err)
+		return
+	}
+
+	objects := splitIntoMultipleSlices(h.listStoreObjects(), 5) //  performance of NATS is bound to degrade if huge messages are sent
+	h.Log.Debugf("Publishing the data from informer stores to the subject: %s", payload.Reply)
+
+	for _, batch := range objects {
+		if err := h.Broker.Publish(payload.Reply, &broker.Message{Object: batch}); err != nil {
+			h.Log.Error(err)
+		}
+	}
+}
+
+func (h *Handler) handleResyncRequest() {
+	h.Log.Debug("Resyncing")
+	h.channelPool[channels.ReSync].(channels.ReSyncChannel) <- struct{}{}
+}
+
+func (h *Handler) handleExecRequest(
+	request *broker.Message,
+	listenerConfigs map[string]config.ListenerConfig,
+) {
+	h.Log.Debug("Starting interactive session")
+	if err := h.processExecRequest(
+		request.Request.Payload,
+		listenerConfigs[config.ExecShell],
+	); err != nil {
+		h.Log.Error(err)
+		return
+	}
+}
+
+func (h *Handler) handleActiveExecRequest() {
+	h.Log.Debug("Connecting to channel pool")
+	if err := h.processActiveExecRequest(); err != nil {
+		h.Log.Error(err)
+		return
+	}
+}
+
+func (h *Handler) publishMeshSyncMeta() {
+	h.Log.Debug("Publishing MeshSync metadata to the subject")
+	err := h.Broker.Publish("meshsync-meta", &broker.Message{
+		Object: config.Server["version"],
+	})
+	if err != nil {
+		h.Log.Error(err)
+		return
+	}
 }
 
 func (h *Handler) listStoreObjects() []model.KubernetesResource {
@@ -278,88 +327,15 @@ loop:
 	h.Log.Debug("meshsync::Handler::WatchCRDs: stopping WatchCRDs")
 }
 
-// TODO
-// fix lint error
-// calculated cyclomatic complexity for function watchCRDsIteration is 14, max is 10 (cyclop)
-//
-//nolint:cyclop
 func (h *Handler) watchCRDsIteration() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	crdWatcher, err := h.kubeClient.DynamicKubeClient.Resource(schema.GroupVersionResource{
-		Group:    "apiextensions.k8s.io",
-		Version:  "v1",
-		Resource: "customresourcedefinitions",
-	}).Watch(ctx, metav1.ListOptions{})
+	crdWatcher, err := h.createCRDWatcher(ctx)
 
 	if err != nil {
 		h.Log.Error(err)
 		return
-	}
-
-	processEvent := func(event watch.Event) {
-		crd := &kubernetes.CRDItem{}
-		if event.Object == nil {
-			h.Log.Debug("Handler::WatchCRDs::processEvent event.Object is nil, skipping")
-			return
-		}
-		byt, err := json.Marshal(event.Object)
-		if err != nil {
-			h.Log.Error(err)
-			return
-		}
-
-		err = json.Unmarshal(byt, crd)
-		if err != nil {
-			h.Log.Error(err)
-			return
-		}
-
-		if len(crd.Spec.Versions) == 0 {
-			h.Log.Debugf(
-				"Handler::WatchCRDs::processEvent: event.Object has empty spec.Versions [%s]",
-				string(byt),
-			)
-		}
-
-		gvr := tmpGetGVRForCustomResources(crd)
-
-		existingPipelines := config.Pipelines
-		err = h.Config.GetObject(config.ResourcesKey, existingPipelines)
-		if err != nil {
-			h.Log.Error(err)
-			return
-		}
-
-		existingPipelineConfigs := existingPipelines[config.GlobalResourceKey]
-
-		configName := fmt.Sprintf("%s.%s.%s", gvr.Resource, gvr.Version, gvr.Group)
-		updatedPipelineConfigs := existingPipelineConfigs
-
-		switch event.Type {
-		case watch.Added:
-			// No need to verify if config is already added because If the config already exists then it indicates the informer has already synced that resource.
-			// Any subsequent updates will have event type as "modified"
-			updatedPipelineConfigs = existingPipelineConfigs.Add(config.PipelineConfig{
-				Name:      configName,
-				PublishTo: config.DefaultPublishingSubject,
-				Events:    []string{"ADDED", "MODIFIED", "DELETED"},
-			})
-		case watch.Deleted:
-			updatedPipelineConfigs = existingPipelineConfigs.Delete(config.PipelineConfig{
-				Name: configName,
-			})
-		}
-		existingPipelines[config.GlobalResourceKey] = updatedPipelineConfigs
-		err = h.Config.SetObject(config.ResourcesKey, existingPipelines)
-		if err != nil {
-			h.Log.Error(err)
-			h.Log.Debug("skipping informer resync")
-			return
-		}
-		h.Log.Debug("Resyncing informer from watch crd")
-		h.channelPool[channels.ReSync].(channels.ReSyncChannel).ReSyncInformer()
 	}
 
 loop:
@@ -372,9 +348,99 @@ loop:
 				h.Log.Debug("meshsync::Handler::watchCRDsIteration crdWatcher.ResultChan() was closed")
 				break loop
 			}
-			processEvent(event)
+			h.handleCRDEvent(event)
 		}
 	}
+}
+
+func (h *Handler) createCRDWatcher(
+	ctx context.Context,
+) (watch.Interface, error) {
+	return h.kubeClient.DynamicKubeClient.Resource(
+		schema.GroupVersionResource{
+			Group:    "apiextensions.k8s.io",
+			Version:  "v1",
+			Resource: "customresourcedefinitions",
+		},
+	).Watch(ctx, metav1.ListOptions{})
+}
+
+func (h *Handler) handleCRDEvent(event watch.Event) {
+	if event.Object == nil {
+		h.Log.Debug("Handler::WatchCRDs::processEvent event.Object is nil, skipping")
+		return
+	}
+
+	crd, data, err := parseCRDEvent(event)
+	if err != nil {
+		h.Log.Error(err)
+		return
+	}
+
+	if len(crd.Spec.Versions) == 0 {
+		h.Log.Debugf(
+			"Handler::WatchCRDs::processEvent: event.Object has empty spec.Versions [%s]",
+			string(data),
+		)
+	}
+
+	gvr := tmpGetGVRForCustomResources(crd)
+	if gvr == nil {
+		return
+	}
+
+	if err := h.updatePipelineConfig(event.Type, gvr); err != nil {
+		h.Log.Error(err)
+		h.Log.Debug("skipping informer resync")
+		return
+	}
+
+	h.Log.Debug("Resyncing informer from watch crd")
+	h.channelPool[channels.ReSync].(channels.ReSyncChannel).ReSyncInformer()
+}
+
+func parseCRDEvent(event watch.Event) (*kubernetes.CRDItem, []byte, error) {
+	data, err := json.Marshal(event.Object)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	crd := &kubernetes.CRDItem{}
+	if err := json.Unmarshal(data, crd); err != nil {
+		return nil, nil, err
+	}
+
+	return crd, data, nil
+}
+
+func (h *Handler) updatePipelineConfig(
+	eventType watch.EventType,
+	gvr *schema.GroupVersionResource,
+) error {
+
+	existing := make(map[string]config.PipelineConfigs)
+	if err := h.Config.GetObject(config.ResourcesKey, &existing); err != nil {
+		return err
+	}
+
+	pipelines := existing[config.GlobalResourceKey]
+	name := fmt.Sprintf("%s.%s.%s", gvr.Resource, gvr.Version, gvr.Group)
+
+	switch eventType {
+	case watch.Added:
+		// No need to verify if config is already added because If the config already exists then it indicates the informer has already synced that resource.
+		// Any subsequent updates will have event type as "modified"
+		pipelines = pipelines.Add(config.PipelineConfig{
+			Name:      name,
+			PublishTo: config.DefaultPublishingSubject,
+			Events:    []string{"ADDED", "MODIFIED", "DELETED"},
+		})
+	case watch.Deleted:
+		pipelines = pipelines.Delete(config.PipelineConfig{Name: name})
+	}
+
+	existing[config.GlobalResourceKey] = pipelines
+	return h.Config.SetObject(config.ResourcesKey, existing)
 }
 
 // TODO: move this to meshkit
