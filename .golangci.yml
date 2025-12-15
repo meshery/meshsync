@@ -12,7 +12,7 @@ linters:
   enable-all: false
   disable-all: false
   enable:
-    # Removed gci from here
+    - gci
     - goconst
     - gocritic
     - govet
