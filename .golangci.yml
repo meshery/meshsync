@@ -23,14 +23,6 @@ linters:
 formatters:
   enable:
     - gci
-  # Optional: add settings for gci here if needed (e.g., local prefixes, sections, etc.)
-  # settings:
-  #   gci:
-  #     local-prefixes: github.com/your-org/your-project
-  #     sections:
-  #       - standard
-  #       - default
-  #       - prefix(github.com/your-org)
 
 issues:
   exclude-dirs:
