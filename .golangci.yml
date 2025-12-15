@@ -1,16 +1,7 @@
 version: 2
 
-linters-settings:
-  cyclop:
-    package-average: 7
-  govet:
-    enable:
-      - shadow
-      - tests
-
 linters:
-  enable-all: false
-  disable-all: false
+  default: none  # Replaces disable-all/enable-all
   enable:
     - gci
     - goconst
@@ -19,7 +10,14 @@ linters:
     - unused
     - cyclop
 
-# Add this new section for formatters
+linters-settings:
+  cyclop:
+    package-average: 7
+  govet:
+    enable:
+      - shadow
+      - tests
+
 formatters:
   enable:
     - gci
