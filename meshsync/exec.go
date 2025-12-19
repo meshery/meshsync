@@ -40,6 +40,23 @@ import (
 // KB stands for KiloByte
 const KB = 1024
 
+// terminalSizeQueueAdapter adapts kubectl's term.TerminalSizeQueue to client-go's remotecommand.TerminalSizeQueue
+type terminalSizeQueueAdapter struct {
+	queue term.TerminalSizeQueue
+}
+
+// Next implements remotecommand.TerminalSizeQueue by converting term.TerminalSize to remotecommand.TerminalSize
+func (a *terminalSizeQueueAdapter) Next() *remotecommand.TerminalSize {
+	termSize := a.queue.Next()
+	if termSize == nil {
+		return nil
+	}
+	return &remotecommand.TerminalSize{
+		Width:  termSize.Width,
+		Height: termSize.Height,
+	}
+}
+
 func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig) error {
 	reqs := make(model.ExecRequests)
 	d, err := utils.Marshal(obj)
@@ -144,7 +161,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 		In:     stdin,
 		Raw:    true,
 	}
-	sizeQueue := t.MonitorSize(t.GetSize())
+	sizeQueue := &terminalSizeQueueAdapter{queue: t.MonitorSize(t.GetSize())}
 
 	// TTY request GoRoutine
 	go func() {
