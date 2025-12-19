@@ -3,6 +3,7 @@ package tests
 import (
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -203,98 +204,118 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 			beforeResync := make(map[string]bool)
 			afterResync := make(map[string]bool)
 
-			const resyncSuccessThreshold = 5
-			var (
-				debounceTimer *time.Timer
-				discoveryDone bool
+			const (
+				discoveryDebounce      = 2 * time.Second
+				resyncSuccessThreshold = 5
 			)
 
-			const discoveryDebounce = 1000 * time.Millisecond
+			var debounceTimer *time.Timer
+			discoveryComplete := make(chan struct{})
+			discoveryOnce := sync.Once{}
+
+			errCh := make(chan error, 1)
 
 			resetDebounce := func() {
 				if debounceTimer != nil {
 					debounceTimer.Stop()
 				}
 				debounceTimer = time.AfterFunc(discoveryDebounce, func() {
-					discoveryDone = true
+					discoveryOnce.Do(func() {
+						close(discoveryComplete)
+					})
 				})
 			}
-
-			resyncRequested := false
-
-			for msg := range out {
-
-				if msg == nil {
-					continue
-				}
-
-				// 1. collect initial objects before resync
-				if !resyncRequested {
-					if msg.EventType == broker.Add ||
-						msg.EventType == broker.Update ||
-						msg.EventType == broker.Delete {
-
-						if msg.Object != nil {
-							kr, err := unmarshalObject(msg.Object)
-							if err == nil && kr.Kind != "" {
-								key := kr.Kind + ":" + kr.KubernetesResourceMeta.Name
-								beforeResync[key] = true
-								resetDebounce()
-							}
-						}
+			// phase 1: discovery
+			go func(errCh0 chan<- error) {
+				for msg := range out {
+					if msg == nil || msg.Object == nil {
+						continue
 					}
-				}
 
-				//  2. wait for initial discovery complete & trigger resync
-				if !resyncRequested && discoveryDone {
+					if msg.EventType != broker.Add &&
+						msg.EventType != broker.Update &&
+						msg.EventType != broker.Delete {
+						continue
+					}
 
-					t.Logf(
-						"Initial discovery quiesced (%d objects). Triggering ReSync…",
-						len(beforeResync),
-					)
-
-					resyncRequested = true
-
-					err := br.Publish(
-						"meshery.meshsync.request",
-						&broker.Message{
-							Request: &broker.RequestObject{
-								Entity: broker.RequestEntity("resync-discovery"),
-							},
-						},
-					)
-
+					kr, err := unmarshalObject(msg.Object)
 					if err != nil {
-						t.Fatalf("failed to publish ReSync request: %v", err)
+						errCh0 <- fmt.Errorf("discovery unmarshal failed: %w", err)
+						return
 					}
 
+					if kr.Kind == "" {
+						continue
+					}
+
+					key := kr.Kind + ":" + kr.KubernetesResourceMeta.Name
+					beforeResync[key] = true
+					resetDebounce()
+
+					select {
+					case <-discoveryComplete:
+						return
+					default:
+					}
+				}
+			}(errCh)
+
+			select {
+			case <-discoveryComplete:
+				t.Logf(
+					"Initial discovery quiesced (%d objects)",
+					len(beforeResync),
+				)
+			case err := <-errCh:
+				t.Fatal(err)
+			}
+
+			// phase 2: trigger resync
+			err := br.Publish(
+				"meshery.meshsync.request",
+				&broker.Message{
+					Request: &broker.RequestObject{
+						Entity: broker.RequestEntity("resync-discovery"),
+					},
+				},
+			)
+			if err != nil {
+				t.Fatalf("failed to publish ReSync request: %v", err)
+			}
+
+			resultData["resync_requested"] = true
+			t.Log("ReSync request published")
+
+			// phase 3: after resync
+			for msg := range out {
+				if msg == nil || msg.Object == nil {
 					continue
 				}
 
-				// 3. collect objects after resync
-				if resyncRequested {
-					if msg.EventType == broker.Add || msg.EventType == broker.Update {
+				if msg.EventType != broker.Add &&
+					msg.EventType != broker.Update {
+					continue
+				}
 
-						if msg.Object != nil {
-							kr, err := unmarshalObject(msg.Object)
-							if err == nil && kr.Kind != "" {
-								key := kr.Kind + ":" + kr.KubernetesResourceMeta.Name
+				kr, err := unmarshalObject(msg.Object)
+				if err != nil {
+					t.Fatalf("post-resync unmarshal failed: %v", err)
+				}
 
-								afterResync[key] = true
-								resultData["last_object"] = kr
-							}
-						}
+				if kr.Kind == "" {
+					continue
+				}
 
-						// Stop once threshold reached
-						if len(afterResync) >= resyncSuccessThreshold {
-							goto DONE
-						}
-					}
+				key := kr.Kind + ":" + kr.KubernetesResourceMeta.Name
+				afterResync[key] = true
+				resultData["last_object"] = kr
+
+				if len(afterResync) >= resyncSuccessThreshold {
+					break
 				}
 			}
 
-		DONE:
-
+			// results
 			matchCount := 0
 			for k := range beforeResync {
 				if afterResync[k] {
@@ -312,7 +333,6 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 				matchCount,
 			)
 		},
-
 		finalHandler: func(t *testing.T, resultData map[string]any) {
 			const minExpectedObjectsAfterResync = 3
 			count := 0
