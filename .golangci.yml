@@ -1,22 +1,3 @@
-version: "2"
-
-run:
-  skip-dirs:
-    - vendor
-    - bundle
-    - config
-    - hack
-    - helpers
-    - img
-
-linters-settings:
-  cyclop:
-    package-average: 7
-  govet:
-    enable:
-      - shadow
-      - tests
-
 # Configuration for golangci-lint that is suitable for a Kubernetes operator project built with Golang
 linters:
   enable:
@@ -26,5 +7,3 @@ linters:
     - govet
     - unused
     - cyclop
-
-issues:
