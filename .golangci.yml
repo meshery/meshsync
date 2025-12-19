@@ -1,4 +1,13 @@
-version: 2
+version: "2"
+
+run:
+  skip-dirs:
+    - vendor
+    - bundle
+    - config
+    - hack
+    - helpers
+    - img
 
 linters-settings:
   cyclop:
@@ -10,8 +19,6 @@ linters-settings:
 
 # Configuration for golangci-lint that is suitable for a Kubernetes operator project built with Golang
 linters:
-  enable-all: false
-  disable-all: false
   enable:
     - gci
     - goconst
@@ -21,10 +28,3 @@ linters:
     - cyclop
 
 issues:
-  exclude-dirs:
-    - vendor
-    - bundle
-    - config
-    - hack
-    - helpers
-    - img
