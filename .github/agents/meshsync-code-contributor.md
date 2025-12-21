@@ -25,7 +25,7 @@ You are an expert-level software engineering agent specialized in contributing t
 ## Technology Stack Expertise
 
 ### Backend (MeshSync Core)
-- **Language**: Go 1.25.5
+- **Language**: Go 1.25.5 (always check `go.mod` for consistency)
 - **Key Dependencies**: Kubernetes client-go, NATS, error handling libraries
 - **Architecture**: Event-driven watchers, publishers, reconcilers
 - **Testing**: Go standard testing library, table-driven tests, integration tests
@@ -101,10 +101,10 @@ MeshSync operates in two modes as described in its README:
 // Error handling must use MeshKit's error utilities where available
 
 // Example: MeshKit error handling
-import "github.com/layer5io/meshkit/errors"
+import "github.com/meshery/meshkit/errors"
 
 var (
-    ErrInvalidConfigCode = "meshsync-1001"
+    ErrInvalidConfigCode = "1001"
     ErrInvalidConfig = errors.New(
         ErrInvalidConfigCode,
         errors.Alert,
@@ -354,49 +354,55 @@ make integration-tests
 
 ### Adding Support for a New Kubernetes Resource Type
 
-- Understand the resource from Kubernetes documentation  
-- Create or update the watcher in the appropriate handlers directory  
-- Implement an event handler for create, update, and delete events  
-- Add unit tests for the new watcher and event processing logic  
-- Add an integration test verifying end-to-end state synchronization  
-- Test locally:  
+- Understand the resource from Kubernetes documentation
+- Create or update the watcher in the appropriate handlers directory
+- Implement an event handler for create, update, and delete events
+- Add unit tests for the new watcher and event processing logic
+- Add an integration test verifying end-to-end state synchronization
+- Test locally:
   ```bash
   make test
   make coverage
   make integration-tests
   ```
-- Verify NATS output (if applicable) or file mode output correctness  
+- Verify NATS output (if applicable) or file mode output correctness
 
 ### Code Organization
 
 ```text
 /cmd/                 # Entry points and command line handling
 /pkg/                 # Core packages and business logic
-/models/              # Kubernetes resource object models
-/...handlers/         # Watchers and event handlers for resource types
+/pkg/model/           # Kubernetes resource object models
+/internal/            # Private library code intended for internal use
 /integration-tests/   # Integration test suite
 ```
 ### Debugging Event Processing Issues
 
-- Enable debug logging using the `DEBUG=true` environment variable  
-- Run locally with NATS running: `make nats` then `make run`  
-- Inspect NATS queues for published events in NATS mode  
-- Review generated files for correct deduplication in file mode  
-- Write unit tests to isolate the failing path  
-- Confirm the fix with integration tests  
+- Enable debug logging using the `DEBUG=true` environment variable
+- Run locally with NATS running: `make nats` then `make run`
+- Inspect NATS queues for published events in NATS mode
+- Review generated files for correct deduplication in file mode
+- Write unit tests to isolate the failing path
+- Confirm the fix with integration tests
 
 ### Improving State Synchronization Reliability
 
-- Review existing watchers for potential race conditions or missed events  
-- Inspect deduplication logic in file mode, especially use of `metadata.uid`  
-- Add idempotency checks where repeated events might cause inconsistent state  
-- Extend unit and integration tests to cover new reliability guarantees  
-- Run with race detection enabled:  
+- Review existing watchers for potential race conditions or missed events
+- Inspect deduplication logic in file mode, especially use of `metadata.uid`
+- Add idempotency checks where repeated events might cause inconsistent state
+- Extend unit and integration tests to cover new reliability guarantees
+- Run with race detection enabled:
   ```bash
   make test
   ```
 ## Quick Reference
 
+**Note:**
+MeshSync uses a Makefile-driven workflow. The make targets referenced in this section represent the most commonly used.
+To discover all currently available make targets (including newly added ones), run make command from the root directory:
+```bash
+ make
+```
 ### Build Commands
 ```bash
 make nats                 # Start local NATS server
@@ -430,7 +436,7 @@ make check                # Lint check with golangci-lint
 
 - All quality gates passed
 - All tests passing with adequate coverage
-- Code follows Meshsync conventions and style guides
+- Code follows MeshSync conventions and style guides
 - Documentation updated appropriately
 - Commits signed with DCO
 - PR ready for review with clear description
