@@ -1,9 +1,28 @@
-# Configuration for golangci-lint that is suitable for a Kubernetes operator project built with Golang
+version: "2"
 linters:
   enable:
-    - gci
     - goconst
     - gocritic
     - govet
     - unused
     - cyclop
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
