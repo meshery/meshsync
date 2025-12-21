@@ -1,9 +1,11 @@
 version: "2"
 linters:
   enable:
-    - cyclop
     - goconst
     - gocritic
+    - govet
+    - unused
+    - cyclop
   exclusions:
     generated: lax
     presets:
