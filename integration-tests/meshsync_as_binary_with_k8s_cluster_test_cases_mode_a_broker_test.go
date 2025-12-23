@@ -205,23 +205,35 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 			afterResync := make(map[string]bool)
 
 			const (
-				discoveryDebounce      = 2 * time.Second
-				resyncSuccessThreshold = 5
+				discoveryDebounce = 2 * time.Second
+				resyncDebounce    = 2 * time.Second
 			)
 
-			var debounceTimer *time.Timer
-			discoveryComplete := make(chan struct{})
-			discoveryOnce := sync.Once{}
+			var (
+				discoveryTimer *time.Timer
+				resyncTimer    *time.Timer
+
+				discoveryOnce sync.Once
+				resyncOnce    sync.Once
+
+				discoveryComplete = make(chan struct{})
+				resyncComplete    = make(chan struct{})
+			)
 
 			errCh := make(chan error, 1)
 
-			resetDebounce := func() {
-				if debounceTimer != nil {
-					debounceTimer.Stop()
+			resetDebounce := func(
+				timer **time.Timer,
+				debounce time.Duration,
+				once *sync.Once,
+				done chan struct{},
+			) {
+				if *timer != nil {
+					(*timer).Stop()
 				}
-				debounceTimer = time.AfterFunc(discoveryDebounce, func() {
-					discoveryOnce.Do(func() {
-						close(discoveryComplete)
+				*timer = time.AfterFunc(debounce, func() {
+					once.Do(func() {
+						close(done)
 					})
 				})
 			}
@@ -250,8 +262,13 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 
 					key := kr.Kind + ":" + kr.KubernetesResourceMeta.Name
 					beforeResync[key] = true
-					resetDebounce()
-
+					// debounce discovery completion
+					resetDebounce(
+						&discoveryTimer,
+						discoveryDebounce,
+						&discoveryOnce,
+						discoveryComplete,
+					)
 					select {
 					case <-discoveryComplete:
 						return
@@ -287,31 +304,48 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 			t.Log("ReSync request published")
 
 			// phase 3: after resync
-			for msg := range out {
-				if msg == nil || msg.Object == nil {
-					continue
-				}
+			resyncDone := false
 
-				if msg.EventType != broker.Add &&
-					msg.EventType != broker.Update {
-					continue
-				}
+			for !resyncDone {
+				select {
+				case msg, ok := <-out:
+					if !ok {
+						// channel closed, we're done
+						break
+					}
 
-				kr, err := unmarshalObject(msg.Object)
-				if err != nil {
-					t.Fatalf("post-resync unmarshal failed: %v", err)
-				}
+					if msg == nil || msg.Object == nil {
+						continue
+					}
 
-				if kr.Kind == "" {
-					continue
-				}
+					if msg.EventType != broker.Add &&
+						msg.EventType != broker.Update {
+						continue
+					}
 
-				key := kr.Kind + ":" + kr.KubernetesResourceMeta.Name
-				afterResync[key] = true
-				resultData["last_object"] = kr
+					kr, err := unmarshalObject(msg.Object)
+					if err != nil {
+						t.Fatalf("post-resync unmarshal failed: %v", err)
+					}
 
-				if len(afterResync) >= resyncSuccessThreshold {
-					break
+					if kr.Kind == "" {
+						continue
+					}
+
+					key := kr.Kind + ":" + kr.KubernetesResourceMeta.Name
+					afterResync[key] = true
+					resultData["last_object"] = kr
+
+					// debounce resync completion
+					resetDebounce(
+						&resyncTimer,
+						resyncDebounce,
+						&resyncOnce,
+						resyncComplete,
+					)
+
+				case <-resyncComplete:
+					resyncDone = true
 				}
 			}
 
