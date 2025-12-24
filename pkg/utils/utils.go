@@ -40,7 +40,7 @@ func GetClusterID(kubeClient *kubernetes.Clientset) string {
 		return ""
 	}
 
-	uid := string(ksns.ObjectMeta.GetUID())
+	uid := string(ksns.GetUID())
 	cachedMapOfClusterID[kubeClient] = &uid
 
 	return *cachedMapOfClusterID[kubeClient]
