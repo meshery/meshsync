@@ -2,21 +2,17 @@ package config
 
 // test for empty blacklist/whitelist
 import (
-	"context"
 	"reflect"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/dynamic/fake"
 )
 
 var (
-	Kind         string = "MeshSync"
-	APIVersion   string = "meshery.io/v1alpha1"
-	URL          string = "https://meshery.io"
-	fakeDyClient *fake.FakeDynamicClient
-	ctx          = context.Background()
+	Kind       string = "MeshSync"
+	APIVersion string = "meshery.io/v1alpha1"
+	URL        string = "https://meshery.io"
 )
 
 func TestWhiteListResources(t *testing.T) {
@@ -107,8 +103,8 @@ func TestBlackListResources(t *testing.T) {
 	// excempted local pipelines: pods, replicasets
 
 	// counting expected pipelines after blacklist
-	expectedGlobalCount := len(Pipelines[GlobalResourceKey]) - 1 //excluding namespaces
-	expectedLocalCount := len(Pipelines[LocalResourceKey]) - 2   //excluding pods, replicasets
+	expectedGlobalCount := len(Pipelines[GlobalResourceKey]) - 1 // excluding namespaces
+	expectedLocalCount := len(Pipelines[LocalResourceKey]) - 2   // excluding pods, replicasets
 
 	if len(meshsyncConfig.Pipelines["global"]) != expectedGlobalCount {
 		t.Errorf("global pipelines not well configured expected %d", expectedGlobalCount)
