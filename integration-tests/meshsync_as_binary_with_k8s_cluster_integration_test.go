@@ -84,7 +84,7 @@ func runMeshsyncBinaryWithK8sClusterTestCase(
 		// Step 2: process messages
 		resultData := make(map[string]any)
 		if tc.brokerMessageHandler != nil {
-			go tc.brokerMessageHandler(t, out, resultData)
+			go tc.brokerMessageHandler(t, br, out, resultData)
 		}
 
 		os.Setenv("BROKER_URL", testMeshsyncNatsURL)
