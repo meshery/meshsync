@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -21,8 +22,8 @@ var (
 	namespace = "meshery"          // Namespace for the Custom Resource
 	crName    = "meshery-meshsync" // Name of the custom resource
 	version   = "v1alpha1"         // Version of the Custom Resource
-	group     = "meshery.io"       //Group for the Custom Resource
-	resource  = "meshsyncs"        //Name of the Resource
+	group     = "meshery.io"       // Group for the Custom Resource
+	resource  = "meshsyncs"        // Name of the Resource
 )
 
 func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) {
@@ -34,17 +35,17 @@ func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) 
 	}
 
 	if crd == nil {
-		return nil, ErrInitConfig(errors.New("Custom Resource is nil"))
+		return nil, ErrInitConfig(errors.New("custom Resource is nil"))
 	}
 
 	spec := crd.Object["spec"]
 	specMap, ok := spec.(map[string]interface{})
 	if !ok {
-		return nil, ErrInitConfig(errors.New("Unable to convert spec to map"))
+		return nil, ErrInitConfig(errors.New("unable to convert spec to map"))
 	}
 	configObj := specMap["watch-list"]
 	if configObj == nil {
-		return nil, ErrInitConfig(errors.New("Custom Resource does not have Meshsync Configs"))
+		return nil, ErrInitConfig(errors.New("custom Resource does not have Meshsync Configs"))
 	}
 	configStr, err := utils.Marshal(configObj)
 	if err != nil {
@@ -52,7 +53,7 @@ func GetMeshsyncCRDConfigs(dyClient dynamic.Interface) (*MeshsyncConfig, error) 
 	}
 
 	configMap := corev1.ConfigMap{}
-	err = utils.Unmarshal(string(configStr), &configMap)
+	err = json.Unmarshal([]byte(configStr), &configMap)
 
 	if err != nil {
 		return nil, ErrInitConfig(err)
@@ -93,97 +94,105 @@ func PopulateConfigs(configMap corev1.ConfigMap) (*MeshsyncConfig, error) {
 func PopulateConfigsFromMap(data map[string]string) (*MeshsyncConfig, error) {
 	meshsyncConfig := &MeshsyncConfig{}
 
-	if _, ok := data["blacklist"]; ok {
-		if len(data["blacklist"]) > 0 {
-			err := utils.Unmarshal(data["blacklist"], &meshsyncConfig.BlackList)
-			if err != nil {
-				return nil, ErrInitConfig(err)
-			}
-		}
+	// Populate whitelist and blacklist from input data
+	if err := populateList(data, "blacklist", &meshsyncConfig.BlackList); err != nil {
+		return nil, ErrInitConfig(err)
+	}
+	if err := populateList(data, "whitelist", &meshsyncConfig.WhiteList); err != nil {
+		return nil, ErrInitConfig(err)
 	}
 
-	if _, ok := data["whitelist"]; ok {
-		if len(data["whitelist"]) > 0 {
-			err := utils.Unmarshal(data["whitelist"], &meshsyncConfig.WhiteList)
-			if err != nil {
-				return nil, ErrInitConfig(err)
-			}
-		}
+	// Validate whitelist/blacklist
+	if err := validateLists(meshsyncConfig); err != nil {
+		return nil, ErrInitConfig(err)
 	}
 
-	// ensure that atleast one of whitelist or blacklist has been supplied
-	if len(meshsyncConfig.BlackList) == 0 && len(meshsyncConfig.WhiteList) == 0 {
-		return nil, ErrInitConfig(errors.New("Both whitelisted and blacklisted resources missing"))
-	}
-
-	// ensure that only one of whitelist or blacklist has been supplied
-	if len(meshsyncConfig.BlackList) != 0 && len(meshsyncConfig.WhiteList) != 0 {
-		return nil, ErrInitConfig(errors.New("Both whitelisted and blacklisted resources not currently supported"))
-	}
-
-	// Handle global resources
-	globalPipelines := make(PipelineConfigs, 0)
-	localPipelines := make(PipelineConfigs, 0)
-
+	// Populate pipelines based on whitelist/blacklist
 	if len(meshsyncConfig.WhiteList) != 0 {
-		for _, v := range Pipelines[GlobalResourceKey] {
-			if idx := slices.IndexFunc(meshsyncConfig.WhiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
-				config := meshsyncConfig.WhiteList[idx]
-				v.Events = config.Events
-				globalPipelines = append(globalPipelines, v)
-			}
-		}
-		if len(globalPipelines) > 0 {
-			meshsyncConfig.Pipelines = map[string]PipelineConfigs{}
-			meshsyncConfig.Pipelines[GlobalResourceKey] = globalPipelines
-		}
-
-		// Handle local resources
-		for _, v := range Pipelines[LocalResourceKey] {
-			if idx := slices.IndexFunc(meshsyncConfig.WhiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
-				config := meshsyncConfig.WhiteList[idx]
-				v.Events = config.Events
-				localPipelines = append(localPipelines, v)
-			}
-		}
-
-		if len(localPipelines) > 0 {
-			if meshsyncConfig.Pipelines == nil {
-				meshsyncConfig.Pipelines = make(map[string]PipelineConfigs)
-			}
-			meshsyncConfig.Pipelines[LocalResourceKey] = localPipelines
-		}
-
+		populatePipelinesFromWhiteList(meshsyncConfig)
 	} else {
-
-		for _, v := range Pipelines[GlobalResourceKey] {
-			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx == -1 {
-				v.Events = DefaultEvents
-				globalPipelines = append(globalPipelines, v)
-			}
-		}
-		if len(globalPipelines) > 0 {
-			meshsyncConfig.Pipelines = map[string]PipelineConfigs{}
-			meshsyncConfig.Pipelines[GlobalResourceKey] = globalPipelines
-		}
-
-		// Handle local resources
-		for _, v := range Pipelines[LocalResourceKey] {
-			if idx := slices.IndexFunc(meshsyncConfig.BlackList, func(c string) bool { return c == v.Name }); idx == -1 {
-				v.Events = DefaultEvents
-				localPipelines = append(localPipelines, v)
-			}
-		}
-
-		if len(localPipelines) > 0 {
-			if meshsyncConfig.Pipelines == nil {
-				meshsyncConfig.Pipelines = make(map[string]PipelineConfigs)
-			}
-			meshsyncConfig.Pipelines[LocalResourceKey] = localPipelines
-		}
+		populatePipelinesFromBlackList(meshsyncConfig)
 	}
 
 	return meshsyncConfig, nil
+}
+
+// Populate either whitelist or blacklist from map
+func populateList(data map[string]string, key string, target any) error {
+	if val, ok := data[key]; ok && len(val) > 0 {
+		if err := json.Unmarshal([]byte(val), target); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Validate that exactly one of whitelist or blacklist is set
+func validateLists(cfg *MeshsyncConfig) error {
+	if len(cfg.BlackList) == 0 && len(cfg.WhiteList) == 0 {
+		return errors.New("both whitelisted and blacklisted resources missing")
+	}
+	if len(cfg.BlackList) != 0 && len(cfg.WhiteList) != 0 {
+		return errors.New("both whitelisted and blacklisted resources not currently supported")
+	}
+	return nil
+}
+
+// Populate pipelines for whitelist case
+func populatePipelinesFromWhiteList(cfg *MeshsyncConfig) {
+	globalPipelines := filterWhitelistedPipelines(Pipelines[GlobalResourceKey], cfg.WhiteList)
+	localPipelines := filterWhitelistedPipelines(Pipelines[LocalResourceKey], cfg.WhiteList)
+
+	if len(globalPipelines) > 0 || len(localPipelines) > 0 {
+		cfg.Pipelines = make(map[string]PipelineConfigs)
+	}
+	if len(globalPipelines) > 0 {
+		cfg.Pipelines[GlobalResourceKey] = globalPipelines
+	}
+	if len(localPipelines) > 0 {
+		cfg.Pipelines[LocalResourceKey] = localPipelines
+	}
+}
+
+// Filter pipelines based on whitelist
+func filterWhitelistedPipelines(pipelines PipelineConfigs, whiteList []ResourceConfig) PipelineConfigs {
+	result := make(PipelineConfigs, 0)
+	for _, v := range pipelines {
+		if idx := slices.IndexFunc(whiteList, func(c ResourceConfig) bool { return c.Resource == v.Name }); idx != -1 {
+			config := whiteList[idx]
+			v.Events = config.Events
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
+// Populate pipelines for blacklist case
+func populatePipelinesFromBlackList(cfg *MeshsyncConfig) {
+	globalPipelines := filterBlacklistedPipelines(Pipelines[GlobalResourceKey], cfg.BlackList)
+	localPipelines := filterBlacklistedPipelines(Pipelines[LocalResourceKey], cfg.BlackList)
+
+	if len(globalPipelines) > 0 || len(localPipelines) > 0 {
+		cfg.Pipelines = make(map[string]PipelineConfigs)
+	}
+	if len(globalPipelines) > 0 {
+		cfg.Pipelines[GlobalResourceKey] = globalPipelines
+	}
+	if len(localPipelines) > 0 {
+		cfg.Pipelines[LocalResourceKey] = localPipelines
+	}
+}
+
+// Filter pipelines based on blacklist
+func filterBlacklistedPipelines(pipelines PipelineConfigs, blackList []string) PipelineConfigs {
+	result := make(PipelineConfigs, 0)
+	for _, v := range pipelines {
+		if idx := slices.IndexFunc(blackList, func(c string) bool { return c == v.Name }); idx == -1 {
+			v.Events = DefaultEvents
+			result = append(result, v)
+		}
+	}
+	return result
 }
 
 func PatchCRVersion(config *rest.Config) error {
