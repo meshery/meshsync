@@ -199,7 +199,7 @@ func filterBlacklistedPipelines(pipelines PipelineConfigs, blackList []string) P
 
 // PatchCRVersion updates the MeshSync CR version safely.
 // It uses Controller Runtime patterns for idempotency and conflict handling.
-func PatchCRVersion(config *rest.Config) error {
+func PatchCRVersion(ctx context.Context, config *rest.Config) error {
 	// 1. Init Controller Runtime Client
 	cl, err := ctrlclient.New(config, ctrlclient.Options{})
 	if err != nil {
