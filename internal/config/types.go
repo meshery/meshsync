@@ -33,7 +33,7 @@ func (p PipelineConfigs) Add(pc PipelineConfig) PipelineConfigs {
 func (p PipelineConfigs) Delete(pc PipelineConfig) PipelineConfigs {
 	for index, pipelineConfig := range p {
 		if pipelineConfig.Name == pc.Name {
-			p = slices.Delete[PipelineConfigs](p, index, index+1)
+			p = slices.Delete(p, index, index+1)
 			break
 		}
 	}

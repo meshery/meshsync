@@ -71,9 +71,13 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	}
 
 	if useCRDFlag {
-		// this patch only make sense when CRD is present when in cluster
-		if errPatchCRVersion := config.PatchCRVersion(&kubeClient.RestConfig); errPatchCRVersion != nil {
-			log.Warnf("meshsync: %v", errPatchCRVersion)
+		// Only attempt to patch MeshSync CR/version if the MeshSync CR object exists.
+		if _, errGetCR := config.GetMeshsyncCRD(kubeClient.DynamicKubeClient); errGetCR == nil {
+			if errPatchCRVersion := config.PatchCRVersion(&kubeClient.RestConfig); errPatchCRVersion != nil {
+				log.Warnf("meshsync: %v", errPatchCRVersion)
+			}
+		} else {
+			log.Debugf("meshsync: skipping PatchCRVersion because MeshSync CR not found: %v", errGetCR)
 		}
 	}
 
