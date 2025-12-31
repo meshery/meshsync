@@ -7,7 +7,6 @@ go 1.25.5
 require (
 	github.com/buger/jsonparser v1.1.1
 	github.com/google/uuid v1.6.0
-	github.com/meshery/meshery-operator v0.8.11
 	github.com/meshery/meshkit v0.8.54
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/sirupsen/logrus v1.9.3
@@ -21,6 +20,7 @@ require (
 	k8s.io/apimachinery v0.34.2
 	k8s.io/client-go v0.34.2
 	k8s.io/kubectl v0.34.2
+	sigs.k8s.io/controller-runtime v0.20.1
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -50,6 +50,7 @@ require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
+	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -113,6 +114,8 @@ require (
 	github.com/nats-io/nkeys v0.4.9 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/oapi-codegen/runtime v1.1.2 // indirect
+	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
+	github.com/onsi/gomega v1.36.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
@@ -166,7 +169,6 @@ require (
 	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
 	k8s.io/utils v0.0.0-20250604170112-4c0f3b243397 // indirect
 	oras.land/oras-go/v2 v2.6.0 // indirect
-	sigs.k8s.io/controller-runtime v0.20.1 // indirect
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8 // indirect
 	sigs.k8s.io/kustomize/api v0.20.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.20.1 // indirect

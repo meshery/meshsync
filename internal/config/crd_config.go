@@ -6,16 +6,18 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/meshery/meshery-operator/pkg/client"
 	"github.com/meshery/meshkit/utils"
 	"golang.org/x/exp/slices"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/util/retry"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var (
@@ -195,24 +197,57 @@ func filterBlacklistedPipelines(pipelines PipelineConfigs, blackList []string) P
 	return result
 }
 
+// PatchCRVersion updates the MeshSync CR version safely.
+// It uses Controller Runtime patterns for idempotency and conflict handling.
 func PatchCRVersion(config *rest.Config) error {
-	meshsyncClient, err := client.New(config)
+	// 1. Init Controller Runtime Client
+	cl, err := ctrlclient.New(config, ctrlclient.Options{})
 	if err != nil {
-		return ErrInitConfig(fmt.Errorf("unable to update MeshSync configuration"))
+		return ErrInitConfig(fmt.Errorf("unable to create controller-runtime client: %w", err))
 	}
 
-	patchedResource := map[string]interface{}{
-		"spec": map[string]interface{}{
-			"version": Server["version"],
-		},
-	}
-	byt, err := utils.Marshal(patchedResource)
-	if err != nil {
-		return ErrInitConfig(fmt.Errorf("unable to update MeshSync configuration"))
-	}
-	_, err = meshsyncClient.CoreV1Alpha1().MeshSyncs("meshery").Patch(context.TODO(), crName, types.MergePatchType, []byte(byt), metav1.PatchOptions{})
-	if err != nil {
-		return ErrInitConfig(fmt.Errorf("unable to update MeshSync configuration"))
-	}
-	return nil
+	// 2. Define the Object (Using Unstructured to avoid circular dependencies)
+	obj := &unstructured.Unstructured{}
+	obj.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   group,
+		Version: version,
+		Kind:    "MeshSync",
+	})
+
+	key := types.NamespacedName{Name: crName, Namespace: namespace}
+
+	// 3. Retry Logic (Standard Kubernetes RetryOnConflict)
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		// Fetch current CR
+		if err := cl.Get(context.TODO(), key, obj); err != nil {
+			if k8serrors.IsNotFound(err) {
+				// GUARD: CR doesn't exist, so we skip patching (Fixes #422)
+				return nil
+			}
+			// Use existing error pattern
+			return ErrInitConfig(fmt.Errorf("unable to get MeshSync CR %s/%s: %w", namespace, crName, err))
+		}
+
+		// Idempotency: Check if version already matches
+		specVersion, found, _ := unstructured.NestedString(obj.Object, "spec", "version")
+		if found && specVersion == Server["version"] {
+			// Version already matches, no update needed
+			return nil
+		}
+
+		// Prepare Patch (MergeFrom handles JSON generation automatically)
+		patch := ctrlclient.MergeFrom(obj.DeepCopy())
+
+		// Update the version field in the object
+		if err := unstructured.SetNestedField(obj.Object, Server["version"], "spec", "version"); err != nil {
+			return ErrInitConfig(fmt.Errorf("unable to set version field: %w", err))
+		}
+
+		// Apply Patch
+		if err := cl.Patch(context.TODO(), obj, patch); err != nil {
+			return err // RetryOnConflict will catch this and retry if it's a conflict
+		}
+
+		return nil
+	})
 }
