@@ -6,6 +6,9 @@ linters:
     - govet
     - unused
     - cyclop
+  settings:
+    staticcheck:
+      checks: ["all", "-ST1005"]
   exclusions:
     generated: lax
     presets:
