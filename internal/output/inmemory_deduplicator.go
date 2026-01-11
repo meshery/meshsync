@@ -22,14 +22,14 @@ type InMemoryDeduplicatorWriter struct {
 	// as model.KubernetesResource.KubernetesResourceMeta could be nil
 	// treat such entities as unique
 	// and just put them in this slice
-	storageIfNoMetaUid []*inMemoryDeduplicatorContainer
+	storageIfNoMetaUID []*inMemoryDeduplicatorContainer
 }
 
 func NewInMemoryDeduplicatorWriter(realWritter Writer) *InMemoryDeduplicatorWriter {
 	return &InMemoryDeduplicatorWriter{
 		realWritter:        realWritter,
 		storage:            make(map[string]*inMemoryDeduplicatorContainer),
-		storageIfNoMetaUid: make([]*inMemoryDeduplicatorContainer, 0, 128),
+		storageIfNoMetaUID: make([]*inMemoryDeduplicatorContainer, 0, 128),
 	}
 }
 
@@ -55,7 +55,7 @@ func (w *InMemoryDeduplicatorWriter) Write(
 	if uid != "" {
 		w.storage[uid] = entity
 	} else {
-		w.storageIfNoMetaUid = append(w.storageIfNoMetaUid, entity)
+		w.storageIfNoMetaUID = append(w.storageIfNoMetaUID, entity)
 	}
 
 	return nil
@@ -65,12 +65,12 @@ func (w *InMemoryDeduplicatorWriter) Flush() error {
 	w.mu.Lock()
 	// Quickly copy the data and reset the maps under lock.
 	storageToFlush := w.storage
-	storageIfNoMetaUidToFlush := w.storageIfNoMetaUid
+	storageIfNoMetaUIDToFlush := w.storageIfNoMetaUID
 	w.storage = make(map[string]*inMemoryDeduplicatorContainer)
-	w.storageIfNoMetaUid = make([]*inMemoryDeduplicatorContainer, 0)
+	w.storageIfNoMetaUID = make([]*inMemoryDeduplicatorContainer, 0)
 	w.mu.Unlock()
 
-	errs := make([]error, 0, len(storageToFlush)+len(storageIfNoMetaUidToFlush))
+	errs := make([]error, 0, len(storageToFlush)+len(storageIfNoMetaUIDToFlush))
 
 	// Perform slow I/O operations on the copied data without holding the lock.
 	for _, v := range storageToFlush {
@@ -79,7 +79,7 @@ func (w *InMemoryDeduplicatorWriter) Flush() error {
 		}
 	}
 
-	for _, v := range storageIfNoMetaUidToFlush {
+	for _, v := range storageIfNoMetaUIDToFlush {
 		if err := w.realWritter.Write(v.obj, v.evtype, v.config); err != nil {
 			errs = append(errs, err)
 		}
