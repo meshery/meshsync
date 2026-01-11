@@ -67,7 +67,7 @@ func (w *InMemoryDeduplicatorWriter) Flush() error {
 	storageToFlush := w.storage
 	storageIfNoMetaUIDToFlush := w.storageIfNoMetaUID
 	w.storage = make(map[string]*inMemoryDeduplicatorContainer)
-	w.storageIfNoMetaUID = make([]*inMemoryDeduplicatorContainer, 0)
+	w.storageIfNoMetaUID = w.storageIfNoMetaUID[:0]
 	w.mu.Unlock()
 
 	errs := make([]error, 0, len(storageToFlush)+len(storageIfNoMetaUIDToFlush))
