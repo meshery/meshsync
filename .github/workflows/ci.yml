@@ -28,7 +28,6 @@ jobs:
         with:
           args:  --timeout=5m
   test:
-    needs: golangci-lint
     name: Unit tests
     if: github.repository == 'meshery/meshsync'
     runs-on: ubuntu-24.04
