@@ -1,6 +1,7 @@
 package meshsync
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -12,7 +13,6 @@ import (
 	"github.com/meshery/meshsync/internal/channels"
 	"github.com/meshery/meshsync/internal/config"
 	"github.com/meshery/meshsync/pkg/model"
-	"golang.org/x/net/context"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"

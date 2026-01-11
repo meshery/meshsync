@@ -16,6 +16,7 @@ package meshsync
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -29,7 +30,6 @@ import (
 	"github.com/meshery/meshsync/internal/channels"
 	"github.com/meshery/meshsync/internal/config"
 	"github.com/meshery/meshsync/pkg/model"
-	"golang.org/x/net/context"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
