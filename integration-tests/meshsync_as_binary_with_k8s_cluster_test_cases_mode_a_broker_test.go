@@ -12,10 +12,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	stopAfterFlag       = "--stopAfter"
+	agileOtterNamespace = "agile-otter"
+)
+
 var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8SClusterTestsCasesStruct = []meshsyncBinaryWithK8SClusterTestsCasesStruct{
 	{
 		name:            "output mode broker: number of messages received from broker is greater than zero",
-		meshsyncCMDArgs: []string{"--stopAfter", "8s"},
+		meshsyncCMDArgs: []string{stopAfterFlag, "8s"},
 		brokerMessageHandler: func(
 			t *testing.T,
 			br broker.Handler,
@@ -44,7 +49,7 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 	{
 		name: "output mode broker: receive from broker only specified resources",
 		meshsyncCMDArgs: []string{
-			"--stopAfter",
+			stopAfterFlag,
 			"8s",
 			"--outputResources",
 			"pod,replicaset",
@@ -105,10 +110,10 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 	{
 		name: "output mode broker: receive from broker only resources from specified namespace",
 		meshsyncCMDArgs: []string{
-			"--stopAfter",
+			stopAfterFlag,
 			"8s",
 			"--outputNamespaces",
-			"agile-otter",
+			agileOtterNamespace,
 		},
 		brokerMessageHandler: func(
 			t *testing.T,
@@ -143,7 +148,7 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 			count, ok := resultData["count"].(map[string]int)
 			assert.True(t, ok, "must get count from result map")
 			if ok {
-				allowedKeys := map[string]bool{"agile-otter": true}
+				allowedKeys := map[string]bool{agileOtterNamespace: true}
 				otherKeys := make([]string, 0)
 				for k, v := range count {
 					t.Logf("received %d messages for namespace %s", v, k)
@@ -154,7 +159,7 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 						)
 					}
 				}
-				assert.True(t, count["agile-otter"] > 0, "must receive messages from resources in agile-otter namespace")
+				assert.True(t, count[agileOtterNamespace] > 0, "must receive messages from resources in agile-otter namespace")
 
 				if len(otherKeys) > 0 {
 					t.Fatalf("received not allowed namespace keys %s", strings.Join(otherKeys, ","))
@@ -167,7 +172,7 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 		name: "output mode broker: must not fail with a --broker-url param",
 		meshsyncCMDArgs: []string{
 			"--broker-url", "10.96.235.19:4222",
-			"--stopAfter", "8s",
+			stopAfterFlag, "8s",
 		},
 		brokerMessageHandler: func(
 			t *testing.T,
@@ -196,7 +201,7 @@ var meshsyncBinaryWithK8SClusterBrokerModeTestsCasesData []meshsyncBinaryWithK8S
 	},
 	{
 		name:            "meshsync handles ReSync request and republishes cluster data",
-		meshsyncCMDArgs: []string{"--stopAfter", "25s"},
+		meshsyncCMDArgs: []string{stopAfterFlag, "25s"},
 
 		brokerMessageHandler: func(t *testing.T, br broker.Handler, out chan *broker.Message, resultData map[string]any) {
 			t.Helper()

@@ -12,44 +12,44 @@ var (
 		"startedat": time.Now().String(),
 	}
 
-	DefaultPublishingSubject = "meshery.meshsync.core"
+	DefaultPublishingSubject = meshsyncCoreTopic
 
 	Pipelines = map[string]PipelineConfigs{
 		GlobalResourceKey: []PipelineConfig{
 			// Core Resources
 			{
-				Name:      "namespaces.v1.",
+				Name:      namespacesResource,
 				PublishTo: DefaultPublishingSubject,
 			},
 			{
 				Name:      "configmaps.v1.",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: meshsyncCoreTopic,
 			},
 			{
 				Name:      "nodes.v1.",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: meshsyncCoreTopic,
 			},
 			{
 				Name:      "secrets.v1.",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: meshsyncCoreTopic,
 			},
 			{
 				Name:      "persistentvolumes.v1.",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: meshsyncCoreTopic,
 			},
 			{
 				Name:      "persistentvolumeclaims.v1.",
-				PublishTo: "meshery.meshsync.core",
+				PublishTo: meshsyncCoreTopic,
 			},
 		},
 		LocalResourceKey: []PipelineConfig{
 			// Core Resources
 			{
-				Name:      "replicasets.v1.apps",
+				Name:      replicasetsResource,
 				PublishTo: DefaultPublishingSubject,
 			},
 			{
-				Name:      "pods.v1.",
+				Name:      podsResource,
 				PublishTo: DefaultPublishingSubject,
 			},
 			{
@@ -385,5 +385,5 @@ var (
 		},
 	}
 
-	DefaultEvents = []string{"ADD", "UPDATE", "DELETE"}
+	DefaultEvents = []string{"ADD", "UPDATE", deleteEvent}
 )
