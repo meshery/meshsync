@@ -28,8 +28,8 @@ func TestWhiteListResources(t *testing.T) {
 			Namespace: "default",
 		},
 		Data: map[string]string{
-			blacklistKey: "",
-			whitelistKey: "[{\"Resource\":\"namespaces.v1.\",\"Events\":[\"ADDED\",\"DELETE\"]},{\"Resource\":\"replicasets.v1.apps\",\"Events\":[\"ADDED\",\"DELETE\"]},{\"Resource\":\"pods.v1.\",\"Events\":[\"MODIFIED\"]}]",
+			BlacklistKey: "",
+			WhitelistKey: "[{\"Resource\":\"namespaces.v1.\",\"Events\":[\"ADDED\",\"DELETE\"]},{\"Resource\":\"replicasets.v1.apps\",\"Events\":[\"ADDED\",\"DELETE\"]},{\"Resource\":\"pods.v1.\",\"Events\":[\"MODIFIED\"]}]",
 		},
 	}
 
@@ -43,9 +43,9 @@ func TestWhiteListResources(t *testing.T) {
 		t.Errorf("WhiteListed resources not correctly deserialized")
 	}
 	expectedWhiteList := []ResourceConfig{
-		{Resource: namespacesResource, Events: []string{"ADDED", deleteEvent}},
-		{Resource: replicasetsResource, Events: []string{"ADDED", deleteEvent}},
-		{Resource: podsResource, Events: []string{"MODIFIED"}},
+		{Resource: NamespacesResource, Events: []string{"ADDED", DeleteEvent}},
+		{Resource: ReplicasetsResource, Events: []string{"ADDED", DeleteEvent}},
+		{Resource: PodsResource, Events: []string{"MODIFIED"}},
 	}
 
 	if !reflect.DeepEqual(meshsyncConfig.WhiteList, expectedWhiteList) {
@@ -78,8 +78,8 @@ func TestBlackListResources(t *testing.T) {
 			Namespace: "default",
 		},
 		Data: map[string]string{
-			blacklistKey: "[\"namespaces.v1.\",\"replicasets.v1.apps\",\"pods.v1.\"]",
-			whitelistKey: "",
+			BlacklistKey: "[\"namespaces.v1.\",\"replicasets.v1.apps\",\"pods.v1.\"]",
+			WhitelistKey: "",
 		},
 	}
 
@@ -93,7 +93,7 @@ func TestBlackListResources(t *testing.T) {
 		t.Errorf("Blacklisted resources not correctly deserialized")
 	}
 
-	expectedBlackList := []string{namespacesResource, replicasetsResource, podsResource}
+	expectedBlackList := []string{NamespacesResource, ReplicasetsResource, PodsResource}
 	if !reflect.DeepEqual(meshsyncConfig.BlackList, expectedBlackList) {
 		t.Error("BlackListed resources not equal")
 	}
