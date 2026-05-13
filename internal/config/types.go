@@ -21,13 +21,6 @@ const (
 	InformerStore     = "informer-store"
 	OutputModeBroker  = "broker"
 	OutputModeFile    = "file"
-	WhitelistKey       = "whitelist"
-	BlacklistKey       = "blacklist"
-	DeleteEvent        = "DELETE"
-	NamespacesResource = "namespaces.v1."
-	ReplicasetsResource = "replicasets.v1.apps"
-	PodsResource       = "pods.v1."
-	MeshsyncCoreTopic  = "meshery.meshsync.core"
 )
 
 type PipelineConfigs []PipelineConfig
@@ -125,3 +118,13 @@ func NewOutputFiltrationContainer(
 		ResourceSet:  resourceSet,
 	}
 }
+
+const (
+	WhitelistKey        = "whitelist"
+	BlacklistKey        = "blacklist"
+	DeleteEvent         = "DELETE"
+	NamespacesResource  = "namespaces.v1."
+	ReplicasetsResource = "replicasets.v1.apps"
+	PodsResource        = "pods.v1."
+	MeshsyncCoreTopic   = "meshery.meshsync.core"
+)
