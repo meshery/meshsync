@@ -15,7 +15,7 @@ var meshSyncBinaryWithK8SClusterFileModeTestCasesData []meshsyncBinaryWithK8SClu
 	{
 		name: "output mode file: must not receive message from queue",
 		meshsyncCMDArgs: []string{
-			"--stopAfter", "8s",
+			stopAfterFlag, "8s",
 			"--output", "file",
 			"--outputFile", "meshery-cluster-snapshot-integration-test-file-mode-00.yaml",
 		},
@@ -60,10 +60,10 @@ var meshSyncBinaryWithK8SClusterFileModeTestCasesData []meshsyncBinaryWithK8SClu
 		// unable to decode "integration-tests/meshery-cluster-snapshot-integration-test-file-mode-01.yaml": json: cannot unmarshal array into Go struct field ObjectMeta.metadata.labels of type map[string]string
 		name: "output mode file: must have yaml with kind pod and kind deployment only and from dedicated namespace",
 		meshsyncCMDArgs: []string{
-			"--stopAfter", "8s",
+			stopAfterFlag, "8s",
 			"--output", "file",
 			"--outputResources", "pod,deployment",
-			"--outputNamespaces", "agile-otter",
+			"--outputNamespaces", agileOtterNamespace,
 			"--outputFile", "meshery-cluster-snapshot-integration-test-file-mode-01.yaml",
 		},
 		setupHooks: []func(){
@@ -77,7 +77,7 @@ var meshSyncBinaryWithK8SClusterFileModeTestCasesData []meshsyncBinaryWithK8SClu
 		},
 		finalHandler: func(t *testing.T, resultData map[string]any) {
 			expectedKinds := []string{"pod", "deployment"}
-			expectedNamespace := "agile-otter"
+			expectedNamespace := agileOtterNamespace
 
 			type K8sMetadata struct {
 				Kind     string `yaml:"kind"`
