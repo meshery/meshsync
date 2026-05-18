@@ -109,7 +109,7 @@
 
 [Object: ConfigMaps	19](#object:-configmaps)
 
-| Resources: [https://github.com/layer5io/meshery-operator](https://github.com/layer5io/meshery-operator) |
+| Resources: [https://github.com/meshery/meshery-operator](https://github.com/meshery/meshery-operator) |
 | :---- |
 
 ## Design Prologue {#design-prologue}
@@ -318,7 +318,7 @@ There are 2 ways we can go about representing the cluster in the system:
   * Watches deployments and ...  
 * Add the Calico custom controller example?  
 * Controller will be deployed as a deployment and the pointer to Meshery server will be an environment variable in pod template spec or controlled through ConfigMap.  
-* Meshery’s current implementation of MeshSync is in [kubernetes-scan.go](https://github.com/layer5io/meshery/blob/4aff1f3dfb787219f8d29b9f8fa039543a4bd03d/helpers/kubernetes-scan.go). We will want to rewrite \`[kubernetes-scan.go](https://github.com/layer5io/meshery/blob/4aff1f3dfb787219f8d29b9f8fa039543a4bd03d/helpers/kubernetes-scan.go)\` into this custom controller.
+* Meshery’s current implementation of MeshSync is in [kubernetes-scan.go](https://github.com/meshery/meshery/blob/4aff1f3dfb787219f8d29b9f8fa039543a4bd03d/helpers/kubernetes-scan.go). We will want to rewrite \`[kubernetes-scan.go](https://github.com/meshery/meshery/blob/4aff1f3dfb787219f8d29b9f8fa039543a4bd03d/helpers/kubernetes-scan.go)\` into this custom controller.
 
 
   
@@ -811,7 +811,7 @@ Networking
 
 [Object: ConfigMaps	19](#object:-configmaps)
 
-| Resources: [https://github.com/layer5io/meshery-operator](https://github.com/layer5io/meshery-operator) |
+| Resources: [https://github.com/meshery/meshery-operator](https://github.com/meshery/meshery-operator) |
 | :---- |
 
 ## Design Prologue {#design-prologue}
@@ -1020,7 +1020,7 @@ There are 2 ways we can go about representing the cluster in the system:
   * Watches deployments and ...  
 * Add the Calico custom controller example?  
 * Controller will be deployed as a deployment and the pointer to Meshery server will be an environment variable in pod template spec or controlled through ConfigMap.  
-* Meshery’s current implementation of MeshSync is in [kubernetes-scan.go](https://github.com/layer5io/meshery/blob/4aff1f3dfb787219f8d29b9f8fa039543a4bd03d/helpers/kubernetes-scan.go). We will want to rewrite \`[kubernetes-scan.go](https://github.com/layer5io/meshery/blob/4aff1f3dfb787219f8d29b9f8fa039543a4bd03d/helpers/kubernetes-scan.go)\` into this custom controller.
+* Meshery’s current implementation of MeshSync is in [kubernetes-scan.go](https://github.com/meshery/meshery/blob/4aff1f3dfb787219f8d29b9f8fa039543a4bd03d/helpers/kubernetes-scan.go). We will want to rewrite \`[kubernetes-scan.go](https://github.com/meshery/meshery/blob/4aff1f3dfb787219f8d29b9f8fa039543a4bd03d/helpers/kubernetes-scan.go)\` into this custom controller.
 
 
   
