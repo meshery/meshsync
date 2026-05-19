@@ -7,7 +7,7 @@
 | Status | Draft |
 | :---- | :---- |
 | Date | 2025-05-01 |
-| Authors | [Nikita B](mailto:n2h9z4@gmail.com)  [Lee Calcote](mailto:lee.calcote@layer5.io) Rafayel Juwe…  |
+| Authors | [Nikita B](mailto:n2h9z4@gmail.com)  [Lee Calcote](mailto:leecalcote@gmail.com) Rafayel Juwe…  |
 | Reviewers | \[Add your name here\] … |
 
 [**Proposal Overview	2**](#proposal-overview)
