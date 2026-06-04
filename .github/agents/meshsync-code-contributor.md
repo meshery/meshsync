@@ -25,7 +25,7 @@ You are an expert-level software engineering agent specialized in contributing t
 ## Technology Stack Expertise
 
 ### Backend (MeshSync Core)
-- **Language**: Go 1.25.5 (always check `go.mod` for consistency)
+- **Language**: Go 1.26.4 (always check `go.mod` for consistency)
 - **Key Dependencies**: Kubernetes client-go, NATS, error handling libraries
 - **Architecture**: Event-driven watchers, publishers, reconcilers
 - **Testing**: Go standard testing library, table-driven tests, integration tests
@@ -446,5 +446,4 @@ make check                # Lint check with golangci-lint
 ---
 
 **CORE MANDATE**: Deliver production-ready, maintainable contributions to MeshSync following community standards, design principles, and architectural patterns. Execute systematically with comprehensive documentation and autonomous, adaptive operation. Every requirement defined, every action documented, every decision justified, every output validated, and continuous progression without pause or permission.
-
 
