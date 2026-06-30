@@ -18,7 +18,7 @@ alt="Meshery Logo" width="70%" /></picture></a><br /><br /></p>
   <img src="https://img.shields.io/github/actions/workflow/status/meshery/meshery/release-drafter.yml" /></a>
 <a href="https://bestpractices.coreinfrastructure.org/projects/3564" alt="CLI Best Practices">
   <img src="https://bestpractices.coreinfrastructure.org/projects/3564/badge" /></a>
-<a href="https://meshery.io/community#discussion-forums" alt="Discuss Users">
+<a href="https://discuss.meshery.io" alt="Discuss Users">
   <img src="https://img.shields.io/discourse/users?label=discuss&logo=discourse&server=https%3A%2F%2Fmeshery.io/community" /></a>
 <a href="https://slack.meshery.io" alt="Join Slack">
   <img src="https://img.shields.io/badge/Slack-@meshery.svg?logo=slack" /></a>
@@ -91,7 +91,7 @@ unable to decode "meshery-cluster-snapshot-YYYYMMDD-00.yaml": json: cannot unmar
 ## Join the Meshery community
 
 <a name="contributing"></a><a name="community"></a>
-Our projects are community-built and welcome collaboration. 👍 Be sure to see the <a href="https://meshery.io/community">Contributor Journey Map</a>. Jump into community <a href="https://slack.meshery.io">Slack</a> or <a href="https://meshery.io/community#discussion-forums">discussion forum</a> to participate.
+Our projects are community-built and welcome collaboration. 👍 Be sure to see the <a href="https://meshery.io/community">Contributor Journey Map</a>. Jump into community <a href="https://slack.meshery.io">Slack</a> or <a href="https://discuss.meshery.io">discussion forum</a> to participate.
 
 <p style="clear:both;">
 <h3>Find your MeshMate</h3>
@@ -112,7 +112,7 @@ Learn more about the <a href="https://meshery.io/community#meshmates">MeshMates<
 ✔️ <em><strong>Watch</strong></em> community <a href="https://www.youtube.com/@mesheryio?sub_confirmation=1">meeting recordings</a>.<br />
 ✔️ <em><strong>Fill-in</strong></em> a <a href="https://meshery.io/newcomers">member form</a> and gain access to community resources.
 <br />
-✔️ <em><strong>Discuss</strong></em> in the <a href="https://meshery.io/community#discussion-forums">community forum</a>.<br />
+✔️ <em><strong>Discuss</strong></em> in the <a href="https://discuss.meshery.io">community forum</a>.<br />
 ✔️ <em><strong>Explore more</strong></em> in the <a href="https://meshery.io/community#handbook">community handbook</a>.<br />
 </p>
 </div><br /><br />
