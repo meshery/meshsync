@@ -25,3 +25,5 @@ cover.html
 
 bin/meshsync
 meshery-cluster-snapshot-*
+
+.claude/worktrees/*
