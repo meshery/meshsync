@@ -75,12 +75,11 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		return err
 	}
 
-	if useCRDFlag {
-		// this patch only make sense when CRD is present when in cluster
-		if errPatchCRVersion := config.PatchCRVersion(&kubeClient.RestConfig); errPatchCRVersion != nil {
-			log.Warnf("meshsync: %v", errPatchCRVersion)
-		}
-	}
+	// MeshSync no longer writes its build version into its own CR: spec is the
+	// operator's (and the user's) declaration of DESIRED state — the operator
+	// maps spec.version to the image tag — so a self-report there fights the
+	// controller and can roll the Deployment to the reporter's own version.
+	// The running version is still advertised over the broker (meshsync-meta).
 
 	// pass configs from crd to default configs
 	if crdConfigs != nil {
