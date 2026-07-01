@@ -45,9 +45,11 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	}
 
 	// Serve liveness/readiness endpoints as early as possible so that
-	// /healthz responds even while the broker is still unreachable.
+	// /healthz responds even while the broker is still unreachable; shut them
+	// down when Run exits so library callers don't leak the port/goroutine.
 	health := newHealthServer()
-	health.start(log, ":"+config.Server["port"])
+	stopHealth := health.start(log, ":"+config.Server["port"])
+	defer stopHealth()
 
 	// Initialize kubeclient
 	// options.KubeConfig is nil by default
@@ -304,8 +306,12 @@ func connectivityTest(log logger.Handler, pingEndpoint string, brokerURL string,
 
 // pingBroker performs a single HTTP GET against the broker monitoring
 // endpoint and reports any failure to reach it or non-OK response status.
+// The client carries its own timeout: http.DefaultClient has none, and a
+// black-holed endpoint would otherwise hang the request past the overall
+// connectivityTest deadline.
 func pingBroker(pingURL string) error {
-	resp, err := http.Get(pingURL) //nolint
+	client := &http.Client{Timeout: 5 * time.Second}
+	resp, err := client.Get(pingURL) //nolint
 	if err != nil {
 		return err
 	}

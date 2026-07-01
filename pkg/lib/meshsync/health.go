@@ -47,10 +47,12 @@ func (h *healthServer) handler() http.Handler {
 	return mux
 }
 
-// start serves the health endpoints on addr in a background goroutine.
+// start serves the health endpoints on addr in a background goroutine and
+// returns a stop function that shuts the server down (releasing the port and
+// goroutine — Run is a library entry point, so callers may outlive it).
 // A failure to serve (e.g. the port is already taken) is logged and otherwise
 // ignored: health reporting must never take the process down.
-func (h *healthServer) start(log logger.Handler, addr string) {
+func (h *healthServer) start(log logger.Handler, addr string) func() {
 	srv := &http.Server{
 		Addr:              addr,
 		Handler:           h.handler(),
@@ -62,4 +64,9 @@ func (h *healthServer) start(log logger.Handler, addr string) {
 			log.Warnf("meshsync: health endpoints server on %s stopped: %v", addr, err)
 		}
 	}()
+	return func() {
+		if err := srv.Close(); err != nil {
+			log.Warnf("meshsync: health endpoints server close failed: %v", err)
+		}
+	}
 }
