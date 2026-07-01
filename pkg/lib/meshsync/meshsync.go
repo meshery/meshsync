@@ -2,9 +2,9 @@
 package meshsync
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"path"
@@ -247,27 +247,67 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	return nil
 }
 
-func connectivityTest(log logger.Handler, pingEndpoint string, url string) error {
-	// Make sure Broker has started before starting NATS client
-	urls := strings.Split(url, ":")
-	if len(urls) == 0 {
-		return errors.New("invalid URL")
+// connectivityTestTimeout bounds how long connectivityTest keeps retrying
+// before it gives up and returns an error.
+const connectivityTestTimeout = 5 * time.Minute
+
+// brokerHost extracts the host part of a broker URL, stripping the scheme,
+// credentials (userinfo) and port if present. URLs without a scheme, such as
+// "host:4222", are treated as nats:// URLs. IPv6 literals are returned
+// without brackets.
+func brokerHost(brokerURL string) (string, error) {
+	rawURL := brokerURL
+	if !strings.Contains(rawURL, "://") {
+		rawURL = "nats://" + rawURL
 	}
-	pingURL := "http://" + urls[0] + pingEndpoint
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid broker url %q: %w", brokerURL, err)
+	}
+	host := u.Hostname()
+	if host == "" {
+		return "", fmt.Errorf("no host found in broker url %q", brokerURL)
+	}
+	return host, nil
+}
+
+// connectivityTest makes sure the broker monitoring endpoint is reachable
+// before the NATS client is started. It retries once per second and gives up
+// once the timeout elapses, returning an error so that the caller exits
+// visibly instead of spinning forever.
+func connectivityTest(log logger.Handler, pingEndpoint string, brokerURL string, timeout time.Duration) error {
+	host, err := brokerHost(brokerURL)
+	if err != nil {
+		return err
+	}
+	pingURL := "http://" + host + pingEndpoint
+	deadline := time.Now().Add(timeout)
 	for {
-		resp, err := http.Get(pingURL) //nolint
-		if err != nil {
-			log.Debugf("meshsync: could not connect to broker: %v retrying...", err)
-			time.Sleep(1 * time.Second)
-			continue
+		errPing := pingBroker(pingURL)
+		if errPing == nil {
+			return nil
 		}
-		if resp.StatusCode == http.StatusOK {
-			break
+		log.Warnf("meshsync: broker connectivity test failed for %s: %v, retrying...", pingURL, errPing)
+		if time.Now().After(deadline) {
+			return fmt.Errorf("broker connectivity test did not succeed within %s: %s: %w", timeout, pingURL, errPing)
 		}
-		log.Debugf("meshsync: could not receive OK response from broker: %s retrying...", pingURL)
 		time.Sleep(1 * time.Second)
 	}
+}
 
+// pingBroker performs a single HTTP GET against the broker monitoring
+// endpoint and reports any failure to reach it or non-OK response status.
+func pingBroker(pingURL string) error {
+	resp, err := http.Get(pingURL) //nolint
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected response status %q", resp.Status)
+	}
 	return nil
 }
 
@@ -276,6 +316,7 @@ func createNatsBrokerHandler(log logger.Handler, pingEndpoint string, brokerURL 
 		log,
 		pingEndpoint,
 		brokerURL,
+		connectivityTestTimeout,
 	); err != nil {
 		return nil, err
 	}
