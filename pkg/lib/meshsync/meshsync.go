@@ -44,6 +44,11 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		)
 	}
 
+	// Serve liveness/readiness endpoints as early as possible so that
+	// /healthz responds even while the broker is still unreachable.
+	health := newHealthServer()
+	health.start(log, ":"+config.Server["port"])
+
 	// Initialize kubeclient
 	// options.KubeConfig is nil by default
 	kubeClient, err := mesherykube.New(options.KubeConfig)
@@ -117,6 +122,9 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 			}
 			br = brokerHandler
 		}
+		// the broker handler exists (nats.New succeeded or a custom
+		// handler was provided): report ready on /readyz
+		health.markReady()
 		outputProcessor.SetOutput(
 			output.NewBrokerWriter(
 				br,
