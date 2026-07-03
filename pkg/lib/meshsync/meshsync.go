@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"path"
 	"slices"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -126,11 +127,17 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		// the broker handler exists (nats.New succeeded or a custom
 		// handler was provided): report ready on /readyz
 		health.markReady()
-		outputProcessor.SetOutput(
-			output.NewBrokerWriter(
-				br,
-			),
-		)
+
+		var brokerWriter output.Writer = output.NewBrokerWriter(br)
+		// Opt-in content deduplication (OFF by default). The dedup cache persists
+		// across informer resyncs, and a resync is a recovery path, so the safe
+		// default is to republish everything. Operators who want to trade a small
+		// amount of memory for reduced broker/DB churn enable it explicitly.
+		if brokerContentDedupEnabled() {
+			log.Info("meshsync: broker content deduplication enabled")
+			brokerWriter = output.NewContentDeduplicatorWriter(brokerWriter)
+		}
+		outputProcessor.SetOutput(brokerWriter)
 	}
 
 	if options.OutputMode == config.OutputModeFile {
@@ -254,6 +261,15 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	log.Info("meshsync: shutting down")
 
 	return nil
+}
+
+// brokerContentDedupEnabled reports whether the operator opted into broker
+// content deduplication via config.EnvBrokerContentDedup. An unset or
+// unparseable value means disabled, preserving the default republish-everything
+// behaviour.
+func brokerContentDedupEnabled() bool {
+	enabled, err := strconv.ParseBool(os.Getenv(config.EnvBrokerContentDedup))
+	return err == nil && enabled
 }
 
 // connectivityTestTimeout bounds how long connectivityTest keeps retrying
