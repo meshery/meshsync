@@ -2,6 +2,8 @@ package config
 
 import (
 	"time"
+
+	"github.com/meshery/meshkit/broker"
 )
 
 var (
@@ -385,5 +387,13 @@ var (
 		},
 	}
 
-	DefaultEvents = []string{"ADD", "UPDATE", "DELETE"}
+	// DefaultEvents is the canonical set of event types the default and
+	// blacklist-configured pipelines watch. These MUST be the broker wire values
+	// (broker.Add == "ADDED", broker.Update == "MODIFIED", broker.Delete ==
+	// "DELETED") because publishItem compares them verbatim against the event
+	// type the broker delivers - `slices.Contains(config.Events, string(evtype))`.
+	// The earlier "ADD"/"UPDATE"/"DELETE" literals never matched, so every event
+	// was silently dropped for pipelines configured via the blacklist path.
+	// Sourcing them from the broker constants keeps them from drifting again.
+	DefaultEvents = []string{string(broker.Add), string(broker.Update), string(broker.Delete)}
 )
