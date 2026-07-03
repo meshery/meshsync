@@ -30,6 +30,13 @@ func (p PipelineConfigs) Add(pc PipelineConfig) PipelineConfigs {
 	return p
 }
 
+// Contains reports whether a pipeline with the given name is already present.
+func (p PipelineConfigs) Contains(name string) bool {
+	return slices.ContainsFunc(p, func(pc PipelineConfig) bool {
+		return pc.Name == name
+	})
+}
+
 func (p PipelineConfigs) Delete(pc PipelineConfig) PipelineConfigs {
 	for index, pipelineConfig := range p {
 		if pipelineConfig.Name == pc.Name {
