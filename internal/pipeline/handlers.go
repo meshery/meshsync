@@ -46,21 +46,26 @@ func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			// the obj can only be of two types, Unstructured or DeletedFinalStateUnknown.
-			// DeletedFinalStateUnknown means that the object that we receive may be `stale`
-			// because of the way informer behaves
+			// The obj can only be of two types: *unstructured.Unstructured or
+			// cache.DeletedFinalStateUnknown. The latter is a tombstone the informer
+			// delivers after a watch gap/resync when it missed the final delete state,
+			// so its wrapped object may be `stale`.
 
 			// refer 'https://pkg.go.dev/k8s.io/client-go/tools/cache#ResourceEventHandler.OnDelete'
 
-			var objCasted *unstructured.Unstructured
-			objCasted = obj.(*unstructured.Unstructured)
-
-			possiblyStaleObj, ok := obj.(cache.DeletedFinalStateUnknown)
-			if ok {
-				objCasted = possiblyStaleObj.Obj.(*unstructured.Unstructured)
+			// Unwrap the tombstone first. Asserting *unstructured.Unstructured directly
+			// on a cache.DeletedFinalStateUnknown would panic and crash this goroutine.
+			if staleObj, ok := obj.(cache.DeletedFinalStateUnknown); ok {
+				obj = staleObj.Obj
 			}
-			err := ri.publishItem(objCasted, broker.Delete, ri.config)
 
+			objCasted, ok := obj.(*unstructured.Unstructured)
+			if !ok {
+				ri.log.Errorf("RegisterInformer::DeleteFunc: unexpected object type %T in delete event; skipping", obj)
+				return
+			}
+
+			err := ri.publishItem(objCasted, broker.Delete, ri.config)
 			if err != nil {
 				ri.log.Error(err)
 			}
