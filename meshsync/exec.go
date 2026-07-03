@@ -22,6 +22,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -149,10 +150,37 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 	stdin := io.NopCloser(tstdin)
 	getStdout, stdout := io.Pipe()
 
-	err := h.Broker.SubscribeWithChannel(fmt.Sprintf("input.%s", id), generateID(), subCh)
-	if err != nil {
+	// done is closed exactly once when the session ends (stream EOF/error,
+	// explicit Stop, or the global channels.Stop). Closing the pipes unblocks the
+	// stdout reader and any in-flight stdin write, so no goroutine is left blocked.
+	done := make(chan struct{})
+	var once sync.Once
+	terminate := func() {
+		once.Do(func() {
+			close(done)
+			// Closing both ends of both pipes unblocks the TTY streamer, the
+			// stdout reader (Read returns io.ErrClosedPipe) and any stdin writer.
+			_ = putStdin.Close()
+			_ = tstdin.Close()
+			_ = stdout.Close()
+			_ = getStdout.Close()
+			delete(h.channelPool, id)
+		})
+	}
+	defer terminate()
+
+	if err := h.Broker.SubscribeWithChannel(fmt.Sprintf("input.%s", id), generateID(), subCh); err != nil {
 		h.Log.Error(ErrExecTerminal(err))
 	}
+
+	// The broker interface exposes no Unsubscribe, so the input.<id> subscription
+	// cannot be torn down here. Once the session ends, keep draining subCh so the
+	// broker's delivery goroutine never blocks on an unread channel after we stop.
+	go func() {
+		<-done
+		for range subCh {
+		}
+	}()
 
 	// Put the terminal into raw mode to prevent it echoing characters twice.
 	t := term.TTY{
@@ -165,6 +193,8 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 
 	// TTY request GoRoutine
 	go func() {
+		defer terminate()
+
 		fn := func() error {
 			request := h.kubeClient.KubeClient.CoreV1().RESTClient().Post().
 				Namespace(req.Namespace).
@@ -182,37 +212,27 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 
 			exec, postErr := remotecommand.NewSPDYExecutor(&h.kubeClient.RestConfig, "POST", request.URL())
 			if postErr != nil {
-				return err
+				return postErr
 			}
 
-			err = exec.StreamWithContext(context.TODO(), remotecommand.StreamOptions{
+			return exec.StreamWithContext(context.TODO(), remotecommand.StreamOptions{
 				Stdin:             stdin,
 				Stdout:            stdout,
 				Stderr:            stdout,
 				Tty:               true,
 				TerminalSizeQueue: sizeQueue})
-			if err != nil {
-				return err
-			}
-
-			// Cleanup the resources when the streaming process terminates
-			execCleanup(h, id)
-			return nil
 		}
 
-		if err = t.Safe(fn); err != nil {
+		if err := t.Safe(fn); err != nil {
 			h.Log.Error(ErrExecTerminal(err))
-			execCleanup(h, id)
 
 			// If the TTY fails then send the error message to the client
-			if err = h.Broker.Publish(id, &broker.Message{
+			if pubErr := h.Broker.Publish(id, &broker.Message{
 				ObjectType: broker.ErrorObject,
 				Object:     err.Error(),
-			}); err != nil {
-				h.Log.Error(ErrExecTerminal(err))
+			}); pubErr != nil {
+				h.Log.Error(ErrExecTerminal(pubErr))
 			}
-
-			return
 		}
 	}()
 
@@ -221,23 +241,31 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 		rdr := bufio.NewReader(getStdout)
 		for {
 			data := make([]byte, 1*KB)
-			_, err = rdr.Read(data)
-			if err == io.EOF {
-				break // No clean up here as this can generate a false positive
+			n, err := rdr.Read(data)
+			if n > 0 {
+				// Publish only the bytes actually read to avoid emitting the
+				// unused trailing NUL padding of the buffer.
+				if pubErr := h.Broker.Publish(id, &broker.Message{
+					ObjectType: broker.ExecOutputObject,
+					Object:     string(data[:n]),
+				}); pubErr != nil {
+					h.Log.Error(ErrExecTerminal(pubErr))
+				}
 			}
-
-			err = h.Broker.Publish(id, &broker.Message{
-				ObjectType: broker.ExecOutputObject,
-				Object:     string(data),
-			})
 			if err != nil {
-				h.Log.Error(ErrExecTerminal(err))
+				// EOF or a closed pipe (session terminated) ends the reader. No
+				// cleanup on EOF alone as it can be a false positive mid-session.
+				return
 			}
 		}
 	}()
 
 	for {
-		if _, ok := h.channelPool[id]; !ok {
+		// The session's StructChannel is asserted below; once terminate() has
+		// removed the pool entry that assertion would be on a nil interface and
+		// panic, so bail out first if the session is already gone.
+		sessionCh, ok := h.channelPool[id].(channels.StructChannel)
+		if !ok {
 			h.Log.Debugf("Session closed for: %s", id)
 			return
 		}
@@ -245,14 +273,19 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 		select {
 		case msg := <-subCh:
 			if msg.ObjectType == broker.ExecInputObject {
-				_, err = io.CopyBuffer(putStdin, strings.NewReader(msg.Object.(string)+"\n"), nil)
-				if err != nil {
+				if _, err := io.CopyBuffer(putStdin, strings.NewReader(msg.Object.(string)+"\n"), nil); err != nil {
 					h.Log.Error(ErrExecTerminal(err))
 				}
 			}
-		case <-h.channelPool[id].(channels.StructChannel):
+		case <-sessionCh:
 			h.Log.Debugf("Closing session %s", id)
-			delete(h.channelPool, id)
+			return
+		case <-h.channelPool[channels.Stop].(channels.StopChannel):
+			h.Log.Debugf("Stopping session %s on global stop", id)
+			return
+		case <-done:
+			h.Log.Debugf("Session closed for: %s", id)
+			return
 		}
 	}
 }
@@ -268,7 +301,14 @@ func execCleanup(h *Handler, id string) {
 		return
 	}
 
-	structChan <- struct{}{}
+	// Non-blocking: the session's loop terminates and stops receiving on this
+	// channel from several paths, so a plain send could deadlock the caller once
+	// the session has already ended. Dropping the signal is safe because the
+	// session tears itself down independently.
+	select {
+	case structChan <- struct{}{}:
+	default:
+	}
 }
 
 func generateID() string {
