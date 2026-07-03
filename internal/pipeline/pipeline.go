@@ -10,26 +10,7 @@ import (
 	"k8s.io/client-go/dynamic/dynamicinformer"
 )
 
-var (
-	Name                 = internalconfig.PipelineNameKey
-	GlobalDiscoveryStage = &pipeline.Stage{
-		Name:       internalconfig.GlobalResourceKey,
-		Concurrent: false,
-		Steps:      []pipeline.Step{},
-	}
-
-	LocalDiscoveryStage = &pipeline.Stage{
-		Name:       internalconfig.LocalResourceKey,
-		Concurrent: false,
-		Steps:      []pipeline.Step{},
-	}
-
-	StartInformersStage = &pipeline.Stage{
-		Name:       "StartInformers",
-		Concurrent: false,
-		Steps:      []pipeline.Step{},
-	}
-)
+var Name = internalconfig.PipelineNameKey
 
 func New(
 	log logger.Handler,
@@ -40,10 +21,18 @@ func New(
 	clusterID string,
 	outputFiltration internalconfig.OutputFiltrationContainer,
 ) *pipeline.Pipeline {
+	// Stages are built fresh on every call. New runs once per discovery and again
+	// on each resync, so the stages must not be shared package-level state: reusing
+	// them would accumulate steps from prior runs that hold shut-down informer
+	// factories and closed stop channels.
+
 	// Global discovery
-	gdstage := GlobalDiscoveryStage
-	configs := plConfigs[gdstage.Name]
-	for _, config := range configs {
+	gdstage := &pipeline.Stage{
+		Name:       internalconfig.GlobalResourceKey,
+		Concurrent: false,
+		Steps:      []pipeline.Step{},
+	}
+	for _, config := range plConfigs[gdstage.Name] {
 		if shouldFilterOutByName(config.Name, outputFiltration.ResourceSet) {
 			// do not register informer for this config
 			continue
@@ -52,9 +41,12 @@ func New(
 	}
 
 	// Local discovery
-	ldstage := LocalDiscoveryStage
-	configs = plConfigs[ldstage.Name]
-	for _, config := range configs {
+	ldstage := &pipeline.Stage{
+		Name:       internalconfig.LocalResourceKey,
+		Concurrent: false,
+		Steps:      []pipeline.Step{},
+	}
+	for _, config := range plConfigs[ldstage.Name] {
 		if shouldFilterOutByName(config.Name, outputFiltration.ResourceSet) {
 			// do not register informer for this config
 			continue
@@ -64,7 +56,11 @@ func New(
 	}
 
 	// Start informers
-	strtInfmrs := StartInformersStage
+	strtInfmrs := &pipeline.Stage{
+		Name:       "StartInformers",
+		Concurrent: false,
+		Steps:      []pipeline.Step{},
+	}
 	strtInfmrs.AddStep(newStartInformersStep(stopChan, log, informer)) // Start the registered informers
 
 	// Create Pipeline
