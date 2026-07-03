@@ -46,10 +46,11 @@ func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			// The obj can only be of two types: *unstructured.Unstructured or
+			// obj is expected to be one of two types: *unstructured.Unstructured or
 			// cache.DeletedFinalStateUnknown. The latter is a tombstone the informer
 			// delivers after a watch gap/resync when it missed the final delete state,
-			// so its wrapped object may be `stale`.
+			// so its wrapped object may be `stale`. Anything else is handled
+			// defensively below rather than assumed away.
 
 			// refer 'https://pkg.go.dev/k8s.io/client-go/tools/cache#ResourceEventHandler.OnDelete'
 
