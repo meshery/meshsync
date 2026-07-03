@@ -175,3 +175,27 @@ func TestBlackListResourcesUseBrokerEvents(t *testing.T) {
 		t.Fatal("expected blacklist config to produce pipelines, got none")
 	}
 }
+
+// TestDefaultPipelinesCarryDefaultEvents verifies the init() backfill: the
+// default pipeline templates are seeded directly as runtime config when no CRD
+// config is available (e.g. a CRD read error), so every template must carry a
+// non-empty, broker-matching event set or discovery would silently drop
+// everything on that fallback path.
+func TestDefaultPipelinesCarryDefaultEvents(t *testing.T) {
+	sawPipeline := false
+	for key, pipelines := range Pipelines {
+		for _, p := range pipelines {
+			sawPipeline = true
+			if len(p.Events) == 0 {
+				t.Errorf("default pipeline %q in %q has empty Events", p.Name, key)
+				continue
+			}
+			if !reflect.DeepEqual(p.Events, DefaultEvents) {
+				t.Errorf("default pipeline %q in %q has Events %v, want %v", p.Name, key, p.Events, DefaultEvents)
+			}
+		}
+	}
+	if !sawPipeline {
+		t.Fatal("expected default Pipelines to be non-empty")
+	}
+}

@@ -85,9 +85,15 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 
 	// pass configs from crd to default configs
 	if crdConfigs != nil {
-		if len(crdConfigs.Pipelines) > 0 {
-			config.Pipelines = crdConfigs.Pipelines
-		}
+		// Assign the CRD-derived pipelines whenever a config was produced, even
+		// if the watch-list filtered down to zero pipelines: an explicit
+		// whitelist/blacklist that matches nothing means "watch nothing" and must
+		// not silently fall back to the full default set. The default pipelines
+		// apply only when there was no CRD config at all (crdConfigs == nil), e.g.
+		// a CRD read/parse error; in that case config.Pipelines keeps its package
+		// default, whose Events are backfilled in config's init() so it still
+		// publishes rather than silently dropping everything.
+		config.Pipelines = crdConfigs.Pipelines
 
 		if len(crdConfigs.Listeners) > 0 {
 			config.Listeners = crdConfigs.Listeners
