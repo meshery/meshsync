@@ -29,15 +29,15 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 #-----------------------------------------------------------------------------
-# Docker-based Builds
+# Docker
 #-----------------------------------------------------------------------------
-.PHONY: docker-check
-## Build Meshsync's docker image
-docker: check
+.PHONY: docker-build
+## Build the MeshSync Docker image
+docker-build: lint-run
 	docker build -t meshery/meshery-meshsync .
 
 .PHONY: docker-run
-## Runs Meshsync in docker
+## Run MeshSync in a Docker container
 docker-run:
 	(docker rm -f meshery-meshsync) || true
 	docker run --name meshery-meshsync -d \
@@ -45,72 +45,76 @@ docker-run:
 	-e DEBUG=true \
 	meshery/meshery-meshsync
 
-PHONY: nats
-## Runs a local instance of NATS server in detached mode
-nats:
-	(docker rm -f nats) || true
-	docker run --name nats --rm -p 4222:4222 -p 8222:8222 -d nats --http_port 8222 
-
 #-----------------------------------------------------------------------------
-# Local Builds
+# Local Development
 #-----------------------------------------------------------------------------
 .PHONY: build
-## Build Meshsync binary to $(MESHSYNC_BINARY_TARGET_RELATIVE)
+## Build the MeshSync binary to bin/meshsync
 build:
 	go build -o $(MESHSYNC_BINARY_TARGET_RELATIVE) main.go
 
-.PHONY: run-check
-## Runs local instance of Meshsync: can be used during local development
-run: nats	
-	go$(v) mod tidy; \
+.PHONY: run
+## Run MeshSync locally against a NATS server, for local development
+run: nats-run
+	go mod tidy; \
 	DEBUG=true GOPROXY=direct GOSUMDB=off go run main.go
 
-.PHONY: check
-## Lint check Meshsync.
-check:
-	$(GOBIN)/golangci-lint run ./...
+.PHONY: nats-run
+## Run a local NATS server in a detached Docker container
+nats-run:
+	(docker rm -f nats) || true
+	docker run --name nats --rm -p 4222:4222 -p 8222:8222 -d nats --http_port 8222
 
-.PHONY: go-mod-tidy
-## Run go mod tidy for dependency management
-go-mod-tidy:
+.PHONY: mod-tidy
+## Tidy Go module dependencies
+mod-tidy:
 	go mod tidy
 
 #-----------------------------------------------------------------------------
-# Tests
+# Quality & Tests
 #-----------------------------------------------------------------------------
+.PHONY: lint-run
+## Lint the codebase with golangci-lint
+lint-run:
+	$(GOBIN)/golangci-lint run ./...
 
-# Test covergae
-.PHONY: coverage
-## Runs coverage tests for Meshsync
-coverage:
+.PHONY: test
+## Run unit tests with the race detector (lints first)
+test: lint-run
+	go test -failfast --short ./... -race
+
+.PHONY: coverage-report
+## Run unit tests and write an HTML coverage report to cover.html
+coverage-report:
 	go test -v ./... -coverprofile cover.out
 	go tool cover -html=cover.out -o cover.html
-## Runs unit tests
-test: check 
-	go test -failfast --short ./... -race 
-## Lint check Golang
-lint:
-	golangci-lint run ./...
 
-## Runs integration tests check dependencies (if docker, kind, kubectl are present)
+#-----------------------------------------------------------------------------
+# Integration Tests
+#-----------------------------------------------------------------------------
+.PHONY: integration-tests-check-dependencies
+## Check integration-test dependencies are present (docker, kind, kubectl)
 integration-tests-check-dependencies:
 	./integration-tests/setup.sh check_dependencies
 
-## Runs integration tests set up (runs docker compose with nats and creates a test kind cluster)
-## docker compose exposes nats on default ports to host, so they must be available
+.PHONY: integration-tests-setup
+## Set up integration tests (NATS via docker compose plus a kind cluster)
 integration-tests-setup:
 	./integration-tests/infrastructure/setup.sh setup
 
-## Runs integration tests clean up (stops docker compose and deletes test cluster)
+.PHONY: integration-tests-cleanup
+## Clean up integration tests (stop docker compose, delete the kind cluster)
 integration-tests-cleanup:
 	./integration-tests/infrastructure/setup.sh cleanup
 
-## Runs integration tests
+.PHONY: integration-tests-run
+## Run the integration tests against the meshsync binary
 integration-tests-run: build
 	RUN_INTEGRATION_TESTS=true \
 	MESHSYNC_BINARY_PATH=$(MESHSYNC_BINARY_TARGET_ABSOLUTE) \
 	SAVE_MESHSYNC_OUTPUT=true \
 	go test -v -count=1 -run Integration $(INTEGRATION_TESTS_DIR)
 
-## Runs integration tests full cycle (setup, run, cleanup)
+.PHONY: integration-tests
+## Run the full integration-test cycle (setup, run, cleanup)
 integration-tests: integration-tests-setup integration-tests-run integration-tests-cleanup
