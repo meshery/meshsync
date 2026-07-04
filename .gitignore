@@ -22,6 +22,7 @@
 .vscode/
 cover.html
 .DS_Store
+__pycache__/
 
 bin/meshsync
 meshery-cluster-snapshot-*
