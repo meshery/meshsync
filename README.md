@@ -35,56 +35,20 @@ alt="Meshery Logo" width="70%" /></picture></a><br /><br /></p>
 
 # MeshSync
 
-MeshSync, an event-driven, continuous discovery and synchronization engine performs the task of ensuring that the state of configuration and status of operation of any supported Meshery platform (e.g. Kubernetes) and environment are known to Meshery Server. When deployed into Kubernetes enviroments, MeshSync runs as a Kubernetes custom controller under the control of Meshery Operator.
+MeshSync is Meshery's event-driven, continuous discovery and synchronization engine. It ensures that the configuration and operational state of Kubernetes (and any supported Meshery platform) are known to Meshery Server. When deployed into a Kubernetes cluster, MeshSync runs as a custom controller under the control of [Meshery Operator](https://docs.meshery.io/concepts/architecture/operator) and publishes resource changes over Meshery Broker (NATS).
 
-See [MeshSync in Meshery Docs](https://docs.meshery.io/concepts/architecture/meshsync) for additional information.
+MeshSync runs in one of two modes: **nats** (default - publishes Kubernetes resource events to NATS) and **file** (writes deduplicated cluster snapshots to disk, with no NATS or CRD dependency). Run `meshsync --help` for input parameters.
 
-----
+## Documentation
 
-Could be run in two modes:
-- nats (default)
-- file
+All MeshSync documentation lives in [Meshery Docs](https://docs.meshery.io) - the single source of truth. Please update the docs alongside code changes rather than duplicating details here.
 
-See details on input params in command help output:
-```sh
-meshsync --help
-```
+📖 **Using & understanding MeshSync** - how it works and where it fits in Meshery's architecture:
+- [MeshSync architecture](https://docs.meshery.io/concepts/architecture/meshsync)
+- [Meshery architecture](https://docs.meshery.io/concepts/architecture) (logical and component architecture)
 
-
-## NATS mode
-NATS mode is the default mode.
-
-In that mode, MeshSync expects a NATS connection and outputs Kubernetes resources updates into NATS queue, which is how MeshSync runs when deployed in Kubernetes cluster in conjuction with Meshery Broker.
-
-## File mode
-File mode is an option to run meshsync without dependency on nats and CRD.
-
-In that mode meshsync outputs  k8s resources updates into file in kubernetes manifest yaml format.
-
-The result of run is two files:
-- meshery-cluster-snapshot-YYYYMMDD-00.yaml
-- meshery-cluster-snapshot-YYYYMMDD-00-extended.yaml
-
-meshery-cluster-snapshot-YYYYMMDD-00-extended.yaml contains all events meshsync produces as output;
-
-meshery-cluster-snapshot-YYYYMMDD-00.yaml contains a deduplicated version where each resource is presented with one entity. 
-Deduplication is done by `metadata.uid` field.
-
-
-### Notes (on file mode)
-Right now the format of the generated files is very close to kubernetes manifest yaml format, but not exactly the same. 
-
-Generated files contain `metadata.labels` as array while in kubernetes manifest it should be an object.
-
-It is due to the format of [KubernetesResourceObjectMeta](pkg/model/model.go#52).
-
-`kubectl apply --dry-run` returns corresponding error:
-
-```sh
-kubectl apply --dry-run=client -f meshery-cluster-snapshot-YYYYMMDD-00.yaml
-
-unable to decode "meshery-cluster-snapshot-YYYYMMDD-00.yaml": json: cannot unmarshal array into Go struct field ObjectMeta.metadata.labels of type map[string]string
-```
+🛠️ **Contributing to MeshSync** - set up a development environment, build, test, and submit changes:
+- [Contributing to MeshSync](https://docs.meshery.io/project/contributing/contributing-meshsync)
 
 <div>&nbsp;</div>
 
@@ -136,9 +100,7 @@ Learn more about the <a href="https://meshery.io/community#meshmates">MeshMates<
 
 ## Contributing
 
-Please do! We're a warm and welcoming community of open source contributors. Please join. All types of contributions are welcome. Be sure to read the [Contributor Guides](https://docs.meshery.io/project/contributing) for a tour of resources available to you and how to get started.
-
-<!-- <a href="https://youtu.be/MXQV-i-Hkf8"><img alt="Deploying Linkerd with Meshery" src="https://docs.meshery.io/assets/img/readme/deploying-linkerd-with-meshery.png" width="100%" align="center" /></a> -->
+Please do! We're a warm and welcoming community of open source contributors. All types of contributions are welcome. Start with [Contributing to MeshSync](https://docs.meshery.io/project/contributing/contributing-meshsync) for a development-environment walkthrough, and see the general [Contributor Guides](https://docs.meshery.io/project/contributing) for a tour of the resources available to you and how to get started.
 
 <div>&nbsp;</div>
 
