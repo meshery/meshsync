@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand/v2"
 	"sync"
 	"time"
 
@@ -309,44 +310,92 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	return parsedObjects
 }
 
+const (
+	// watchCRDsBaseDelay is the pause between CRD watch iterations under normal
+	// conditions - the API server routinely closes long-lived watches and we
+	// simply re-establish them.
+	watchCRDsBaseDelay = 2 * time.Second
+	// watchCRDsMaxDelay caps the exponential backoff applied to failing or
+	// immediately-collapsing watches so a persistently unreachable API server is
+	// retried at a steady, bounded rate instead of in a tight loop.
+	watchCRDsMaxDelay = 2 * time.Minute
+)
+
 func (h *Handler) WatchCRDs() {
 	h.Log.Debug("meshsync::Handler::WatchCRDs: starting WatchCRDs")
+
+	backoff := watchCRDsBaseDelay
 loop:
 	for {
-		// watchCRDsIteration will return if the stop channel is closed.
-		h.watchCRDsIteration()
+		// watchCRDsIteration returns nil when the stop channel is closed or the
+		// API server closes a healthy watch; it returns an error when the watch
+		// could not be established.
+		start := time.Now()
+		err := h.watchCRDsIteration()
+		lasted := time.Since(start)
 
-		// After an iteration, wait before the next, but also listen for a stop signal
+		var delay time.Duration
+		// Treat an iteration as healthy only if it ran without error for at least
+		// the base delay. A watch that errors, or that collapses almost
+		// immediately (e.g. RBAC denial, API server churn), is backed off
+		// exponentially with jitter; a watch that stayed up and cycled normally
+		// resets the backoff so routine re-establishment is not penalised.
+		if err == nil && lasted >= watchCRDsBaseDelay {
+			backoff = watchCRDsBaseDelay
+			delay = watchCRDsBaseDelay
+		} else {
+			if err != nil {
+				h.Log.Warnf("meshsync::Handler::WatchCRDs: watch iteration failed, backing off %s: %v", backoff, err)
+			} else {
+				h.Log.Debugf("meshsync::Handler::WatchCRDs: watch collapsed after %s, backing off %s", lasted, backoff)
+			}
+			delay = jitter(backoff)
+			backoff = min(backoff*2, watchCRDsMaxDelay)
+		}
+
+		// Wait before the next iteration, but wake immediately on a stop signal
 		// to ensure a fast shutdown.
 		select {
 		case <-h.channelPool[channels.Stop].(channels.StopChannel):
 			break loop
-		case <-time.After(2 * time.Second):
+		case <-time.After(delay):
 		}
 	}
 	h.Log.Debug("meshsync::Handler::WatchCRDs: stopping WatchCRDs")
 }
 
-func (h *Handler) watchCRDsIteration() {
+// jitter returns a duration in [d/2, d] to spread out watch re-establishment
+// retries and avoid many MeshSync instances retrying in lockstep against the
+// API server.
+func jitter(d time.Duration) time.Duration {
+	if d <= 0 {
+		return 0
+	}
+	half := d / 2
+	return half + time.Duration(rand.Int64N(int64(half)+1))
+}
+
+func (h *Handler) watchCRDsIteration() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	crdWatcher, err := h.createCRDWatcher(ctx)
-
 	if err != nil {
-		h.Log.Error(err)
-		return
+		return err
 	}
+	// Stop the watcher explicitly rather than relying on ctx cancellation alone,
+	// so the streaming connection and its goroutine are released immediately when
+	// this iteration returns (stop signal, closed channel, or re-establishment).
+	defer crdWatcher.Stop()
 
-loop:
 	for {
 		select {
 		case <-h.channelPool[channels.Stop].(channels.StopChannel):
-			break loop
+			return nil
 		case event, ok := <-crdWatcher.ResultChan():
 			if !ok {
 				h.Log.Debug("meshsync::Handler::watchCRDsIteration crdWatcher.ResultChan() was closed")
-				break loop
+				return nil
 			}
 			h.handleCRDEvent(event)
 		}
@@ -389,9 +438,18 @@ func (h *Handler) handleCRDEvent(event watch.Event) {
 		return
 	}
 
-	if err := h.updatePipelineConfig(event.Type, gvr); err != nil {
+	changed, err := h.updatePipelineConfig(event.Type, gvr)
+	if err != nil {
 		h.Log.Error(err)
 		h.Log.Debug("skipping informer resync")
+		return
+	}
+
+	if !changed {
+		// The set of watched resources is unchanged (e.g. a MODIFIED event), so a
+		// resync would tear down and rebuild every informer - re-listing all
+		// watched resource types cluster-wide - for no benefit. Skip it.
+		h.Log.Debugf("crd %s event for %s did not change discovery config; skipping informer resync", event.Type, gvr.String())
 		return
 	}
 
@@ -413,14 +471,22 @@ func parseCRDEvent(event watch.Event) (*kubernetes.CRDItem, []byte, error) {
 	return crd, data, nil
 }
 
+// updatePipelineConfig reflects a CRD watch event in the discovery pipeline
+// config. It returns changed=true only when the set of watched resources was
+// actually mutated (a resource registered or removed), so callers can skip the
+// expensive informer resync for events that leave discovery untouched - notably
+// MODIFIED events, which controllers such as cert-manager's cainjector emit
+// continuously as they rewrite unrelated CRD fields (e.g. the conversion webhook
+// caBundle). The GVR is derived solely from group/version/plural, none of which
+// a MODIFIED event alters, so such events never change what we watch.
 func (h *Handler) updatePipelineConfig(
 	eventType watch.EventType,
 	gvr *schema.GroupVersionResource,
-) error {
+) (changed bool, err error) {
 
 	existing := make(map[string]config.PipelineConfigs)
 	if err := h.Config.GetObject(config.ResourcesKey, &existing); err != nil {
-		return err
+		return false, err
 	}
 
 	pipelines := existing[config.GlobalResourceKey]
@@ -428,8 +494,14 @@ func (h *Handler) updatePipelineConfig(
 
 	switch eventType {
 	case watch.Added:
-		// No need to verify if config is already added because If the config already exists then it indicates the informer has already synced that resource.
-		// Any subsequent updates will have event type as "modified"
+		// Adding is idempotent. A freshly (re)established CRD watch re-lists every
+		// existing CRD as ADDED, so registering unconditionally would accumulate
+		// duplicate pipeline configs - which in turn register duplicate informer
+		// event handlers and double-publish every resource. Only register (and
+		// resync for) resources we are not already watching.
+		if pipelines.Contains(name) {
+			return false, nil
+		}
 		pipelines = pipelines.Add(config.PipelineConfig{
 			Name:      name,
 			PublishTo: config.DefaultPublishingSubject,
@@ -438,11 +510,21 @@ func (h *Handler) updatePipelineConfig(
 			Events: config.DefaultEvents,
 		})
 	case watch.Deleted:
+		if !pipelines.Contains(name) {
+			return false, nil
+		}
 		pipelines = pipelines.Delete(config.PipelineConfig{Name: name})
+	default:
+		// MODIFIED, BOOKMARK, ERROR: the watched-resource set is unchanged, so
+		// there is nothing to persist and no reason to resync.
+		return false, nil
 	}
 
 	existing[config.GlobalResourceKey] = pipelines
-	return h.Config.SetObject(config.ResourcesKey, existing)
+	if err := h.Config.SetObject(config.ResourcesKey, existing); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // TODO: move this to meshkit
