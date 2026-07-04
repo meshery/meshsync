@@ -1,7 +1,3 @@
-I have complete grounding across all five repositories. I'm now ready to author the full blueprint.
-
----
-
 # Blueprint: Durable Delivery via NATS JetStream
 
 ## 1. Goal & Gap

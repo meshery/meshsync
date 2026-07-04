@@ -1,7 +1,3 @@
-I have a complete picture now across all six repos. I have enough grounding to produce the full blueprint.
-
----
-
 # IMPLEMENTATION BLUEPRINT: Tiered & Configurable Discovery
 
 ## 1. Goal & Gap
