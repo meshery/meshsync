@@ -10,7 +10,6 @@ import (
 	"github.com/meshery/meshsync/internal/channels"
 	"github.com/meshery/meshsync/internal/config"
 	"github.com/meshery/meshsync/pkg/model"
-	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
@@ -195,11 +194,16 @@ func TestUpdatePipelineConfigRegistersBrokerEvents(t *testing.T) {
 	}
 }
 
+// logInfoLevel is MeshKit's info log level. logger.Options.LogLevel is a plain
+// int mirroring logrus severity levels (info == 4); it is spelled out here so
+// the tests depend only on MeshKit for logging, not on logrus directly.
+const logInfoLevel = 4
+
 func testLogger(t *testing.T) logger.Handler {
 	t.Helper()
 	log, err := logger.New("meshsync-test", logger.Options{
 		Format:   logger.SyslogLogFormat,
-		LogLevel: int(logrus.InfoLevel),
+		LogLevel: logInfoLevel,
 	})
 	if err != nil {
 		t.Fatalf("failed to create logger: %v", err)
