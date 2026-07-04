@@ -90,9 +90,31 @@ func newStartInformersStep(stopChan chan struct{}, log logger.Handler, informer 
 	}
 }
 
+// Exec starts the registered informers, then blocks until their caches have
+// primed. The order is load-bearing: DynamicSharedInformerFactory.WaitForCacheSync
+// only waits on informers that have already been started, so Start must run
+// first. Calling WaitForCacheSync before Start makes it a no-op, so discovery
+// proceeds against unprimed caches and reports an empty or partial cluster
+// snapshot. WaitForCacheSync unblocks once every started informer has synced, or
+// early if stopChan is closed (shutdown or resync).
 func (si *StartInformers) Exec(request *pipeline.Request) *pipeline.Result {
-	si.informer.WaitForCacheSync(si.stopChan)
 	si.informer.Start(si.stopChan)
+
+	var unsynced []string
+	for gvr, ok := range si.informer.WaitForCacheSync(si.stopChan) {
+		if !ok {
+			unsynced = append(unsynced, gvr.String())
+		}
+	}
+	if len(unsynced) > 0 {
+		// A false sync result means stopChan closed before the cache primed - the
+		// discovery was stopped or resynced mid-sync, which is expected teardown
+		// rather than a hard failure, so it does not fail the pipeline step.
+		si.log.Debugf("informer caches not primed before discovery stopped: %v", unsynced)
+	} else {
+		si.log.Debug("informer caches synced")
+	}
+
 	return &pipeline.Result{
 		Error: nil,
 		Data:  request.Data,

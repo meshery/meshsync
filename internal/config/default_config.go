@@ -2,6 +2,8 @@ package config
 
 import (
 	"time"
+
+	"github.com/meshery/meshkit/broker"
 )
 
 var (
@@ -385,5 +387,32 @@ var (
 		},
 	}
 
-	DefaultEvents = []string{"ADD", "UPDATE", "DELETE"}
+	// DefaultEvents is the canonical set of event types the default and
+	// blacklist-configured pipelines watch. These MUST be the broker wire values
+	// (broker.Add == "ADDED", broker.Update == "MODIFIED", broker.Delete ==
+	// "DELETED") because publishItem compares them verbatim against the event
+	// type the broker delivers - `slices.Contains(config.Events, string(evtype))`.
+	// The earlier "ADD"/"UPDATE"/"DELETE" literals never matched, so every event
+	// was silently dropped for pipelines configured via the blacklist path.
+	// Sourcing them from the broker constants keeps them from drifting again.
+	DefaultEvents = []string{string(broker.Add), string(broker.Update), string(broker.Delete)}
 )
+
+func init() {
+	// The pipeline templates above deliberately omit per-resource Events: the
+	// whitelist path fills them from user config and the blacklist path fills
+	// them with DefaultEvents. But these same templates are also seeded directly
+	// as the runtime config when no meshsync CRD config is available - for
+	// example when a CRD read/parse error leaves crdConfigs nil (see
+	// pkg/lib/meshsync). With an empty Events set, publishItem's
+	// slices.Contains(Events, string(evtype)) never matches and discovery
+	// silently produces nothing. Backfill the canonical default so the default
+	// pipelines are safe to use standalone.
+	for _, pipelines := range Pipelines {
+		for i := range pipelines {
+			if len(pipelines[i].Events) == 0 {
+				pipelines[i].Events = DefaultEvents
+			}
+		}
+	}
+}

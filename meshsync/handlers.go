@@ -501,7 +501,9 @@ func (h *Handler) updatePipelineConfig(
 		pipelines = pipelines.Add(config.PipelineConfig{
 			Name:      name,
 			PublishTo: config.DefaultPublishingSubject,
-			Events:    []string{string(broker.Add), string(broker.Update), string(broker.Delete)},
+			// Dynamically discovered CRD pipelines watch the canonical default
+			// event set; keep them sourced from one place to avoid drift.
+			Events: config.DefaultEvents,
 		})
 	case watch.Deleted:
 		if !pipelines.Contains(name) {
