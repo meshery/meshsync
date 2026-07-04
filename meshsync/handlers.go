@@ -383,6 +383,10 @@ func (h *Handler) watchCRDsIteration() error {
 	if err != nil {
 		return err
 	}
+	// Stop the watcher explicitly rather than relying on ctx cancellation alone,
+	// so the streaming connection and its goroutine are released immediately when
+	// this iteration returns (stop signal, closed channel, or re-establishment).
+	defer crdWatcher.Stop()
 
 	for {
 		select {
