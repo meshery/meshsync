@@ -85,7 +85,7 @@ func TestContentDeduplicatorWriter_AlwaysEmitsDeleteAndEvicts(t *testing.T) {
 	assert.Len(t, mock2.written, 3)
 	assert.Equal(t, broker.Add, mock2.events[2])
 
-	// The map must not retain the UID after delete.
+	// After re-add following DELETE, the UID should be present again in the map.
 	writer2.mu.Lock()
 	_, present := writer2.hashByUID["uid-1"]
 	writer2.mu.Unlock()
