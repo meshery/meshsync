@@ -42,6 +42,10 @@ MeshSync is Meshery's Kubernetes cluster-state synchronization agent: a Go contr
 - [Naming conventions](docs/agent-instructions/naming-conventions.md) - the ecosystem identifier-casing contract and MeshSync's current divergence
 - [Testing](docs/agent-instructions/testing.md) - unit, integration, and runtime-verification commands
 
+## Claude Automation
+
+`.claude/hooks/meshkit-errors.sh` blocks net-new ad-hoc errors (`fmt.Errorf`/`errors.New("...")`) in any edited `.go` file - see Critical Rule 1. `.claude/hooks/no-ai-attribution.sh` blocks AI-attribution content in any tool call. `.claude/hooks/session-start.sh` provisions `../meshery-operator` as a sibling on remote (web) sessions for the cross-repo checks in Critical Rule 3. `.claude/skills/verifier-meshsync/` is the runtime-verification skill referenced under Commands.
+
 ## Further Reading
 
 - [design-spec: MeshSync infrastructure synchronization](docs/design-spec_meshsync-infrastructure-synchronization.md)

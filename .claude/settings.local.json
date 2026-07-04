@@ -1,13 +1,6 @@
 {
   "enabledMcpjsonServers": [
-    "github",
-    "playwright",
-    "postgres-dev",
-    "postgres-prod"
-  ],
-  "disabledMcpjsonServers": [
-    "context7",
-    "postgres-staging"
+    "github"
   ],
   "hooks": {
     "SessionStart": [
@@ -26,15 +19,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/guard-local-models.sh"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
             "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/meshkit-errors.sh"
           }
         ]
@@ -48,25 +32,9 @@
           }
         ]
       }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write|MultiEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "tools/hooks/helm-chart-audit.py"
-          }
-        ]
-      }
     ]
   },
   "additionalDirectories": [
-    "../schemas"
-  ],
-  "permissions": {
-    "allow": [
-      "mcp__playwright__browser_navigate"
-    ]
-  }
+    "../meshery-operator"
+  ]
 }
