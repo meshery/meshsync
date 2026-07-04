@@ -5,7 +5,7 @@ replace vbom.ml/util => github.com/fvbommel/util v0.0.0-20180919145318-efcd4e0f9
 go 1.26.4
 
 require (
-	github.com/buger/jsonparser v1.1.2
+	github.com/buger/jsonparser v1.2.0
 	github.com/google/uuid v1.6.0
 	github.com/meshery/meshkit v1.0.4
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
