@@ -32,24 +32,11 @@ type Handler struct {
 }
 
 func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
-	var blacklist []string
-	err := config.GetObject("spec.informer_config", blacklist)
-	if err != nil {
-		return nil, err
-	}
-
-	return func(lo *v1.ListOptions) {
-		// Create a label selector to include all objects
-		labelSelector := &v1.LabelSelector{}
-
-		// Add label selector requirements to exclude blacklisted types
-		labelSelectorReq := v1.LabelSelectorRequirement{
-			Key:      "type",
-			Operator: v1.LabelSelectorOpNotIn,
-			Values:   blacklist,
-		}
-		labelSelector.MatchExpressions = append(labelSelector.MatchExpressions, labelSelectorReq)
-	}, nil
+	// Resource filtering is handled by the whitelist/blacklist watch-list in
+	// internal/config/crd_config.go, which decides which informers get registered;
+	// this returns a no-op so the shared informer factory builds without duplicating
+	// (and previously mis-applying) that filtering here.
+	return func(*v1.ListOptions) {}, nil
 }
 
 func New(

@@ -62,6 +62,80 @@ func newUnstructuredPod(name, namespace string) *unstructured.Unstructured {
 	}
 }
 
+// newUpdateTestRegisterInformer mirrors newTestRegisterInformer but enables the
+// UPDATE event so UpdateFunc actually reaches the writer.
+func newUpdateTestRegisterInformer(t *testing.T) (*RegisterInformer, *recordingWriter) {
+	t.Helper()
+
+	log, err := logger.New("meshsync-test", logger.Options{})
+	require.NoError(t, err)
+
+	writer := &recordingWriter{}
+	ri := &RegisterInformer{
+		log:          log,
+		outputWriter: writer,
+		config: internalconfig.PipelineConfig{
+			Name:   "pods.v1.",
+			Events: []string{string(broker.Update)},
+		},
+		clusterID: "test-cluster",
+	}
+	return ri, writer
+}
+
+func newUnstructuredPodWithRV(name, namespace, resourceVersion string) *unstructured.Unstructured {
+	pod := newUnstructuredPod(name, namespace)
+	pod.SetResourceVersion(resourceVersion)
+	return pod
+}
+
+// TestUpdateFunc_SuppressesEqualResourceVersion verifies that a resync-style
+// UPDATE, where the resourceVersion is unchanged, is treated as a no-op and
+// nothing is published.
+func TestUpdateFunc_SuppressesEqualResourceVersion(t *testing.T) {
+	ri, writer := newUpdateTestRegisterInformer(t)
+	handlers := ri.GetEventHandlers()
+
+	old := newUnstructuredPodWithRV("pod", "default", "12345")
+	updated := newUnstructuredPodWithRV("pod", "default", "12345")
+
+	handlers.UpdateFunc(old, updated)
+
+	assert.Empty(t, writer.written, "an unchanged resourceVersion must not publish an UPDATE")
+}
+
+// TestUpdateFunc_PublishesChangedResourceVersion verifies that a real change,
+// where the resourceVersion differs, is published.
+func TestUpdateFunc_PublishesChangedResourceVersion(t *testing.T) {
+	ri, writer := newUpdateTestRegisterInformer(t)
+	handlers := ri.GetEventHandlers()
+
+	old := newUnstructuredPodWithRV("pod", "default", "12345")
+	updated := newUnstructuredPodWithRV("pod", "default", "12346")
+
+	handlers.UpdateFunc(old, updated)
+
+	require.Len(t, writer.written, 1, "a changed resourceVersion must publish exactly one UPDATE")
+	assert.Equal(t, broker.Update, writer.events[0])
+}
+
+// TestUpdateFunc_OpaqueResourceVersion is the regression test for treating
+// resourceVersion as an opaque string. A numeric parse would map both of these
+// non-numeric versions to 0, wrongly suppressing a genuine change; comparing the
+// raw strings publishes the update as it must.
+func TestUpdateFunc_OpaqueResourceVersion(t *testing.T) {
+	ri, writer := newUpdateTestRegisterInformer(t)
+	handlers := ri.GetEventHandlers()
+
+	old := newUnstructuredPodWithRV("pod", "default", "W/abc")
+	updated := newUnstructuredPodWithRV("pod", "default", "W/def")
+
+	handlers.UpdateFunc(old, updated)
+
+	require.Len(t, writer.written, 1, "differing opaque resourceVersions must publish an UPDATE")
+	assert.Equal(t, broker.Update, writer.events[0])
+}
+
 // TestDeleteFunc_Tombstone is the regression test for the panic that occurred
 // when the informer delivered a cache.DeletedFinalStateUnknown tombstone - the
 // exact stale-delete case that happens after a watch gap/resync. The handler

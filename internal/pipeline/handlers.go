@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/meshery/meshkit/broker"
 	internalconfig "github.com/meshery/meshsync/internal/config"
@@ -26,10 +25,14 @@ func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 			oldObjCasted := oldObj.(*unstructured.Unstructured)
 			objCasted := obj.(*unstructured.Unstructured)
 
-			oldRV, _ := strconv.ParseInt(oldObjCasted.GetResourceVersion(), 0, 64)
-			newRV, _ := strconv.ParseInt(objCasted.GetResourceVersion(), 0, 64)
+			// resourceVersion is an opaque string per the Kubernetes API contract
+			// and must not be parsed or ordered numerically. A pure resync delivers
+			// an UPDATE with an unchanged resourceVersion, so equal versions mean no
+			// change and the event is suppressed; any difference is a real update.
+			oldRV := oldObjCasted.GetResourceVersion()
+			newRV := objCasted.GetResourceVersion()
 
-			if oldRV < newRV {
+			if oldRV != newRV {
 				err := ri.publishItem(objCasted, broker.Update, ri.config)
 
 				if err != nil {
@@ -38,9 +41,8 @@ func (ri *RegisterInformer) GetEventHandlers() cache.ResourceEventHandlerFuncs {
 				ri.log.Debugf("Received UPDATE event for: %s/%s of kind: %s", objCasted.GetName(), objCasted.GetNamespace(), objCasted.GroupVersionKind().Kind)
 			} else {
 				ri.log.Debug(fmt.Sprintf(
-					"Skipping UPDATE event for: %s => [No changes detected]: %d %d",
+					"Skipping UPDATE event for: %s => [No changes detected]: resourceVersion %s",
 					objCasted.GetName(),
-					oldRV,
 					newRV,
 				))
 			}
