@@ -36,7 +36,7 @@ func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {
 	// internal/config/crd_config.go, which decides which informers get registered;
 	// this returns a no-op so the shared informer factory builds without duplicating
 	// (and previously mis-applying) that filtering here.
-	return func(lo *v1.ListOptions) {}, nil
+	return func(*v1.ListOptions) {}, nil
 }
 
 func New(

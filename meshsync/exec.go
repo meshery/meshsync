@@ -239,8 +239,10 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 	// TTY stdout streaming Goroutine
 	go func() {
 		rdr := bufio.NewReader(getStdout)
+		// Reused across iterations: string(data[:n]) copies the bytes on publish,
+		// so a single buffer is safe and avoids a 1KB allocation per read.
+		data := make([]byte, 1*KB)
 		for {
-			data := make([]byte, 1*KB)
 			n, err := rdr.Read(data)
 			if n > 0 {
 				// Publish only the bytes actually read to avoid emitting the
