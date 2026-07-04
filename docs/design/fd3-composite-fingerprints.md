@@ -1,9 +1,3 @@
-This is exactly the "sibling / match-labels" pattern already implemented for design-authoring, operating on `component.Component`'s configuration fields via `sel.Match.Refs` JSON-path lookups against `design.Components` (a slice). This is the precise algorithmic shape (bucket-by-shared-field-value, `sibling` kind, N.log(N) grouping) I should mirror for the runtime-inventory case, confirming `sibling`/`matchlabels` as the taxonomy for the peer/grouping relationship (as opposed to `hierarchical`/`inventory`/`parent` for a Deployment->Pod-style parent-child edge). This gives me the complete taxonomy mapping needed for the schema section: `sibling.matchlabels` for same-app grouping, `hierarchical.inventory.parent` reused for owner-reference chains within the app.
-
-I now have full grounding across all four repos. Here is the blueprint.
-
----
-
 # Blueprint: Composite Fingerprints Spanning Multiple Entities
 
 ## 1. Goal & Gap

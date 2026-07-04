@@ -1,7 +1,3 @@
-That's just generic boilerplate, not prescriptive. I now have full grounding. Let me produce the blueprint.
-
----
-
 # Blueprint: Periodic Reconciliation / Resync for MeshSync
 
 ## 1. Goal and Gap
@@ -133,7 +129,7 @@ Implemented as the third branch above: for each reconciled GVR, take the key set
 
 - **CRD is the schema of record** for this field (see §2/§4). `spec.reconcile-interval` (`metav1.Duration`, both `v1alpha1` and `v1alpha2`), `omitempty`, default absent = disabled.
 - **Versioning**: added to both existing API versions identically in the same PR — no new CRD API version is needed, and doing otherwise would violate the `conversion.go` round-trip invariant.
-- **Back-compat**: an existing `MeshSync` CR without `reconcile-interval` set unmarshal to the Go zero value (`metav1.Duration{}`, i.e. `0`), which the Operator's `applyReconcileInterval` treats as "no-op, omit env var," and MeshSync's own resolution treats as "disabled" — fully backward compatible, no migration needed for existing CRs.
+- **Back-compat**: an existing `MeshSync` CR without `reconcile-interval` set unmarshals to the Go zero value (`metav1.Duration{}`, i.e. `0`), which the Operator's `applyReconcileInterval` treats as "no-op, omit env var," and MeshSync's own resolution treats as "disabled" — fully backward compatible, no migration needed for existing CRs.
 - **MeshSync-side config**: new `ReconcileIntervalKey` in `internal/config/config.go`, populated via `RECONCILE_INTERVAL` env (set by Operator) or `-reconcileInterval` CLI flag (dev/file-mode), resolved once at `pkg/lib/meshsync.Run` startup — no runtime CRD re-poll for interval changes; a change to `spec.reconcile-interval` takes effect on the next MeshSync pod restart (Operator's SSA + rollout), consistent with how `spec.version`/`spec.size` already work (Deployment update → rollout → new pod picks up new env). This avoids adding a *second* live-reload mechanism (the existing CRD watch/`WatchCRDs` path is scoped to the resource whitelist/blacklist, not this scalar) — flagged as a deliberate simplification in §11 rather than a gap, since resource-set changes already require the same rollout-based propagation for `watch-list` today when driven by direct CR edit (only informer-level GVR set changes via the CRD-watch path get live-applied without restart, and that's a different, existing mechanism this feature does not need to replicate).
 
 ## 6. Sequencing and Feature-Flagging

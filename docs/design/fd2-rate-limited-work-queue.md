@@ -1,7 +1,3 @@
-I have full grounding now. Let me construct the blueprint.
-
----
-
 # Implementation Blueprint: Rate-Limited Work Queue + Converter (Backpressure)
 
 ## 1. Goal & Gap

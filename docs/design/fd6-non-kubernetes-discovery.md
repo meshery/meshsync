@@ -1,9 +1,3 @@
-I have everything I need. No pre-existing `Discoverer`/`Platform` abstraction anywhere. `component_info.json`'s `next_error_code: 1015` is already claimed by `ErrWriteOutputCode` in `internal/pipeline/error.go` (the file's local numbering has drifted ahead of the tracked `next_error_code` - I'll flag this as a pre-existing inconsistency worth noting, not something to fix as part of this design task, per the "flag, don't silently step over" instruction, but only as an aside since it's an unrelated latent bookkeeping gap, not something this feature touches directly).
-
-I now have full grounding across all five repos. Here is the blueprint.
-
----
-
 # IMPLEMENTATION BLUEPRINT: Non-Kubernetes / Multi-Platform Discovery for MeshSync
 
 ## 1. Goal & Gap
