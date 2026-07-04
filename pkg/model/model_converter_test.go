@@ -176,7 +176,7 @@ func TestRedactSecretsEnabled(t *testing.T) {
 
 func TestRedactSecretData(t *testing.T) {
 	t.Run("redacts values preserving keys", func(t *testing.T) {
-		out := redactSecretData(`{"password":"cGFzcw==","username":"YWRtaW4="}`)
+		out := redactSecretData([]byte(`{"password":"cGFzcw==","username":"YWRtaW4="}`))
 		assertJSONEqual(t, out, map[string]string{
 			"password": redactedSecretPlaceholder,
 			"username": redactedSecretPlaceholder,
@@ -184,20 +184,20 @@ func TestRedactSecretData(t *testing.T) {
 	})
 
 	t.Run("empty input is returned unchanged", func(t *testing.T) {
-		if out := redactSecretData(""); out != "" {
+		if out := redactSecretData(nil); out != "" {
 			t.Errorf("expected empty string, got %q", out)
 		}
 	})
 
 	t.Run("malformed json is returned unchanged", func(t *testing.T) {
-		in := `{not-json`
-		if out := redactSecretData(in); out != in {
+		in := []byte(`{not-json`)
+		if out := redactSecretData(in); out != string(in) {
 			t.Errorf("expected input returned unchanged, got %q", out)
 		}
 	})
 
 	t.Run("empty object stays empty object", func(t *testing.T) {
-		if out := redactSecretData(`{}`); out != `{}` {
+		if out := redactSecretData([]byte(`{}`)); out != `{}` {
 			t.Errorf("expected {}, got %q", out)
 		}
 	})

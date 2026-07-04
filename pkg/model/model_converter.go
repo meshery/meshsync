@@ -45,14 +45,14 @@ func redactSecretsEnabled() bool {
 // redactedSecretPlaceholder while preserving the keys. If the input is not a
 // JSON object (empty, malformed, or unexpected shape), it is returned
 // unchanged so redaction never corrupts or drops data it does not understand.
-func redactSecretData(raw string) string {
-	if raw == "" {
-		return raw
+func redactSecretData(raw []byte) string {
+	if len(raw) == 0 {
+		return ""
 	}
 
 	var kv map[string]json.RawMessage
-	if err := json.Unmarshal([]byte(raw), &kv); err != nil {
-		return raw
+	if err := json.Unmarshal(raw, &kv); err != nil {
+		return string(raw)
 	}
 
 	redacted := make(map[string]string, len(kv))
@@ -62,7 +62,7 @@ func redactSecretData(raw string) string {
 
 	out, err := json.Marshal(redacted)
 	if err != nil {
-		return raw
+		return string(raw)
 	}
 	return string(out)
 }
@@ -145,26 +145,32 @@ func ParseList(
 	// keys are preserved, keeping plaintext/base64 secrets from leaving the
 	// cluster. Redaction applies to Secret resources only; ConfigMap data is
 	// left untouched.
-	redactSecrets := redactSecretsEnabled() && result.Kind == secretKind
+	// result.Kind is checked first so redactSecretsEnabled() (which reads the
+	// environment) is only evaluated for Secret resources, not on the hot path
+	// for every non-Secret resource.
+	redactSecrets := result.Kind == secretKind && redactSecretsEnabled()
 
 	if objData, _, _, err := jsonparser.Get(data, "data"); err == nil {
-		result.Data = string(objData)
 		if redactSecrets {
-			result.Data = redactSecretData(result.Data)
+			result.Data = redactSecretData(objData)
+		} else {
+			result.Data = string(objData)
 		}
 	}
 
 	if binaryData, _, _, err := jsonparser.Get(data, "binaryData"); err == nil {
-		result.BinaryData = string(binaryData)
 		if redactSecrets {
-			result.BinaryData = redactSecretData(result.BinaryData)
+			result.BinaryData = redactSecretData(binaryData)
+		} else {
+			result.BinaryData = string(binaryData)
 		}
 	}
 
 	if stringData, _, _, err := jsonparser.Get(data, "stringData"); err == nil {
-		result.StringData = string(stringData)
 		if redactSecrets {
-			result.StringData = redactSecretData(result.StringData)
+			result.StringData = redactSecretData(stringData)
+		} else {
+			result.StringData = string(stringData)
 		}
 	}
 
