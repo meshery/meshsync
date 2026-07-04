@@ -77,34 +77,41 @@ func (w *ContentDeduplicatorWriter) Write(
 		return w.realWriter.Write(obj, evtype, cfg)
 	}
 
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
 	// DELETE always publishes and evicts the UID. Evicting keeps the map bounded
 	// and ensures a subsequently re-created object republishes fresh rather than
 	// colliding with a stale hash.
 	if evtype == broker.Delete {
+		w.mu.Lock()
 		delete(w.hashByUID, uid)
+		w.mu.Unlock()
 		return w.realWriter.Write(obj, evtype, cfg)
 	}
 
 	// ADD/UPDATE: publish only when the payload content changed for this UID.
+	// Hash outside the lock: the JSON serialization is CPU-bound and must not
+	// serialize concurrent writers. The mutex guards only the map, and the
+	// downstream write happens after the lock is released.
 	hash, err := hashResource(obj)
 	if err != nil {
 		// Hashing failed for reasons outside our control (a value that does not
 		// round-trip through JSON). Fail open - forward the event - rather than
 		// silently dropping it, and drop any stale hash so we do not wedge this
 		// UID into a permanently-suppressed state.
+		w.mu.Lock()
 		delete(w.hashByUID, uid)
+		w.mu.Unlock()
 		return w.realWriter.Write(obj, evtype, cfg)
 	}
 
+	w.mu.Lock()
 	if prev, ok := w.hashByUID[uid]; ok && prev == hash {
 		// Byte-identical to the last published payload for this UID: skip.
+		w.mu.Unlock()
 		return nil
 	}
-
 	w.hashByUID[uid] = hash
+	w.mu.Unlock()
+
 	return w.realWriter.Write(obj, evtype, cfg)
 }
 
