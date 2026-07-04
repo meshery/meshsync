@@ -7,7 +7,6 @@ import (
 	"io"
 
 	"github.com/meshery/meshkit/broker"
-	"github.com/meshery/meshsync/internal/channels"
 	"github.com/meshery/meshsync/internal/config"
 	"github.com/meshery/meshsync/pkg/model"
 	v1 "k8s.io/api/core/v1"
@@ -27,17 +26,15 @@ func (h *Handler) processLogRequest(obj interface{}, cfg config.ListenerConfig) 
 
 	for _, req := range reqs {
 		id := fmt.Sprintf("logs.%s.%s.%s", req.Namespace, req.Name, req.Container)
-		if _, ok := h.channelPool[id]; !ok {
-			// Subscribing the first time
-			if !bool(req.Stop) {
-				h.channelPool[id] = channels.NewStructChannel()
-				go h.streamLogs(id, req, cfg)
+		if bool(req.Stop) {
+			// Stop request: signal the running stream, if any, to close.
+			if ch, ok := h.getSession(id); ok {
+				ch <- struct{}{}
 			}
-		} else {
-			// Already running subscription
-			if bool(req.Stop) {
-				h.channelPool[id].(channels.StructChannel) <- struct{}{}
-			}
+			continue
+		}
+		if _, created := h.addSession(id); created {
+			go h.streamLogs(id, req, cfg)
 		}
 	}
 
@@ -58,14 +55,16 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 	}).Stream(context.TODO())
 	if err != nil {
 		h.Log.Error(ErrLogStream(err))
-		delete(h.channelPool, id)
+		h.deleteSession(id)
 		return
 	}
 
 	go func() {
-		<-h.channelPool[id].(channels.StructChannel)
+		if ch, ok := h.getSession(id); ok {
+			<-ch
+		}
 		h.Log.Debugf("Closing %s", id)
-		delete(h.channelPool, id)
+		h.deleteSession(id)
 		resp.Close()
 	}()
 
@@ -80,7 +79,7 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 		}
 		if err != nil {
 			h.Log.Error(ErrCopyBuffer(err))
-			delete(h.channelPool, id)
+			h.deleteSession(id)
 		}
 
 		message := string(buf[:numBytes])
