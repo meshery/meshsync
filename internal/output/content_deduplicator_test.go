@@ -206,3 +206,42 @@ func (m *lockingMockWriter) count() int {
 	defer m.mu.Unlock()
 	return m.written
 }
+
+// failableWriter fails its next Write once when failNext is set, then succeeds.
+type failableWriter struct {
+	failNext bool
+	calls    int
+}
+
+func (w *failableWriter) Write(_ model.KubernetesResource, _ broker.EventType, _ config.PipelineConfig) error {
+	w.calls++
+	if w.failNext {
+		w.failNext = false
+		return fmt.Errorf("downstream write failed")
+	}
+	return nil
+}
+
+// A failed downstream publish must not record the hash, or a retry of the same
+// payload would be wrongly suppressed as a duplicate that never actually shipped.
+func TestContentDeduplicatorWriter_FailedWriteNotRecorded(t *testing.T) {
+	inner := &failableWriter{failNext: true}
+	writer := NewContentDeduplicatorWriter(inner)
+	cfg := config.PipelineConfig{}
+	res := resourceWithUID("uid-1", "100")
+
+	// First publish fails downstream: the error propagates and the hash is not recorded.
+	assert.Error(t, writer.Write(res, broker.Add, cfg))
+	writer.mu.Lock()
+	_, present := writer.hashByUID["uid-1"]
+	writer.mu.Unlock()
+	assert.False(t, present, "a failed publish must not record the hash")
+
+	// Retry with the identical payload must reach the downstream writer (not be suppressed).
+	assert.NoError(t, writer.Write(res, broker.Update, cfg))
+	assert.Equal(t, 2, inner.calls, "retry after a failed publish should re-reach the downstream writer")
+
+	// After the successful publish the hash is recorded, so an identical write is skipped.
+	assert.NoError(t, writer.Write(res, broker.Update, cfg))
+	assert.Equal(t, 2, inner.calls, "byte-identical write after a successful publish should be suppressed")
+}

@@ -104,15 +104,24 @@ func (w *ContentDeduplicatorWriter) Write(
 	}
 
 	w.mu.Lock()
-	if prev, ok := w.hashByUID[uid]; ok && prev == hash {
-		// Byte-identical to the last published payload for this UID: skip.
-		w.mu.Unlock()
+	prev, ok := w.hashByUID[uid]
+	w.mu.Unlock()
+	if ok && prev == hash {
+		// Byte-identical to the last successfully published payload: skip.
 		return nil
 	}
+
+	// Publish first, then record the hash only on success. Recording before the
+	// write would let a failed publish suppress a later retry of the same payload
+	// (the payload would be marked "published" though it never was).
+	if err := w.realWriter.Write(obj, evtype, cfg); err != nil {
+		return err
+	}
+
+	w.mu.Lock()
 	w.hashByUID[uid] = hash
 	w.mu.Unlock()
-
-	return w.realWriter.Write(obj, evtype, cfg)
+	return nil
 }
 
 // hashResource returns the sha256 of the JSON encoding of obj. json.Marshal is
