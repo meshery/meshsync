@@ -29,7 +29,7 @@ main.go --parses CLI flags--> pkg/lib/meshsync.Run(...)
 
 - `main.go` parses flags (`-output`, `-outputFile`, `-outputNamespaces`, `-outputResources`, `-stopAfter`) and calls `pkg/lib/meshsync.Run(...)`.
 - `meshsync.Handler` (`meshsync/meshsync.go`) holds the config, logger, broker handle, dynamic informer factory, kube client, channel pool, output writer, and output-filtration config. `meshsync.New(...)` wires them together and derives the cluster ID via `pkg/utils.GetClusterID`.
-- `GetDynamicInformer` builds a `dynamicinformer.DynamicSharedInformerFactory` filtered by a label selector derived from the config's informer blacklist.
+- `GetDynamicInformer` builds a `dynamicinformer.DynamicSharedInformerFactory`. Resource filtering happens in the watch-list config (`internal/config/crd_config.go` decides which informers get registered); the factory's list-options hook (`GetListOptionsFunc`) is a deliberate no-op.
 
 ## Discovery Pipeline (`internal/pipeline`)
 

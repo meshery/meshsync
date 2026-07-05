@@ -37,7 +37,7 @@ alt="Meshery Logo" width="70%" /></picture></a><br /><br /></p>
 
 MeshSync is Meshery's event-driven, continuous discovery and synchronization engine. It ensures that the configuration and operational state of Kubernetes (and any supported Meshery platform) are known to Meshery Server. When deployed into a Kubernetes cluster, MeshSync runs as a custom controller under the control of [Meshery Operator](https://docs.meshery.io/concepts/architecture/operator) and publishes resource changes over Meshery Broker (NATS).
 
-MeshSync runs in one of two modes: **nats** (default - publishes Kubernetes resource events to NATS) and **file** (writes deduplicated cluster snapshots to disk, with no NATS or CRD dependency). Run `meshsync --help` for input parameters.
+MeshSync runs in one of two output modes: **broker** (default - publishes Kubernetes resource events to Meshery Broker over NATS) and **file** (writes deduplicated cluster snapshots to disk, with no NATS or CRD dependency). Run `meshsync --help` for input parameters.
 
 ## Documentation
 

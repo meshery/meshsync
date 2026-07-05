@@ -94,14 +94,14 @@ func parseFlags() {
 		&outputNamespacesString,
 		"outputNamespaces",
 		"",
-		"k8s namespaces for which limit the output, comma separated list f.e. \"default,agile-otter\", applicable for both nats and file output mode",
+		"k8s namespaces for which limit the output, comma separated list f.e. \"default,agile-otter\", applicable for both broker and file output mode",
 	)
 	var outputResourcesString string
 	flag.StringVar(
 		&outputResourcesString,
 		"outputResources",
 		"",
-		"k8s resources for which limit the output, comma separated case insensitive list of k8s resources, f.e. \"pod,deployment,service\", applicable for both nats and file output mode",
+		"k8s resources for which limit the output, comma separated case insensitive list of k8s resources, f.e. \"pod,deployment,service\", applicable for both broker and file output mode",
 	)
 	flag.DurationVar(
 		&stopAfterDuration,
