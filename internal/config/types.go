@@ -21,6 +21,15 @@ const (
 	InformerStore     = "informer-store"
 	OutputModeBroker  = "broker"
 	OutputModeFile    = "file"
+
+	// EnvBrokerContentDedup, when truthy, enables in-memory content-hash
+	// deduplication on the broker output path so that byte-identical
+	// republishes of the same resource are suppressed. It is OFF by default:
+	// the dedup cache persists across informer resyncs, and a resync is also a
+	// recovery path, so republishing everything (the default) is the safe
+	// behaviour. Accepted truthy values are parsed by strconv.ParseBool
+	// ("1", "t", "true", etc.).
+	EnvBrokerContentDedup = "MESHSYNC_BROKER_CONTENT_DEDUP"
 )
 
 type PipelineConfigs []PipelineConfig
