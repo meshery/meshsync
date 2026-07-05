@@ -370,8 +370,8 @@ func determineUseCRDFlag(
 	log logger.Handler,
 	kubeClient *mesherykube.Client,
 ) bool {
-	// if output mode is not nats generally it is not expected to have CRD present in cluster.
-	// theoretically CRD could be present even in file, channel output mode.
+	// if output mode is not broker generally it is not expected to have CRD present in cluster.
+	// theoretically CRD could be present even in file output mode.
 	// hence check if CRD are present in the cluster,
 	// and only skip them if it is not present.
 	crd, errGetMeshsyncCRD := config.GetMeshsyncCRD(kubeClient.DynamicKubeClient)
