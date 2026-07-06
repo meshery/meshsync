@@ -74,25 +74,7 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 	done := make(chan struct{})
 	defer close(done)
 
-	go func() {
-		ch, ok := h.getSession(id)
-		if !ok {
-			return
-		}
-		select {
-		case <-ch:
-			// Stop request: close the stream so the read loop unblocks and exits.
-			h.Log.Debugf("Closing %s", id)
-			resp.Close()
-		case <-h.channelPool[channels.Stop].(channels.StopChannel):
-			// Global shutdown: close the stream so a long-running log stream does
-			// not block graceful shutdown. channelPool holds only the fixed system
-			// channels and is read-only after init, so this read needs no lock.
-			h.Log.Debugf("Stopping session %s on global stop", id)
-			resp.Close()
-		case <-done:
-		}
-	}()
+	go h.awaitLogStreamStop(id, resp, done)
 
 	for {
 		buf := make([]byte, 2000)
@@ -123,5 +105,26 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 		}); pubErr != nil {
 			h.Log.Error(ErrCopyBuffer(pubErr))
 		}
+	}
+}
+
+// awaitLogStreamStop closes resp when the session receives an explicit stop
+// signal or the process is shutting down (channels.Stop), and returns without
+// closing when the stream has already ended on its own (done is closed by
+// streamLogs). channelPool holds only the fixed system channels and is
+// read-only after init, so reading channels.Stop from it needs no lock.
+func (h *Handler) awaitLogStreamStop(id string, resp io.ReadCloser, done <-chan struct{}) {
+	ch, ok := h.getSession(id)
+	if !ok {
+		return
+	}
+	select {
+	case <-ch:
+		h.Log.Debugf("Closing %s", id)
+		resp.Close()
+	case <-h.channelPool[channels.Stop].(channels.StopChannel):
+		h.Log.Debugf("Stopping session %s on global stop", id)
+		resp.Close()
+	case <-done:
 	}
 }
