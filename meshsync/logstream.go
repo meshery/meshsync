@@ -27,17 +27,20 @@ func (h *Handler) processLogRequest(obj interface{}, cfg config.ListenerConfig) 
 
 	for _, req := range reqs {
 		id := fmt.Sprintf("logs.%s.%s.%s", req.Namespace, req.Name, req.Container)
-		if _, ok := h.channelPool[id]; !ok {
-			// Subscribing the first time
-			if !bool(req.Stop) {
-				h.channelPool[id] = channels.NewStructChannel()
-				go h.streamLogs(id, req, cfg)
+		if bool(req.Stop) {
+			// Stop request: signal the running stream, if any, to close.
+			// Non-blocking: the stream may already be closing and no longer
+			// receiving, so a plain send could freeze this loop.
+			if ch, ok := h.getSession(id); ok {
+				select {
+				case ch <- struct{}{}:
+				default:
+				}
 			}
-		} else {
-			// Already running subscription
-			if bool(req.Stop) {
-				h.channelPool[id].(channels.StructChannel) <- struct{}{}
-			}
+			continue
+		}
+		if _, created := h.addSession(id); created {
+			go h.streamLogs(id, req, cfg)
 		}
 	}
 
@@ -45,6 +48,10 @@ func (h *Handler) processLogRequest(obj interface{}, cfg config.ListenerConfig) 
 }
 
 func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.ListenerConfig) {
+	// Remove the session however this function exits (stream-open failure, EOF,
+	// read error, or a stop request).
+	defer h.deleteSession(id)
+
 	resp, err := h.kubeClient.KubeClient.CoreV1().Pods(req.Namespace).GetLogs(req.Name, &v1.PodLogOptions{
 		Container:  req.Container,
 		Follow:     req.Follow,
@@ -58,16 +65,16 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 	}).Stream(context.TODO())
 	if err != nil {
 		h.Log.Error(ErrLogStream(err))
-		delete(h.channelPool, id)
 		return
 	}
+	defer resp.Close()
 
-	go func() {
-		<-h.channelPool[id].(channels.StructChannel)
-		h.Log.Debugf("Closing %s", id)
-		delete(h.channelPool, id)
-		resp.Close()
-	}()
+	// done unblocks the waiter goroutine when the stream ends on its own (EOF or
+	// read error), so it is not leaked once streamLogs returns.
+	done := make(chan struct{})
+	defer close(done)
+
+	go h.awaitLogStreamStop(id, resp, done)
 
 	for {
 		buf := make([]byte, 2000)
@@ -75,16 +82,18 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 		if err == io.EOF {
 			break
 		}
+		if err != nil {
+			// A non-EOF read error ends the stream; breaking avoids an infinite
+			// read/log loop on a failed stream.
+			h.Log.Error(ErrCopyBuffer(err))
+			break
+		}
 		if numBytes == 0 {
 			continue
 		}
-		if err != nil {
-			h.Log.Error(ErrCopyBuffer(err))
-			delete(h.channelPool, id)
-		}
 
 		message := string(buf[:numBytes])
-		err = h.Broker.Publish(cfg.PublishTo, &broker.Message{
+		if pubErr := h.Broker.Publish(cfg.PublishTo, &broker.Message{
 			ObjectType: broker.LogStreamObject,
 			EventType:  broker.Add,
 			Object: &model.LogObject{
@@ -93,10 +102,29 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 				Primary:   req.Name,
 				Secondary: req.Container,
 			},
-		})
-		if err != nil {
-			h.Log.Error(ErrCopyBuffer(err))
+		}); pubErr != nil {
+			h.Log.Error(ErrCopyBuffer(pubErr))
 		}
 	}
+}
 
+// awaitLogStreamStop closes resp when the session receives an explicit stop
+// signal or the process is shutting down (channels.Stop), and returns without
+// closing when the stream has already ended on its own (done is closed by
+// streamLogs). channelPool holds only the fixed system channels and is
+// read-only after init, so reading channels.Stop from it needs no lock.
+func (h *Handler) awaitLogStreamStop(id string, resp io.ReadCloser, done <-chan struct{}) {
+	ch, ok := h.getSession(id)
+	if !ok {
+		return
+	}
+	select {
+	case <-ch:
+		h.Log.Debugf("Closing %s", id)
+		resp.Close()
+	case <-h.channelPool[channels.Stop].(channels.StopChannel):
+		h.Log.Debugf("Stopping session %s on global stop", id)
+		resp.Close()
+	case <-done:
+	}
 }

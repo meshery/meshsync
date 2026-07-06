@@ -72,28 +72,26 @@ func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig)
 
 	for _, req := range reqs {
 		id := fmt.Sprintf("exec.%s.%s.%s.%s", req.Namespace, req.Name, req.Container, req.ID)
-		if _, ok := h.channelPool[id]; !ok {
-			// Subscribing the first time
-			if !bool(req.Stop) {
-				h.channelPool[id] = channels.NewStructChannel()
-				h.Log.Debug("Starting session")
-
-				err := h.Broker.Publish("active_sessions.exec", &broker.Message{
-					ObjectType: broker.ActiveExecObject,
-					Object:     h.getActiveChannels(),
-				})
-				if err != nil {
-					h.Log.Error(ErrGetObject(err))
-				}
-				go h.streamSession(id, req, cfg)
-			}
-		} else {
-			// Already running subscription
-			if bool(req.Stop) {
-				// TODO: once we have a unsubscribe functionality, need to publish message to active sessions subject
-				execCleanup(h, id)
-			}
+		if bool(req.Stop) {
+			// Stop request: tear down the session if one is running (no-op otherwise).
+			// TODO: once we have unsubscribe functionality, publish to active sessions subject.
+			execCleanup(h, id)
+			continue
 		}
+		if _, created := h.addSession(id); !created {
+			// A session for this id is already running.
+			continue
+		}
+		h.Log.Debug("Starting session")
+
+		err := h.Broker.Publish("active_sessions.exec", &broker.Message{
+			ObjectType: broker.ActiveExecObject,
+			Object:     h.getActiveChannels(),
+		})
+		if err != nil {
+			h.Log.Error(ErrGetObject(err))
+		}
+		go h.streamSession(id, req, cfg)
 	}
 
 	return nil
@@ -104,9 +102,10 @@ func (h *Handler) processActiveExecRequest() error {
 	return nil
 }
 func (h *Handler) getActiveChannels() []*string {
-	activeChannels := make([]*string, 0, len(h.channelPool))
-	for k := range h.channelPool {
-		activeChannels = append(activeChannels, &k)
+	ids := h.activeSessionIDs()
+	activeChannels := make([]*string, 0, len(ids))
+	for i := range ids {
+		activeChannels = append(activeChannels, &ids[i])
 	}
 
 	return activeChannels
@@ -164,7 +163,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 			_ = tstdin.Close()
 			_ = stdout.Close()
 			_ = getStdout.Close()
-			delete(h.channelPool, id)
+			h.deleteSession(id)
 		})
 	}
 	defer terminate()
@@ -263,10 +262,8 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 	}()
 
 	for {
-		// The session's StructChannel is asserted below; once terminate() has
-		// removed the pool entry that assertion would be on a nil interface and
-		// panic, so bail out first if the session is already gone.
-		sessionCh, ok := h.channelPool[id].(channels.StructChannel)
+		// If terminate() has already removed the session, bail out.
+		sessionCh, ok := h.getSession(id)
 		if !ok {
 			h.Log.Debugf("Session closed for: %s", id)
 			return
@@ -293,12 +290,7 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 }
 
 func execCleanup(h *Handler, id string) {
-	ch, ok := h.channelPool[id]
-	if !ok {
-		return
-	}
-
-	structChan, ok := ch.(channels.StructChannel)
+	structChan, ok := h.getSession(id)
 	if !ok {
 		return
 	}

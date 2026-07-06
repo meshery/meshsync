@@ -1,6 +1,8 @@
 package meshsync
 
 import (
+	"sync"
+
 	"github.com/meshery/meshkit/broker"
 	"github.com/meshery/meshkit/config"
 	"github.com/meshery/meshkit/logger"
@@ -22,10 +24,15 @@ type Handler struct {
 	Log    logger.Handler
 	Broker broker.Handler
 
-	clusterID        string
-	informer         dynamicinformer.DynamicSharedInformerFactory
-	kubeClient       *mesherykube.Client
+	clusterID  string
+	informer   dynamicinformer.DynamicSharedInformerFactory
+	kubeClient *mesherykube.Client
+	// channelPool holds the fixed system channels (Stop/OS/ReSync) and is
+	// read-only after construction. Dynamic exec/log-stream sessions live in
+	// sessions (guarded by sessionsMu), not here, so the two never race.
 	channelPool      map[string]channels.GenericChannel
+	sessions         map[string]channels.StructChannel
+	sessionsMu       sync.Mutex
 	stores           map[string]cache.Store
 	outputWriter     output.Writer
 	outputFiltration internalconfig.OutputFiltrationContainer
@@ -65,6 +72,7 @@ func New(
 		kubeClient:       kubeClient,
 		clusterID:        clusterID,
 		channelPool:      pool,
+		sessions:         make(map[string]channels.StructChannel),
 		outputFiltration: outputFiltration,
 	}, nil
 }
