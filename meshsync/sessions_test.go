@@ -69,3 +69,32 @@ func TestSessionsConcurrentAccess(t *testing.T) {
 	}
 	wg.Wait()
 }
+
+func TestAddSessionChannelIsBuffered(t *testing.T) {
+	h := newSessionsHandler()
+	ch, created := h.addSession("s")
+	if !created {
+		t.Fatal("expected the session to be created")
+	}
+	// The session channel must be buffered: exec/log-stream send stop signals
+	// non-blocking, so a stop that arrives before the receiver is ready must land
+	// in the buffer rather than being dropped.
+	select {
+	case ch <- struct{}{}:
+	default:
+		t.Fatal("session channel is unbuffered: a non-blocking stop signal was dropped")
+	}
+}
+
+func TestAddSessionInitializesNilMap(t *testing.T) {
+	// A Handler constructed outside New has a nil sessions map; addSession must
+	// initialize it rather than panic on the write.
+	h := &Handler{}
+	ch, created := h.addSession("s")
+	if !created || ch == nil {
+		t.Fatal("addSession should lazily initialize the map and create the session")
+	}
+	if _, ok := h.getSession("s"); !ok {
+		t.Fatal("session should be retrievable after lazy initialization")
+	}
+}

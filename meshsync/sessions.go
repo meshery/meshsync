@@ -21,10 +21,18 @@ import (
 func (h *Handler) addSession(id string) (ch channels.StructChannel, created bool) {
 	h.sessionsMu.Lock()
 	defer h.sessionsMu.Unlock()
+	// Defensive: a Handler constructed outside New has a nil map; writing to it
+	// would panic.
+	if h.sessions == nil {
+		h.sessions = make(map[string]channels.StructChannel)
+	}
 	if existing, ok := h.sessions[id]; ok {
 		return existing, false
 	}
-	ch = channels.NewStructChannel()
+	// 1-buffered: exec/log-stream stop signals are sent non-blocking, so a stop
+	// that arrives before the session goroutine begins receiving must still be
+	// recorded rather than dropped (which would leave the session running).
+	ch = make(channels.StructChannel, 1)
 	h.sessions[id] = ch
 	return ch, true
 }
