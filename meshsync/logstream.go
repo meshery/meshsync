@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshsync/internal/channels"
 	"github.com/meshery/meshsync/internal/config"
 	"github.com/meshery/meshsync/pkg/model"
 	v1 "k8s.io/api/core/v1"
@@ -82,6 +83,12 @@ func (h *Handler) streamLogs(id string, req model.LogRequest, cfg config.Listene
 		case <-ch:
 			// Stop request: close the stream so the read loop unblocks and exits.
 			h.Log.Debugf("Closing %s", id)
+			resp.Close()
+		case <-h.channelPool[channels.Stop].(channels.StopChannel):
+			// Global shutdown: close the stream so a long-running log stream does
+			// not block graceful shutdown. channelPool holds only the fixed system
+			// channels and is read-only after init, so this read needs no lock.
+			h.Log.Debugf("Stopping session %s on global stop", id)
 			resp.Close()
 		case <-done:
 		}
