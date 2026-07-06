@@ -2,7 +2,6 @@ package meshsync
 
 import (
 	"context"
-	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -11,6 +10,7 @@ import (
 	"github.com/meshery/meshkit/broker"
 	"github.com/meshery/meshkit/broker/channel"
 	"github.com/meshery/meshkit/logger"
+	"go.uber.org/goleak"
 )
 
 // recordingBroker wraps a real broker.Handler, recording the subjects passed to
@@ -63,12 +63,17 @@ func TestUnsubscribeSessionInputTearsDownSubscription(t *testing.T) {
 	rec := &recordingBroker{Handler: channel.NewChannelBrokerHandler()}
 	h := &Handler{Broker: rec, Log: newTestLogger(t)}
 
+	// Snapshot the goroutines already running (broker/logger infra) now; the
+	// forwarding goroutine SubscribeWithChannel starts below is NOT in this set,
+	// so goleak fails if it is still alive after teardown. goleak retries with
+	// backoff, so it is robust to normal runtime scheduling (unlike a raw
+	// NumGoroutine comparison).
+	defer goleak.VerifyNone(t, goleak.IgnoreCurrent())
+
 	const id = "exec.ns.pod.ctr.req-1"
 	subject := "input." + id
-	// Mirror streamSession: a 1-buffered channel subscribed to input.<id>.
-	subCh := make(chan *broker.Message, 1)
-
-	baseline := runtime.NumGoroutine()
+	// Mirror streamSession: a buffered channel subscribed to input.<id>.
+	subCh := make(chan *broker.Message, execInputChannelBuffer)
 
 	if err := rec.SubscribeWithChannel(subject, generateID(), subCh); err != nil {
 		t.Fatalf("SubscribeWithChannel: %v", err)
@@ -102,9 +107,8 @@ func TestUnsubscribeSessionInputTearsDownSubscription(t *testing.T) {
 			t.Fatalf("subject %s still registered after Unsubscribe: %v", subject, rec.ConnectedEndpoints())
 		}
 	}
-
-	// ...and the delivery goroutine it started has exited, so nothing leaks.
-	waitForGoroutines(t, baseline, 3*time.Second)
+	// ...and the delivery goroutine it started has exited (verified by the
+	// deferred goleak check), so nothing leaks.
 }
 
 // TestUnsubscribeSessionInputLogsErrorWithoutPanic covers the teardown error
@@ -122,24 +126,5 @@ func TestUnsubscribeSessionInputLogsErrorWithoutPanic(t *testing.T) {
 
 	if got := rec.subjects(); len(got) != 1 {
 		t.Fatalf("expected exactly one Unsubscribe call, got %v", got)
-	}
-}
-
-// waitForGoroutines fails if the goroutine count has not returned to at most
-// baseline within timeout. It guards against the per-session delivery-goroutine
-// leak that the old drain-goroutine approach caused.
-func waitForGoroutines(t *testing.T, baseline int, timeout time.Duration) {
-	t.Helper()
-	deadline := time.Now().Add(timeout)
-	for {
-		runtime.Gosched()
-		if runtime.NumGoroutine() <= baseline {
-			return
-		}
-		if time.Now().After(deadline) {
-			t.Fatalf("goroutine count did not return to baseline %d (now %d): delivery goroutine leaked",
-				baseline, runtime.NumGoroutine())
-		}
-		time.Sleep(10 * time.Millisecond)
 	}
 }

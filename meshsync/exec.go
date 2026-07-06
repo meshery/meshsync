@@ -41,6 +41,14 @@ import (
 // KB stands for KiloByte
 const KB = 1024
 
+// execInputChannelBuffer bounds how many stdin messages can queue for a session
+// before the broker's delivery goroutine backpressures. A cushion (rather than
+// an unbuffered channel) keeps a burst of input - or a delivery already in
+// flight when the session tears down - from blocking that delivery goroutine in
+// the window before Unsubscribe stops further delivery. It is a cushion, not a
+// correctness dependency: teardown unsubscribes the subject regardless.
+const execInputChannelBuffer = 256
+
 // terminalSizeQueueAdapter adapts kubectl's term.TerminalSizeQueue to client-go's remotecommand.TerminalSizeQueue
 type terminalSizeQueueAdapter struct {
 	queue term.TerminalSizeQueue
@@ -148,10 +156,11 @@ func (h *Handler) streamChannelPool() {
 //
 //nolint:cyclop
 func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.ListenerConfig) {
-	// Buffer one message so a delivery already in flight at teardown lands in the
-	// buffer instead of blocking the broker's delivery goroutine on an unread
-	// channel in the window before Unsubscribe (in terminate) takes effect.
-	subCh := make(chan *broker.Message, 1)
+	// Buffered (see execInputChannelBuffer) so a burst of stdin - or a delivery
+	// already in flight at teardown - lands in the buffer instead of blocking the
+	// broker's delivery goroutine on an unread channel in the window before
+	// Unsubscribe (in terminate) takes effect.
+	subCh := make(chan *broker.Message, execInputChannelBuffer)
 	tstdin, putStdin := io.Pipe()
 	stdin := io.NopCloser(tstdin)
 	getStdout, stdout := io.Pipe()
@@ -279,10 +288,22 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 		}
 
 		select {
-		case msg := <-subCh:
-			if msg.ObjectType == broker.ExecInputObject {
-				if _, err := io.CopyBuffer(putStdin, strings.NewReader(msg.Object.(string)+"\n"), nil); err != nil {
-					h.Log.Error(ErrExecTerminal(err))
+		case msg, ok := <-subCh:
+			if !ok {
+				// A broker implementation that closes the delivery channel on
+				// Unsubscribe would make this receive return (nil, false); end the
+				// session rather than spin on the closed channel or dereference a
+				// nil message.
+				h.Log.Debugf("Input channel closed for session %s", id)
+				return
+			}
+			// Guard the payload assertion too: a malformed ExecInput message with a
+			// non-string object must not panic the session loop.
+			if msg != nil && msg.ObjectType == broker.ExecInputObject {
+				if input, isStr := msg.Object.(string); isStr {
+					if _, err := io.CopyBuffer(putStdin, strings.NewReader(input+"\n"), nil); err != nil {
+						h.Log.Error(ErrExecTerminal(err))
+					}
 				}
 			}
 		case <-sessionCh:
