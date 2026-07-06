@@ -41,6 +41,14 @@ import (
 // KB stands for KiloByte
 const KB = 1024
 
+// execInputChannelBuffer bounds how many stdin messages can queue for a session
+// before the broker's delivery goroutine backpressures. A cushion (rather than
+// an unbuffered channel) keeps a burst of input - or a delivery already in
+// flight when the session tears down - from blocking that delivery goroutine in
+// the window before Unsubscribe stops further delivery. It is a cushion, not a
+// correctness dependency: teardown unsubscribes the subject regardless.
+const execInputChannelBuffer = 256
+
 // terminalSizeQueueAdapter adapts kubectl's term.TerminalSizeQueue to client-go's remotecommand.TerminalSizeQueue
 type terminalSizeQueueAdapter struct {
 	queue term.TerminalSizeQueue
@@ -73,8 +81,9 @@ func (h *Handler) processExecRequest(obj interface{}, cfg config.ListenerConfig)
 	for _, req := range reqs {
 		id := fmt.Sprintf("exec.%s.%s.%s.%s", req.Namespace, req.Name, req.Container, req.ID)
 		if bool(req.Stop) {
-			// Stop request: tear down the session if one is running (no-op otherwise).
-			// TODO: once we have unsubscribe functionality, publish to active sessions subject.
+			// Stop request: tear down the running session if any (no-op otherwise).
+			// The session's terminate() unsubscribes its input.<id> subject; the
+			// 10s streamChannelPool ticker republishes the active-session list.
 			execCleanup(h, id)
 			continue
 		}
@@ -139,15 +148,26 @@ func (h *Handler) streamChannelPool() {
 	}()
 }
 
-// TODO fix cyclop error
-// Error: meshsync/exec.go:113:1: calculated cyclomatic complexity for function streamSession is 15, max is 10 (cyclop)
+// streamSession wires up one exec session: its input subscription and teardown,
+// the TTY exec stream, stdout publishing, and the input loop. Its branch count
+// (the four-case select plus the teardown/streaming closures) exceeds cyclop's
+// default; the body is a linear setup-then-loop sequence, so splitting it would
+// scatter the shared pipes/channels and hurt readability more than it helps.
 //
 //nolint:cyclop
 func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.ListenerConfig) {
-	subCh := make(chan *broker.Message)
+	// Buffered (see execInputChannelBuffer) so a burst of stdin - or a delivery
+	// already in flight at teardown - lands in the buffer instead of blocking the
+	// broker's delivery goroutine on an unread channel in the window before
+	// Unsubscribe (in terminate) takes effect.
+	subCh := make(chan *broker.Message, execInputChannelBuffer)
 	tstdin, putStdin := io.Pipe()
 	stdin := io.NopCloser(tstdin)
 	getStdout, stdout := io.Pipe()
+
+	// inputSubject is the per-session subject the client publishes stdin to; it is
+	// subscribed below and torn down in terminate().
+	inputSubject := fmt.Sprintf("input.%s", id)
 
 	// done is closed exactly once when the session ends (stream EOF/error,
 	// explicit Stop, or the global channels.Stop). Closing the pipes unblocks the
@@ -157,6 +177,13 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 	terminate := func() {
 		once.Do(func() {
 			close(done)
+			// Tear down the input subscription so the broker stops delivering to
+			// subCh and releases the delivery goroutine it started for it. The main
+			// loop has already stopped reading subCh (it returns on done), so
+			// without this the subscription and its goroutine would leak for the
+			// process lifetime. Unsubscribe is idempotent, so the repeated
+			// terminate() calls (defer + TTY goroutine) are safe.
+			h.unsubscribeSessionInput(inputSubject)
 			// Closing both ends of both pipes unblocks the TTY streamer, the
 			// stdout reader (Read returns io.ErrClosedPipe) and any stdin writer.
 			_ = putStdin.Close()
@@ -168,18 +195,9 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 	}
 	defer terminate()
 
-	if err := h.Broker.SubscribeWithChannel(fmt.Sprintf("input.%s", id), generateID(), subCh); err != nil {
+	if err := h.Broker.SubscribeWithChannel(inputSubject, generateID(), subCh); err != nil {
 		h.Log.Error(ErrExecTerminal(err))
 	}
-
-	// The broker interface exposes no Unsubscribe, so the input.<id> subscription
-	// cannot be torn down here. Once the session ends, keep draining subCh so the
-	// broker's delivery goroutine never blocks on an unread channel after we stop.
-	go func() {
-		<-done
-		for range subCh {
-		}
-	}()
 
 	// Put the terminal into raw mode to prevent it echoing characters twice.
 	t := term.TTY{
@@ -270,10 +288,22 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 		}
 
 		select {
-		case msg := <-subCh:
-			if msg.ObjectType == broker.ExecInputObject {
-				if _, err := io.CopyBuffer(putStdin, strings.NewReader(msg.Object.(string)+"\n"), nil); err != nil {
-					h.Log.Error(ErrExecTerminal(err))
+		case msg, ok := <-subCh:
+			if !ok {
+				// A broker implementation that closes the delivery channel on
+				// Unsubscribe would make this receive return (nil, false); end the
+				// session rather than spin on the closed channel or dereference a
+				// nil message.
+				h.Log.Debugf("Input channel closed for session %s", id)
+				return
+			}
+			// Guard the payload assertion too: a malformed ExecInput message with a
+			// non-string object must not panic the session loop.
+			if msg != nil && msg.ObjectType == broker.ExecInputObject {
+				if input, isStr := msg.Object.(string); isStr {
+					if _, err := io.CopyBuffer(putStdin, strings.NewReader(input+"\n"), nil); err != nil {
+						h.Log.Error(ErrExecTerminal(err))
+					}
 				}
 			}
 		case <-sessionCh:
@@ -286,6 +316,17 @@ func (h *Handler) streamSession(id string, req model.ExecRequest, cfg config.Lis
 			h.Log.Debugf("Session closed for: %s", id)
 			return
 		}
+	}
+}
+
+// unsubscribeSessionInput tears down an exec session's stdin subscription
+// (input.<id>) so the broker stops delivering to its channel and releases the
+// delivery goroutine it started for it. It runs during session teardown, so the
+// error is logged rather than returned; Unsubscribe is a no-op for a subject
+// with no active subscription and is safe to call more than once.
+func (h *Handler) unsubscribeSessionInput(subject string) {
+	if err := h.Broker.Unsubscribe(subject); err != nil {
+		h.Log.Error(ErrExecTerminal(err))
 	}
 }
 
