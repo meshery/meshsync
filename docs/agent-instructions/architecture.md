@@ -57,6 +57,12 @@ main.go --parses CLI flags--> pkg/lib/meshsync.Run(...)
 
 - `channel.go` / `generic.go` / `system.go` / `broker.go` define small typed channels (e.g. `StructChannel`) used for coordination (stop signals, broker request/response) between the handler and the pipeline - not a general pub/sub system.
 
+## Interactive Sessions (exec / log stream)
+
+- Meshery Server routes interactive `kubectl exec` and pod-log requests to MeshSync over the broker; `meshsync/exec.go` (`processExecRequest`) and `meshsync/logstream.go` (`processLogRequest`) start one long-lived goroutine per request, keyed by a request id.
+- These per-session channels live in a **`sync.Mutex`-guarded `sessions` map** on the Handler (`meshsync/sessions.go`), deliberately separate from `channelPool`, which holds only the fixed system channels (`Stop`/`OS`/`ReSync`) and is read-only after construction. Keeping them apart avoids the concurrent map read/write panic that occurred when session goroutines mutated the same map other goroutines ranged.
+- An exec session subscribes to its own `input.<id>` subject (client keystrokes) via `SubscribeWithChannel`. On teardown - stream EOF/error, an explicit stop request, or the global `Stop` - `terminate()` runs once (guarded by a `sync.Once`) and calls `broker.Handler.Unsubscribe("input.<id>")`, which releases the subscription and the broker's delivery goroutine. Before MeshKit exposed `Unsubscribe` (v1.0.22), the subscription could not be torn down and each session parked a drain goroutine that never exited, leaking a goroutine and a subscription per session.
+
 ## Deployment Topology
 
 - Meshery Operator's `MeshSync` controller (`meshery/meshery-operator`, `pkg/meshsync/meshsync.go`) renders this binary as a `Deployment` and injects `BROKER_URL` pointing at the Broker's derived NATS endpoint. See that repo's architecture doc for the reconcile side.

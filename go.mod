@@ -7,7 +7,7 @@ go 1.26.4
 require (
 	github.com/buger/jsonparser v1.2.0
 	github.com/google/uuid v1.6.0
-	github.com/meshery/meshkit v1.0.20
+	github.com/meshery/meshkit v1.0.22
 	github.com/myntra/pipeline v0.0.0-20180618182531-2babf4864ce8
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/viper v1.21.0
@@ -108,7 +108,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.19 // indirect
 	github.com/mattn/go-sqlite3 v1.14.32 // indirect
-	github.com/meshery/schemas v1.3.23 // indirect
+	github.com/meshery/schemas v1.3.25 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
