@@ -30,10 +30,15 @@ type Handler struct {
 	// channelPool holds the fixed system channels (Stop/OS/ReSync) and is
 	// read-only after construction. Dynamic exec/log-stream sessions live in
 	// sessions (guarded by sessionsMu), not here, so the two never race.
-	channelPool      map[string]channels.GenericChannel
-	sessions         map[string]channels.StructChannel
-	sessionsMu       sync.Mutex
+	channelPool map[string]channels.GenericChannel
+	sessions    map[string]channels.StructChannel
+	sessionsMu  sync.Mutex
+	// stores holds the per-GVR informer store set from the latest discovery.
+	// startDiscovery replaces it wholesale on the discovery goroutine on every
+	// (re)discovery while handleInformerStoreRequest reads it on the request
+	// listener goroutine; storesMu guards that concurrent field access.
 	stores           map[string]cache.Store
+	storesMu         sync.RWMutex
 	outputWriter     output.Writer
 	outputFiltration internalconfig.OutputFiltrationContainer
 }

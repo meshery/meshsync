@@ -293,7 +293,7 @@ func (h *Handler) publishMeshSyncMeta() {
 
 func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	objects := make([]interface{}, 0)
-	for _, v := range h.stores {
+	for _, v := range h.snapshotStores() {
 		objects = append(objects, v.List()...)
 	}
 	parsedObjects := make([]model.KubernetesResource, 0)
