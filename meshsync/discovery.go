@@ -45,5 +45,28 @@ func (h *Handler) startDiscovery(pipelineCh chan struct{}) {
 		return
 	}
 
+	h.replaceStores(data)
+}
+
+// replaceStores swaps in the per-GVR informer store set produced by a discovery
+// run. stores is read concurrently by handleInformerStoreRequest, so the swap is
+// guarded by storesMu.
+func (h *Handler) replaceStores(data map[string]cache.Store) {
+	h.storesMu.Lock()
+	defer h.storesMu.Unlock()
 	h.stores = data
+}
+
+// snapshotStores returns the current per-GVR informer stores. storesMu is held
+// only while copying the map values, never across the caller's subsequent
+// store reads, so a store List() never blocks the discovery goroutine's next
+// replaceStores.
+func (h *Handler) snapshotStores() []cache.Store {
+	h.storesMu.RLock()
+	defer h.storesMu.RUnlock()
+	stores := make([]cache.Store, 0, len(h.stores))
+	for _, s := range h.stores {
+		stores = append(stores, s)
+	}
+	return stores
 }
