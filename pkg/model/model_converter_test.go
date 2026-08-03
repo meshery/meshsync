@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshkit/orchestration"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -43,6 +45,55 @@ func TestParseList_ManagedFieldsNotCaptured(t *testing.T) {
 	}
 	if result.KubernetesResourceMeta.ManagedFields != "" {
 		t.Errorf("expected ManagedFields to be empty, got %q", result.KubernetesResourceMeta.ManagedFields)
+	}
+}
+
+// TestParseList_DesignIDLabelParsed is the regression test for the design-id
+// parsing fix: the design.meshery.io/id label carries the design UUID as a
+// canonical string, so it must be parsed with uuid.Parse. uuid.FromBytes expects
+// 16 raw bytes and errored on the 36-byte string, and the discarded error left
+// PatternResource pointing at the nil UUID for every design-associated resource.
+func TestParseList_DesignIDLabelParsed(t *testing.T) {
+	designID := uuid.New()
+
+	cases := []struct {
+		name       string
+		labelValue string
+		want       *uuid.UUID
+	}{
+		{"valid design id is parsed", designID.String(), &designID},
+		{"invalid design id leaves PatternResource nil", "not-a-uuid", nil},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			obj := newUnstructured(map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "ConfigMap",
+				"metadata": map[string]interface{}{
+					"name":      "sample",
+					"namespace": "default",
+					"labels": map[string]interface{}{
+						orchestration.ResourceSourceDesignIdLabelKey: tc.labelValue,
+					},
+				},
+			})
+
+			got := ParseList(obj, broker.Add, "cluster-1").PatternResource
+
+			if tc.want == nil {
+				if got != nil {
+					t.Fatalf("PatternResource = %v, want nil for label value %q", *got, tc.labelValue)
+				}
+				return
+			}
+			if got == nil {
+				t.Fatalf("PatternResource = nil, want %v", *tc.want)
+			}
+			if *got != *tc.want {
+				t.Fatalf("PatternResource = %v, want %v", *got, *tc.want)
+			}
+		})
 	}
 }
 

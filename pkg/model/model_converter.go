@@ -91,8 +91,9 @@ func ParseList(
 		})
 
 		if string(key) == orchestration.ResourceSourceDesignIdLabelKey {
-			id, _ := uuid.FromBytes(value)
-			result.PatternResource = &id
+			if id, err := uuid.Parse(string(value)); err == nil {
+				result.PatternResource = &id
+			}
 		}
 
 		return nil
