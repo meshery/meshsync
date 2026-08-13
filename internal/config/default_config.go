@@ -77,7 +77,7 @@ var (
 			},
 			// Added
 			{
-				Name:      "ingressclass.v1.networking.k8s.io",
+				Name:      "ingressclasses.v1.networking.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added endpoint support
@@ -97,7 +97,7 @@ var (
 			},
 			// Added job  support
 			{
-				Name:      "job.v1.batch",
+				Name:      "jobs.v1.batch",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added service APIs support
@@ -107,17 +107,17 @@ var (
 			},
 			// Added  csidriver support
 			{
-				Name:      "csidriver.v1.storage.k8s.io",
+				Name:      "csidrivers.v1.storage.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added csinode  support
 			{
-				Name:      "csinode.v1.storage.k8s.io",
+				Name:      "csinodes.v1.storage.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added  csistoragecapacity support
 			{
-				Name:      "csistoragecapacity.v1.storage.k8s.io",
+				Name:      "csistoragecapacities.v1.storage.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added volume support
@@ -127,92 +127,92 @@ var (
 			},
 			// Added volumeattributesclass support
 			{
-				Name:      "volumeattributesclass.v1alpha1.storage.k8s.io",
+				Name:      "volumeattributesclasses.v1alpha1.storage.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added clustertrustbundle support
 			{
-				Name:      "clustertrustbundle.v1alpha1.certificates.k8s.io",
+				Name:      "clustertrustbundles.v1alpha1.certificates.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added  controllerversion support
 			{
-				Name:      "controllerrevision.v1.apps",
+				Name:      "controllerrevisions.v1.apps",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added customresourcedefinition support
 			{
-				Name:      "customresourcedefinition.v1.apiextensions.k8s.io",
+				Name:      "customresourcedefinitions.v1.apiextensions.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added  event support
 			{
-				Name:      "event.v1.events.k8s.io",
+				Name:      "events.v1.events.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added limitrange support
 			{
-				Name:      "limitrange.v1.",
+				Name:      "limitranges.v1.",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added horizontalpodautoscaler support
 			{
-				Name:      "horizontalpodautoscaler.v2.autoscaling",
+				Name:      "horizontalpodautoscalers.v2.autoscaling",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added mutatingwebhookconfiguration support
 			{
-				Name:      "mutatingwebhookconfiguration.v1.admissionregistration.k8s.io",
+				Name:      "mutatingwebhookconfigurations.v1.admissionregistration.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added podschedulingcontext support
 			{
-				Name:      "podschedulingcontext.v1alpha2.resource.k8s.io",
+				Name:      "podschedulingcontexts.v1alpha2.resource.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added podtemplate support
 			{
-				Name:      "podtemplate.v1.",
+				Name:      "podtemplates.v1.",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added poddistruptionbudget support
 			{
-				Name:      "poddisruptionbudget.v1.policy",
+				Name:      "poddisruptionbudgets.v1.policy",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added priorityclass support
 			{
-				Name:      "priorityclass.v1.scheduling.k8s.io",
+				Name:      "priorityclasses.v1.scheduling.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added resourceclaim support
 			{
-				Name:      "resourceclaim.v1alpha2.resource.k8s.io",
+				Name:      "resourceclaims.v1alpha2.resource.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added resourceclaimtemplate support
 			{
-				Name:      "resourceclaimtemplate.v1alpha2.resource.k8s.io",
+				Name:      "resourceclaimtemplates.v1alpha2.resource.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added resourceclass support
 			{
-				Name:      "resourceclass.v1alpha2.resource.k8s.io",
+				Name:      "resourceclasses.v1alpha2.resource.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added ValidatingWebhookConfiguration support
 			{
-				Name:      "validatingwebhookconfiguration.v1.admissionregistration.k8s.io",
+				Name:      "validatingwebhookconfigurations.v1.admissionregistration.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added ValidatingAdmissionPolicy support
 			{
-				Name:      "validatingadmissionpolicy.v1beta1.admissionregistration.k8s.io",
+				Name:      "validatingadmissionpolicies.v1beta1.admissionregistration.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added ValidatingAdmissionPolicyBinding support
 			{
-				Name:      "validatingadmissionpolicybinding.v1beta1.admissionregistration.k8s.io",
+				Name:      "validatingadmissionpolicybindings.v1beta1.admissionregistration.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added  binding support
@@ -222,33 +222,33 @@ var (
 			},
 			// Added certificatesigningrequest support
 			{
-				Name:      "certificatesigningrequest.v1.certificates.k8s.io",
+				Name:      "certificatesigningrequests.v1.certificates.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 
 			// Added clusterrolebinding support
 			{
-				Name:      "clusterrolebinding.v1.rbac.authorization.k8s.io",
+				Name:      "clusterrolebindings.v1.rbac.authorization.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added componentstatus support
 			{
-				Name:      "componentstatus.v1.",
+				Name:      "componentstatuses.v1.",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added flowschema support
 			{
-				Name:      "flowschema.v1.flowcontrol.apiserver.k8s.io",
+				Name:      "flowschemas.v1.flowcontrol.apiserver.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added IPAddress support
 			{
-				Name:      "ipaddress.v1alpha1.networking.k8s.io",
+				Name:      "ipaddresses.v1alpha1.networking.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added Lease support
 			{
-				Name:      "lease.v1.coordination.k8s.io",
+				Name:      "leases.v1.coordination.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added LocalSubjectAccessReview support
@@ -263,32 +263,32 @@ var (
 			},
 			// Added NetworkPolicy support
 			{
-				Name:      "networkpolicy.v1.networking.k8s.io",
+				Name:      "networkpolicies.v1.networking.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added PriorityLevelConfiguration support
 			{
-				Name:      "prioritylevelconfiguration.v1.flowcontrol.apiserver.k8s.io",
+				Name:      "prioritylevelconfigurations.v1.flowcontrol.apiserver.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added resourcequota support
 			{
-				Name:      "resourcequota.v1.",
+				Name:      "resourcequotas.v1.",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added Role support
 			{
-				Name:      "role.v1.rbac.authorization.k8s.io",
+				Name:      "roles.v1.rbac.authorization.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added RoleBinding support
 			{
-				Name:      "rolebinding.v1.rbac.authorization.k8s.io",
+				Name:      "rolebindings.v1.rbac.authorization.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added runtimeclass support
 			{
-				Name:      "runtimeclass.v1.node.k8s.io",
+				Name:      "runtimeclasses.v1.node.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added SelfSubjectAccessReview support
@@ -308,17 +308,17 @@ var (
 			},
 			// Added ServiceAccount support
 			{
-				Name:      "serviceaccount.v1.",
+				Name:      "serviceaccounts.v1.",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added ServiceCIDR support
 			{
-				Name:      "servicecidr.v1alpha1.networking.k8s.io",
+				Name:      "servicecidrs.v1alpha1.networking.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added StorageVersion support
 			{
-				Name:      "storageversion.v1alpha1.internal.apiserver.k8s.io",
+				Name:      "storageversions.v1alpha1.internal.apiserver.k8s.io",
 				PublishTo: DefaultPublishingSubject,
 			},
 			// Added subjectaccessreview support
