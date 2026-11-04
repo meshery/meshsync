@@ -67,6 +67,22 @@ func redactSecretData(raw []byte) string {
 	return string(out)
 }
 
+// jsonStringValue returns the decoded form of a value returned by jsonparser.
+// jsonparser returns string values without the surrounding quotes but with
+// JSON escape sequences (\", \n, \\, \uXXXX) still in place, so they are
+// decoded here. Non-string values, and strings that fail to decode, are
+// returned unchanged.
+func jsonStringValue(value []byte, dataType jsonparser.ValueType) string {
+	if dataType != jsonparser.String {
+		return string(value)
+	}
+	decoded, err := jsonparser.ParseString(value)
+	if err != nil {
+		return string(value)
+	}
+	return decoded
+}
+
 // TODO fix cyclop error
 // Error: pkg/model/model_converter.go:16:1: calculated cyclomatic complexity for function ParseList is 13, max is 10 (cyclop)
 //
@@ -87,7 +103,7 @@ func ParseList(
 		labels = append(labels, &KubernetesKeyValue{
 			Kind:  KindLabel,
 			Key:   string(key),
-			Value: string(value),
+			Value: jsonStringValue(value, dataType),
 		})
 
 		if string(key) == orchestration.ResourceSourceDesignIdLabelKey {
@@ -104,7 +120,7 @@ func ParseList(
 		annotations = append(annotations, &KubernetesKeyValue{
 			Kind:  KindAnnotation,
 			Key:   string(key),
-			Value: string(value),
+			Value: jsonStringValue(value, dataType),
 		})
 		return nil
 	}, "metadata", "annotations")
