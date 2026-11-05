@@ -46,6 +46,61 @@ func TestParseList_ManagedFieldsNotCaptured(t *testing.T) {
 	}
 }
 
+// TestParseList_LabelAndAnnotationValuesUnescaped asserts that label and
+// annotation values are captured as decoded strings. Values that contain JSON
+// escape sequences (quotes, newlines, backslashes), such as the
+// kubectl.kubernetes.io/last-applied-configuration annotation, must not keep
+// the escape sequences from the serialized object.
+func TestParseList_LabelAndAnnotationValuesUnescaped(t *testing.T) {
+	lastAppliedKey := "kubectl.kubernetes.io/last-applied-configuration"
+	lastApplied := `{"apiVersion":"v1","kind":"ConfigMap","metadata":{"name":"cm"}}` + "\n"
+	description := "line one\nline \"two\" C:\\path é"
+
+	obj := newUnstructured(map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "ConfigMap",
+		"metadata": map[string]interface{}{
+			"name":      "cm",
+			"namespace": "default",
+			"labels": map[string]interface{}{
+				"app": "web",
+			},
+			"annotations": map[string]interface{}{
+				lastAppliedKey: lastApplied,
+				"description":  description,
+			},
+		},
+	})
+
+	result := ParseList(obj, broker.Add, "cluster-1")
+
+	if result.KubernetesResourceMeta == nil {
+		t.Fatalf("expected metadata to be populated")
+	}
+
+	labels := map[string]string{}
+	for _, l := range result.KubernetesResourceMeta.Labels {
+		labels[l.Key] = l.Value
+	}
+	if labels["app"] != "web" {
+		t.Errorf("label app: got %q, want %q", labels["app"], "web")
+	}
+
+	annotations := map[string]string{}
+	for _, a := range result.KubernetesResourceMeta.Annotations {
+		annotations[a.Key] = a.Value
+	}
+	want := map[string]string{
+		lastAppliedKey: lastApplied,
+		"description":  description,
+	}
+	for key, value := range want {
+		if annotations[key] != value {
+			t.Errorf("annotation %s: got %q, want %q", key, annotations[key], value)
+		}
+	}
+}
+
 // TestParseList_SecretRedactionDisabledByDefault asserts the default (env var
 // unset) behavior is byte-for-byte unchanged: Secret data/stringData passes
 // through exactly as it appears in the source object.
