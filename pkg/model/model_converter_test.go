@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/meshery/meshkit/broker"
@@ -256,6 +257,69 @@ func TestRedactSecretData(t *testing.T) {
 			t.Errorf("expected {}, got %q", out)
 		}
 	})
+}
+
+// TestParseList_NullSpecAndStatusDoesNotPanic verifies that resources carrying
+// a JSON null spec or status do not cause a nil pointer panic in ParseList.
+func TestParseList_NullSpecAndStatusDoesNotPanic(t *testing.T) {
+	obj := newUnstructured(map[string]interface{}{
+		"apiVersion": "example.com/v1",
+		"kind":       "Widget",
+		"metadata": map[string]interface{}{
+			"name":      "w",
+			"namespace": "default",
+		},
+		"spec":   nil,
+		"status": nil,
+	})
+
+	var result KubernetesResource
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("ParseList panicked on null spec/status: %v", r)
+			}
+		}()
+		result = ParseList(obj, broker.Add, "cluster-1")
+	}()
+
+	if result.Spec != nil {
+		t.Errorf("expected Spec to stay nil for a null spec, got %+v", result.Spec)
+	}
+	if result.Status != nil {
+		t.Errorf("expected Status to stay nil for a null status, got %+v", result.Status)
+	}
+}
+
+// TestParseList_NonNullSpecAndStatusStillPopulated asserts the nil guards do
+// not change behavior for regular objects: an object-valued spec/status is
+// still captured into the Spec/Status attributes.
+func TestParseList_NonNullSpecAndStatusStillPopulated(t *testing.T) {
+	obj := newUnstructured(map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "Pod",
+		"metadata": map[string]interface{}{
+			"name":      "p",
+			"namespace": "default",
+		},
+		"spec":   map[string]interface{}{"restartPolicy": "Always"},
+		"status": map[string]interface{}{"phase": "Running"},
+	})
+
+	result := ParseList(obj, broker.Add, "cluster-1")
+
+	if result.Spec == nil {
+		t.Fatalf("expected Spec to be populated for an object-valued spec")
+	}
+	if !strings.Contains(result.Spec.Attribute, `"restartPolicy":"Always"`) {
+		t.Errorf("unexpected Spec attribute: %q", result.Spec.Attribute)
+	}
+	if result.Status == nil {
+		t.Fatalf("expected Status to be populated for an object-valued status")
+	}
+	if !strings.Contains(result.Status.Attribute, `"phase":"Running"`) {
+		t.Errorf("unexpected Status attribute: %q", result.Status.Attribute)
+	}
 }
 
 // assertJSONEqual compares a JSON string against an expected key/value map,

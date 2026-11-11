@@ -142,11 +142,13 @@ func ParseList(
 		result.KubernetesResourceMeta.OwnerReferences = string(ownerReferences)
 	}
 
-	if spec, _, _, err := jsonparser.Get(data, "spec"); err == nil {
+	// A JSON null leaves pointer fields nil while jsonparser.Get still reports
+	// success. Guard against nil pointer dereference.
+	if spec, _, _, err := jsonparser.Get(data, "spec"); err == nil && result.Spec != nil {
 		result.Spec.Attribute = string(spec)
 	}
 
-	if status, _, _, err := jsonparser.Get(data, "status"); err == nil {
+	if status, _, _, err := jsonparser.Get(data, "status"); err == nil && result.Status != nil {
 		result.Status.Attribute = string(status)
 	}
 
