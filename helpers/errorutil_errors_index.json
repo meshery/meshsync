@@ -1,0 +1,238 @@
+{
+  "errors": [
+    {
+      "code": "meshsync-1000",
+      "moniker": "ErrInitConfigCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1000",
+      "severity": "alert",
+      "shortDescription": "Error while initializing MeshSync configuration.",
+      "longDescription": "Missing or outdated CRD.",
+      "probableCause": [
+        "Missing or outdated CRD."
+      ],
+      "suggestedRemediation": [
+        "Confirm that meshsyncs custom resource is present in the cluster."
+      ]
+    },
+    {
+      "code": "meshsync-1001",
+      "moniker": "ErrListCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1001",
+      "severity": "alert"
+    },
+    {
+      "code": "meshsync-1002",
+      "moniker": "ErrPublishCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1002",
+      "severity": "alert"
+    },
+    {
+      "code": "meshsync-1003",
+      "moniker": "ErrDynamicClientCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1003",
+      "severity": "alert"
+    },
+    {
+      "code": "meshsync-1004",
+      "moniker": "ErrGetObjectCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1004",
+      "severity": "alert",
+      "shortDescription": "Error getting config object",
+      "probableCause": [
+        "Config doesnt exist"
+      ],
+      "suggestedRemediation": [
+        "Check application config is configured correct or restart the server"
+      ]
+    },
+    {
+      "code": "meshsync-1005",
+      "moniker": "ErrNewPipelineCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1005",
+      "severity": "alert",
+      "shortDescription": "Error creating pipeline",
+      "probableCause": [
+        "Pipeline step failed"
+      ],
+      "suggestedRemediation": [
+        "Investigate on the respective pipeline step that has failed to figure the cause"
+      ]
+    },
+    {
+      "code": "meshsync-1006",
+      "moniker": "ErrNewInformerCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1006",
+      "severity": "alert",
+      "shortDescription": "Error initializing informer",
+      "probableCause": [
+        "Resource is invalid or doesnt exist"
+      ],
+      "suggestedRemediation": [
+        "Make sure to input the existing valid resource"
+      ]
+    },
+    {
+      "code": "meshsync-1007",
+      "moniker": "ErrKubeConfigCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1007",
+      "severity": "alert",
+      "shortDescription": "Error creating kubernetes client",
+      "probableCause": [
+        "Kubernetes config is invalid or APi server is not reachable"
+      ],
+      "suggestedRemediation": [
+        "Make sure to upload a valid kubernetes config",
+        "Make sure kubernetes API server is reachable"
+      ]
+    },
+    {
+      "code": "meshsync-1008",
+      "moniker": "ErrInitRequestCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1008",
+      "severity": "alert",
+      "shortDescription": "Error while initializing requests channel",
+      "probableCause": [
+        "Application resource deficit"
+      ],
+      "suggestedRemediation": [
+        "Make sure meshsync has enough resources to create channels"
+      ]
+    },
+    {
+      "code": "meshsync-1009",
+      "moniker": "ErrSubscribeRequestCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1009",
+      "severity": "alert",
+      "shortDescription": "Error while subscribing to requests",
+      "probableCause": [
+        "Broker resource deficit"
+      ],
+      "suggestedRemediation": [
+        "Make sure Broker has enough resources to create channels"
+      ]
+    },
+    {
+      "code": "meshsync-1010",
+      "moniker": "ErrLogStreamCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1010",
+      "severity": "alert",
+      "shortDescription": "Error while open log stream connection",
+      "probableCause": [
+        "requested Resource could be invalid"
+      ],
+      "suggestedRemediation": [
+        "Make sure the requested resource is valid and existing"
+      ]
+    },
+    {
+      "code": "meshsync-1011",
+      "moniker": "ErrCopyBufferCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1011",
+      "severity": "alert",
+      "shortDescription": "Error while copying log buffer"
+    },
+    {
+      "code": "meshsync-1012",
+      "moniker": "ErrInvalidRequestCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1012",
+      "severity": "alert",
+      "shortDescription": "Request is invalid",
+      "probableCause": [
+        "Stale request on the broker"
+      ],
+      "suggestedRemediation": [
+        "Make sure the request format is correctly configured"
+      ]
+    },
+    {
+      "code": "meshsync-1013",
+      "moniker": "ErrExecTerminalCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1013",
+      "severity": "alert",
+      "shortDescription": "Error while opening a terminal session",
+      "probableCause": [
+        "requested Resource could be invalid"
+      ],
+      "suggestedRemediation": [
+        "Make sure the requested resource is valid and existing"
+      ]
+    },
+    {
+      "code": "meshsync-1014",
+      "moniker": "ErrCacheSyncCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1014",
+      "severity": "alert"
+    },
+    {
+      "code": "meshsync-1015",
+      "moniker": "ErrWriteOutputCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1015",
+      "severity": "alert"
+    }
+  ],
+  "schemaVersion": 2
+}
