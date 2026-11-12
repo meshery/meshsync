@@ -222,16 +222,6 @@
       },
       "numericCode": "1014",
       "severity": "alert"
-    },
-    {
-      "code": "meshsync-1015",
-      "moniker": "ErrWriteOutputCode",
-      "component": {
-        "name": "meshsync",
-        "type": "controller"
-      },
-      "numericCode": "1015",
-      "severity": "alert"
     }
   ],
   "schemaVersion": 2
