@@ -30,8 +30,16 @@ func (h *Handler) startDiscovery(pipelineCh chan struct{}) {
 		return
 	}
 
+	h.lifecycleMu.Lock()
+	inf := h.informer
+	h.lifecycleMu.Unlock()
+	if inf == nil {
+		h.Log.Warnf("startDiscovery: informer is nil, skipping discovery pipeline creation")
+		return
+	}
+
 	h.Log.Debug("Pipeline started")
-	pl := pipeline.New(h.Log, h.informer, h.outputWriter, pipelineConfigs, pipelineCh, h.clusterID, h.outputFiltration)
+	pl := pipeline.New(h.Log, inf, h.outputWriter, pipelineConfigs, pipelineCh, h.clusterID, h.outputFiltration)
 	result := pl.Run()
 	if result.Error != nil {
 		h.Log.Error(ErrNewPipeline(result.Error))

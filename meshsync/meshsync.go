@@ -2,6 +2,7 @@ package meshsync
 
 import (
 	"sync"
+	"time"
 
 	"github.com/meshery/meshkit/broker"
 	"github.com/meshery/meshkit/config"
@@ -36,6 +37,15 @@ type Handler struct {
 	stores           map[string]cache.Store
 	outputWriter     output.Writer
 	outputFiltration internalconfig.OutputFiltrationContainer
+
+	// Debounce and discovery lifecycle fields
+	DebounceDuration  time.Duration
+	InformerUpdater   func() error
+	DiscoveryStarter  func(pipelineCh chan struct{})
+	lifecycleMu       sync.Mutex
+	currentPipelineCh chan struct{}
+	discoveryWg       sync.WaitGroup
+	stopped           bool
 }
 
 func GetListOptionsFunc(config config.Handler) (func(*v1.ListOptions), error) {

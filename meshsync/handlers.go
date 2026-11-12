@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand/v2"
-	"sync"
 	"time"
 
 	"github.com/meshery/meshkit/broker"
-	"github.com/meshery/meshkit/utils"
 	"github.com/meshery/meshkit/utils/kubernetes"
 	"github.com/meshery/meshsync/internal/channels"
 	"github.com/meshery/meshsync/internal/config"
@@ -21,107 +19,197 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-var mu sync.Mutex
-var timer *time.Timer
-
-func debounce(d time.Duration, f func(ch chan struct{})) func(ch chan struct{}) {
-	return func(pipelineCh chan struct{}) {
-		mu.Lock()
-		defer mu.Unlock()
-
-		if timer != nil {
-			timer.Stop()
+func (h *Handler) getSystemChannels() (channels.StopChannel, channels.ReSyncChannel) {
+	var stopCh channels.StopChannel
+	if rawStop, ok := h.channelPool[channels.Stop]; ok && rawStop != nil {
+		var asserted bool
+		stopCh, asserted = rawStop.(channels.StopChannel)
+		if !asserted {
+			h.Log.Warnf("channelPool[%q] has unexpected type %T, expected channels.StopChannel", channels.Stop, rawStop)
 		}
-		timer = time.AfterFunc(d, func() {
-			f(pipelineCh)
-		})
+	}
+	var resyncCh channels.ReSyncChannel
+	if rawResync, ok := h.channelPool[channels.ReSync]; ok && rawResync != nil {
+		var asserted bool
+		resyncCh, asserted = rawResync.(channels.ReSyncChannel)
+		if !asserted {
+			h.Log.Warnf("channelPool[%q] has unexpected type %T, expected channels.ReSyncChannel", channels.ReSync, rawResync)
+		}
+	}
+	return stopCh, resyncCh
+}
+
+func (h *Handler) startAndTrackDiscoveryLocked() {
+	if h.stopped {
+		return
+	}
+	pipelineCh := make(chan struct{})
+	h.currentPipelineCh = pipelineCh
+	h.discoveryWg.Add(1)
+	go func(ch chan struct{}) {
+		defer h.discoveryWg.Done()
+		h.Log.Debugf("h.startDiscovery starting with channel %p", ch)
+		h.runDiscovery(ch)
+		h.Log.Debugf("h.startDiscovery completed for channel %p", ch)
+	}(pipelineCh)
+}
+
+func (h *Handler) runDiscovery(pipelineCh chan struct{}) {
+	if h.DiscoveryStarter != nil {
+		h.DiscoveryStarter(pipelineCh)
+		return
+	}
+	h.startDiscovery(pipelineCh)
+}
+
+// Only the Run goroutine invokes stopCurrentDiscoveryLocked, ensuring single-owner
+// channel closure. Pipeline channels are only closed and never sent on, so the
+// select-default probe safely detects closures without misinterpreting sent data.
+func (h *Handler) stopCurrentDiscoveryLocked() {
+	if h.currentPipelineCh != nil {
+		select {
+		case <-h.currentPipelineCh:
+			// already closed
+		default:
+			h.Log.Debugf("Closing previous pipelineCh (%p) to stop existing discovery.", h.currentPipelineCh)
+			close(h.currentPipelineCh)
+		}
 	}
 }
 
-func (h *Handler) Run() {
-	var currentPipelineCh chan struct{} // Will be initialized before first use
-	var discoveryWg sync.WaitGroup
+func (h *Handler) updateInformer() error {
+	if h.InformerUpdater != nil {
+		return h.InformerUpdater()
+	}
+	return h.UpdateInformer()
+}
 
-	// Helper to start discovery and manage WaitGroup
-	startAndTrackDiscovery := func() {
-		currentPipelineCh = make(chan struct{}) // Create a new channel for each discovery instance
-		discoveryWg.Add(1)
-		go func(ch chan struct{}) {
-			defer discoveryWg.Done()
-			h.Log.Debugf("h.startDiscovery starting with channel %p", ch)
-			h.startDiscovery(ch)
-			h.Log.Debugf("h.startDiscovery completed for channel %p", ch)
-		}(currentPipelineCh)
+// Run drives the discovery lifecycle for this Handler until Stop is closed. It
+// must not be invoked concurrently on the same Handler: debounce and discovery
+// lifecycle state live on the struct.
+func (h *Handler) Run() {
+	stopCh, resyncCh := h.getSystemChannels()
+
+	debounceDur := h.DebounceDuration
+	if debounceDur <= 0 {
+		debounceDur = 5 * time.Second
 	}
 
-	// Initial start of the discovery process
-	startAndTrackDiscovery()
-
-	// This debounced function is responsible for stopping the old discovery
-	// and starting a new one.
-	debouncedRestartDiscovery := debounce(time.Second*5, func(prevPipelineCh chan struct{}) {
-		h.Log.Debug("Debounce triggered: attempting to restart discovery.")
-
-		// Close the previous channel to signal its discovery goroutine to stop
-		if prevPipelineCh != nil && !utils.IsClosed(prevPipelineCh) {
-			h.Log.Debugf("Closing previous pipelineCh (%p) to stop existing discovery.", prevPipelineCh)
-			close(prevPipelineCh)
-		} else {
-			h.Log.Debug("Previous pipelineCh is nil or already closed.")
-		}
-
-		// Wait for the previous discovery goroutine to finish
-		h.Log.Debug("Waiting for existing discovery goroutine to complete...")
-		discoveryWg.Wait() // This waits for all Add(1) calls that haven't been Done()
-		h.Log.Debug("Existing discovery goroutine completed.")
-
-		// Update informer before starting new discovery
-		if err := h.UpdateInformer(); err != nil {
-			// TODO: Define ErrUpdateInformer or use a more generic error log
-			h.Log.Error(fmt.Errorf("failed to update informer: %w", err))
-		}
-
-		h.Log.Debug("Starting new discovery process...")
-		startAndTrackDiscovery() // This will create and use a new currentPipelineCh
-	})
+	h.lifecycleMu.Lock()
+	h.stopped = false
+	h.startAndTrackDiscoveryLocked()
+	h.lifecycleMu.Unlock()
 
 	defer func() {
 		h.Log.Debug("Run: defer function executing.")
-		if currentPipelineCh != nil && !utils.IsClosed(currentPipelineCh) {
-			h.Log.Debugf("Run: Closing current pipelineCh (%p) in defer.", currentPipelineCh)
-			close(currentPipelineCh)
-		}
+		h.lifecycleMu.Lock()
+		h.stopped = true
+		h.stopCurrentDiscoveryLocked()
+		h.lifecycleMu.Unlock()
+
 		h.Log.Debug("Run: Waiting for final discovery goroutine to complete...")
-		discoveryWg.Wait() // Ensure the last discovery goroutine also finishes
+		h.discoveryWg.Wait()
 		h.Log.Debug("Run: Final discovery goroutine completed.")
+
+		h.ShutdownInformer()
+	}()
+
+	var debounceTimer *time.Timer
+	var debounceCh <-chan time.Time
+	defer func() {
+		if debounceTimer != nil {
+			debounceTimer.Stop()
+		}
 	}()
 
 loop:
 	for {
 		select {
-		case <-h.channelPool[channels.Stop].(channels.StopChannel):
+		case <-stopCh:
 			h.Log.Debug("Run: Received stop signal. Breaking loop.")
 			break loop
-		case <-h.channelPool[channels.ReSync].(channels.ReSyncChannel):
+
+		case <-resyncCh:
 			h.Log.Debug("Run: Received ReSync signal.")
-			// The debounced function will operate on the `currentPipelineCh`
-			// that was active when the ReSync signal was received.
-			go debouncedRestartDiscovery(currentPipelineCh)
+			if debounceTimer != nil {
+				debounceTimer.Stop()
+			}
+			debounceTimer = time.NewTimer(debounceDur)
+			debounceCh = debounceTimer.C
+
+		// The debounce tick is handled here on the Run goroutine rather than in a
+		// time.AfterFunc callback, so restarts and shutdown share one goroutine
+		// and discoveryWg.Add and Wait can never race.
+		case <-debounceCh:
+			debounceTimer = nil
+			debounceCh = nil
+			if h.restartDiscovery(stopCh) {
+				break loop
+			}
 		}
 	}
 	h.Log.Debug("Stopping Run function.")
 }
 
+// restartDiscovery drains the previous discovery pipeline and starts a fresh
+// one. It reports true when Stop was observed, telling the caller to break its
+// loop.
+func (h *Handler) restartDiscovery(stopCh channels.StopChannel) bool {
+	// Signal previous discovery pipeline to stop
+	h.lifecycleMu.Lock()
+	if h.stopped {
+		h.lifecycleMu.Unlock()
+		return true
+	}
+	h.stopCurrentDiscoveryLocked()
+	h.lifecycleMu.Unlock()
+
+	// Wait for existing discovery goroutine to finish
+	h.Log.Debug("Waiting for existing discovery goroutine to complete...")
+	h.discoveryWg.Wait()
+	h.Log.Debug("Existing discovery goroutine completed.")
+
+	// Stop may have arrived while the previous pipeline was draining; honor it
+	// before starting anything new.
+	if stopCh != nil {
+		select {
+		case <-stopCh:
+			h.Log.Debug("Run: Received stop signal while waiting for discovery. Breaking loop.")
+			return true
+		default:
+		}
+	}
+
+	// Update informer before starting new discovery
+	if err := h.updateInformer(); err != nil {
+		h.Log.Error(ErrNewInformer(err))
+	}
+
+	h.lifecycleMu.Lock()
+	if h.stopped {
+		h.lifecycleMu.Unlock()
+		return true
+	}
+	h.Log.Debug("Starting new discovery process...")
+	h.startAndTrackDiscoveryLocked()
+	h.lifecycleMu.Unlock()
+	return false
+}
+
 func (h *Handler) UpdateInformer() error {
+	if h.kubeClient == nil {
+		return ErrNilClient()
+	}
 	dynamicClient, err := dynamic.NewForConfig(&h.kubeClient.RestConfig)
 	if err != nil {
-		// TODO: Define ErrNewInformer or use a more generic error
-		return fmt.Errorf("failed to create new dynamic client for informer: %w", err)
+		return ErrNewInformer(err)
 	}
 	listOptionsFunc, err := GetListOptionsFunc(h.Config)
 	if err != nil {
-		return fmt.Errorf("failed to get list options func for informer: %w", err)
+		return ErrNewInformer(err)
 	}
+	h.lifecycleMu.Lock()
+	defer h.lifecycleMu.Unlock()
 	if h.informer != nil {
 		h.Log.Debug("Shutting down existing informer before update.")
 		h.informer.Shutdown()
@@ -132,9 +220,14 @@ func (h *Handler) UpdateInformer() error {
 }
 
 func (h *Handler) ShutdownInformer() {
+	h.lifecycleMu.Lock()
+	defer h.lifecycleMu.Unlock()
 	if h.informer != nil {
 		h.Log.Debug("Shutting down informer...")
 		h.informer.Shutdown()
+		// Informer is nulled after shutdown so that the deferred ShutdownInformer call
+		// in pkg/lib/meshsync/meshsync.go remains an idempotent safe no-op.
+		h.informer = nil
 		h.Log.Debug("Shutting down informer done.")
 	}
 }
@@ -255,7 +348,12 @@ func (h *Handler) handleInformerStoreRequest(request *broker.Message) {
 
 func (h *Handler) handleResyncRequest() {
 	h.Log.Debug("Resyncing")
-	h.channelPool[channels.ReSync].(channels.ReSyncChannel) <- struct{}{}
+	stopCh, resyncCh := h.getSystemChannels()
+	if resyncCh != nil {
+		if !resyncCh.ReSyncInformerWithStop(stopCh) {
+			h.Log.Debug("Dropping resync request: stop signal received")
+		}
+	}
 }
 
 func (h *Handler) handleExecRequest(
@@ -454,7 +552,12 @@ func (h *Handler) handleCRDEvent(event watch.Event) {
 	}
 
 	h.Log.Debug("Resyncing informer from watch crd")
-	h.channelPool[channels.ReSync].(channels.ReSyncChannel).ReSyncInformer()
+	stopCh, resyncCh := h.getSystemChannels()
+	if resyncCh != nil {
+		if !resyncCh.ReSyncInformerWithStop(stopCh) {
+			h.Log.Debug("Dropping CRD resync: stop signal received")
+		}
+	}
 }
 
 func parseCRDEvent(event watch.Event) (*kubernetes.CRDItem, []byte, error) {
