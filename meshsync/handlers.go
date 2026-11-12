@@ -22,11 +22,19 @@ import (
 func (h *Handler) getSystemChannels() (channels.StopChannel, channels.ReSyncChannel) {
 	var stopCh channels.StopChannel
 	if rawStop, ok := h.channelPool[channels.Stop]; ok && rawStop != nil {
-		stopCh, _ = rawStop.(channels.StopChannel)
+		var asserted bool
+		stopCh, asserted = rawStop.(channels.StopChannel)
+		if !asserted {
+			h.Log.Warnf("channelPool[%q] has unexpected type %T, expected channels.StopChannel", channels.Stop, rawStop)
+		}
 	}
 	var resyncCh channels.ReSyncChannel
 	if rawResync, ok := h.channelPool[channels.ReSync]; ok && rawResync != nil {
-		resyncCh, _ = rawResync.(channels.ReSyncChannel)
+		var asserted bool
+		resyncCh, asserted = rawResync.(channels.ReSyncChannel)
+		if !asserted {
+			h.Log.Warnf("channelPool[%q] has unexpected type %T, expected channels.ReSyncChannel", channels.ReSync, rawResync)
+		}
 	}
 	return stopCh, resyncCh
 }
@@ -55,7 +63,8 @@ func (h *Handler) runDiscovery(pipelineCh chan struct{}) {
 }
 
 // Only the Run goroutine invokes stopCurrentDiscoveryLocked, ensuring single-owner
-// channel closure. The select-default probe is safe from double-close panics.
+// channel closure. Pipeline channels are only closed and never sent on, so the
+// select-default probe safely detects closures without misinterpreting sent data.
 func (h *Handler) stopCurrentDiscoveryLocked() {
 	if h.currentPipelineCh != nil {
 		select {
@@ -173,7 +182,7 @@ func (h *Handler) restartDiscovery(stopCh channels.StopChannel) bool {
 
 	// Update informer before starting new discovery
 	if err := h.updateInformer(); err != nil {
-		h.Log.Error(fmt.Errorf("failed to update informer: %w", err))
+		h.Log.Error(ErrNewInformer(err))
 	}
 
 	h.lifecycleMu.Lock()
@@ -189,15 +198,15 @@ func (h *Handler) restartDiscovery(stopCh channels.StopChannel) bool {
 
 func (h *Handler) UpdateInformer() error {
 	if h.kubeClient == nil {
-		return fmt.Errorf("failed to update informer: kubeClient is nil")
+		return ErrKubeConfig(fmt.Errorf("failed to update informer: kubeClient is nil"))
 	}
 	dynamicClient, err := dynamic.NewForConfig(&h.kubeClient.RestConfig)
 	if err != nil {
-		return fmt.Errorf("failed to create new dynamic client for informer: %w", err)
+		return ErrNewInformer(err)
 	}
 	listOptionsFunc, err := GetListOptionsFunc(h.Config)
 	if err != nil {
-		return fmt.Errorf("failed to get list options func for informer: %w", err)
+		return ErrNewInformer(err)
 	}
 	h.lifecycleMu.Lock()
 	defer h.lifecycleMu.Unlock()

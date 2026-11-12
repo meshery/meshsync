@@ -223,7 +223,6 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	if err != nil {
 		return err
 	}
-	defer meshsyncHandler.ShutdownInformer()
 
 	if useCRDFlag {
 		go meshsyncHandler.WatchCRDs()

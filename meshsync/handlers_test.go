@@ -330,6 +330,18 @@ func TestJitterBounds(t *testing.T) {
 	}
 }
 
+// waitForCount polls c until it equals want or a deadline expires.
+func waitForCount(t *testing.T, c *atomic.Int32, want int32) {
+	t.Helper()
+	deadline := time.Now().Add(2 * time.Second)
+	for c.Load() != want {
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for count %d, got %d", want, c.Load())
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+}
+
 // TestRun_DebounceCoalescesBurst verifies that rapid bursts of ReSync signals within
 // the debounce window coalesce into a single restart.
 func TestRun_DebounceCoalescesBurst(t *testing.T) {
@@ -363,15 +375,7 @@ func TestRun_DebounceCoalescesBurst(t *testing.T) {
 	}()
 
 	// Wait for initial discovery to start
-	for i := 0; i < 50; i++ {
-		if discoveryStarts.Load() == 1 {
-			break
-		}
-		time.Sleep(5 * time.Millisecond)
-	}
-	if got := discoveryStarts.Load(); got != 1 {
-		t.Fatalf("expected initial discovery to start, got %d", got)
-	}
+	waitForCount(t, &discoveryStarts, 1)
 
 	// Send burst of 4 ReSync signals 10ms apart (total 30ms span, 5x margin
 	// against the 150ms debounce window for slow CI runners)
@@ -380,8 +384,10 @@ func TestRun_DebounceCoalescesBurst(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 
-	// Wait past the debounce duration (fires ~180ms after the first signal)
-	time.Sleep(300 * time.Millisecond)
+	// Wait for the debounced restart and its informer update
+	waitForCount(t, &discoveryStarts, 2)
+	waitForCount(t, &informerUpdates, 1)
+	time.Sleep(50 * time.Millisecond)
 
 	// Exactly 1 restart should have occurred (total discoveryStarts == 2)
 	if got := discoveryStarts.Load(); got != 2 {
@@ -434,15 +440,7 @@ func TestRun_StopCancelsPendingDebounce(t *testing.T) {
 	}()
 
 	// Wait for initial discovery to start
-	for i := 0; i < 50; i++ {
-		if discoveryStarts.Load() == 1 {
-			break
-		}
-		time.Sleep(5 * time.Millisecond)
-	}
-	if got := discoveryStarts.Load(); got != 1 {
-		t.Fatalf("expected initial discovery to start, got %d", got)
-	}
+	waitForCount(t, &discoveryStarts, 1)
 
 	// Trigger a resync, scheduling a restart in 100ms
 	resyncCh <- struct{}{}
@@ -528,18 +526,15 @@ func TestRun_MultipleHandlersIndependent(t *testing.T) {
 	}()
 
 	// Wait for both to initialize initial discovery
-	for i := 0; i < 50; i++ {
-		if d1Starts.Load() == 1 && d2Starts.Load() == 1 {
-			break
-		}
-		time.Sleep(5 * time.Millisecond)
-	}
+	waitForCount(t, &d1Starts, 1)
+	waitForCount(t, &d2Starts, 1)
 
 	// Trigger resync ONLY on h1
 	resyncCh1 <- struct{}{}
 
-	// Wait for h1 to debounce and restart (30ms + margin)
-	time.Sleep(80 * time.Millisecond)
+	// Wait for h1 to debounce and restart
+	waitForCount(t, &d1Starts, 2)
+	time.Sleep(50 * time.Millisecond)
 
 	if got := d1Starts.Load(); got != 2 {
 		t.Errorf("expected h1 to have restarted (2 starts), got %d", got)

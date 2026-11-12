@@ -44,8 +44,12 @@ func (ch ReSyncChannel) ReSyncInformer() {
 
 func (ch ReSyncChannel) ReSyncInformerWithStop(stop StopChannel) bool {
 	if stop == nil {
-		ch <- struct{}{}
-		return true
+		select {
+		case ch <- struct{}{}:
+			return true
+		default:
+			return false
+		}
 	}
 	select {
 	case ch <- struct{}{}:
