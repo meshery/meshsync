@@ -2,6 +2,8 @@ package meshsync
 
 import (
 	"reflect"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -325,5 +327,333 @@ func TestJitterBounds(t *testing.T) {
 	}
 	if j := jitter(-time.Second); j != 0 {
 		t.Errorf("jitter(negative) = %s, want 0", j)
+	}
+}
+
+// TestRun_DebounceCoalescesBurst verifies that rapid bursts of ReSync signals within
+// the debounce window coalesce into a single restart.
+func TestRun_DebounceCoalescesBurst(t *testing.T) {
+	h := newConfigTestHandler(t, config.PipelineConfigs{})
+	h.Log = testLogger(t)
+	h.DebounceDuration = 150 * time.Millisecond
+
+	stopCh := channels.NewStopChannel()
+	resyncCh := channels.NewReSyncChannel()
+	h.channelPool = map[string]channels.GenericChannel{
+		channels.Stop:   stopCh,
+		channels.ReSync: resyncCh,
+	}
+
+	var discoveryStarts atomic.Int32
+	var informerUpdates atomic.Int32
+
+	h.DiscoveryStarter = func(pipelineCh chan struct{}) {
+		discoveryStarts.Add(1)
+		<-pipelineCh
+	}
+	h.InformerUpdater = func() error {
+		informerUpdates.Add(1)
+		return nil
+	}
+
+	runDone := make(chan struct{})
+	go func() {
+		h.Run()
+		close(runDone)
+	}()
+
+	// Wait for initial discovery to start
+	for i := 0; i < 50; i++ {
+		if discoveryStarts.Load() == 1 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	if got := discoveryStarts.Load(); got != 1 {
+		t.Fatalf("expected initial discovery to start, got %d", got)
+	}
+
+	// Send burst of 4 ReSync signals 10ms apart (total 30ms span, 5x margin
+	// against the 150ms debounce window for slow CI runners)
+	for i := 0; i < 4; i++ {
+		resyncCh <- struct{}{}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// Wait past the debounce duration (fires ~180ms after the first signal)
+	time.Sleep(300 * time.Millisecond)
+
+	// Exactly 1 restart should have occurred (total discoveryStarts == 2)
+	if got := discoveryStarts.Load(); got != 2 {
+		t.Errorf("expected 2 total discoveries (1 initial + 1 debounced restart), got %d", got)
+	}
+	if got := informerUpdates.Load(); got != 1 {
+		t.Errorf("expected 1 informer update, got %d", got)
+	}
+
+	// Clean shutdown
+	close(stopCh)
+	select {
+	case <-runDone:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run() did not exit after Stop was closed")
+	}
+}
+
+// TestRun_StopCancelsPendingDebounce verifies that if channels.Stop is closed while
+// a debounce timer is pending, the timer is aborted immediately and no late
+// discovery or informer update occurs after Run() returns.
+func TestRun_StopCancelsPendingDebounce(t *testing.T) {
+	h := newConfigTestHandler(t, config.PipelineConfigs{})
+	h.Log = testLogger(t)
+	h.DebounceDuration = 100 * time.Millisecond
+
+	stopCh := channels.NewStopChannel()
+	resyncCh := channels.NewReSyncChannel()
+	h.channelPool = map[string]channels.GenericChannel{
+		channels.Stop:   stopCh,
+		channels.ReSync: resyncCh,
+	}
+
+	var discoveryStarts atomic.Int32
+	var informerUpdates atomic.Int32
+
+	h.DiscoveryStarter = func(pipelineCh chan struct{}) {
+		discoveryStarts.Add(1)
+		<-pipelineCh
+	}
+	h.InformerUpdater = func() error {
+		informerUpdates.Add(1)
+		return nil
+	}
+
+	runDone := make(chan struct{})
+	go func() {
+		h.Run()
+		close(runDone)
+	}()
+
+	// Wait for initial discovery to start
+	for i := 0; i < 50; i++ {
+		if discoveryStarts.Load() == 1 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	if got := discoveryStarts.Load(); got != 1 {
+		t.Fatalf("expected initial discovery to start, got %d", got)
+	}
+
+	// Trigger a resync, scheduling a restart in 100ms
+	resyncCh <- struct{}{}
+
+	// Stop 25ms later, well before the 100ms debounce fires
+	time.Sleep(25 * time.Millisecond)
+	close(stopCh)
+
+	select {
+	case <-runDone:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run() did not exit after Stop was closed")
+	}
+
+	// Snapshot counts right at shutdown
+	shutdownDiscoveries := discoveryStarts.Load()
+	shutdownInformerUpdates := informerUpdates.Load()
+
+	// Wait past the original 100ms debounce window
+	time.Sleep(150 * time.Millisecond)
+
+	// Ensure no late timer fired after shutdown
+	if got := discoveryStarts.Load(); got != shutdownDiscoveries {
+		t.Errorf("zombie discovery started post-shutdown: expected %d, got %d", shutdownDiscoveries, got)
+	}
+	if got := informerUpdates.Load(); got != shutdownInformerUpdates {
+		t.Errorf("zombie informer update post-shutdown: expected %d, got %d", shutdownInformerUpdates, got)
+	}
+}
+
+// TestRun_MultipleHandlersIndependent verifies that two independent Handler instances
+// do not share or overwrite debounce timers or mutexes (confirming removal of package globals).
+func TestRun_MultipleHandlersIndependent(t *testing.T) {
+	h1 := newConfigTestHandler(t, config.PipelineConfigs{})
+	h1.Log = testLogger(t)
+	h1.DebounceDuration = 30 * time.Millisecond
+
+	stopCh1 := channels.NewStopChannel()
+	resyncCh1 := channels.NewReSyncChannel()
+	h1.channelPool = map[string]channels.GenericChannel{
+		channels.Stop:   stopCh1,
+		channels.ReSync: resyncCh1,
+	}
+
+	h2 := newConfigTestHandler(t, config.PipelineConfigs{})
+	h2.Log = testLogger(t)
+	h2.DebounceDuration = 30 * time.Millisecond
+
+	stopCh2 := channels.NewStopChannel()
+	resyncCh2 := channels.NewReSyncChannel()
+	h2.channelPool = map[string]channels.GenericChannel{
+		channels.Stop:   stopCh2,
+		channels.ReSync: resyncCh2,
+	}
+
+	var d1Starts, d2Starts atomic.Int32
+
+	h1.DiscoveryStarter = func(pipelineCh chan struct{}) {
+		d1Starts.Add(1)
+		<-pipelineCh
+	}
+	h1.InformerUpdater = func() error {
+		return nil
+	}
+	h2.DiscoveryStarter = func(pipelineCh chan struct{}) {
+		d2Starts.Add(1)
+		<-pipelineCh
+	}
+	h2.InformerUpdater = func() error {
+		return nil
+	}
+
+	runDone1 := make(chan struct{})
+	go func() {
+		h1.Run()
+		close(runDone1)
+	}()
+
+	runDone2 := make(chan struct{})
+	go func() {
+		h2.Run()
+		close(runDone2)
+	}()
+
+	// Wait for both to initialize initial discovery
+	for i := 0; i < 50; i++ {
+		if d1Starts.Load() == 1 && d2Starts.Load() == 1 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	// Trigger resync ONLY on h1
+	resyncCh1 <- struct{}{}
+
+	// Wait for h1 to debounce and restart (30ms + margin)
+	time.Sleep(80 * time.Millisecond)
+
+	if got := d1Starts.Load(); got != 2 {
+		t.Errorf("expected h1 to have restarted (2 starts), got %d", got)
+	}
+	if got := d2Starts.Load(); got != 1 {
+		t.Errorf("expected h2 to remain untouched (1 start), got %d", got)
+	}
+
+	close(stopCh1)
+	close(stopCh2)
+
+	select {
+	case <-runDone1:
+	case <-time.After(2 * time.Second):
+		t.Fatal("h1.Run() did not exit after Stop was closed")
+	}
+
+	select {
+	case <-runDone2:
+	case <-time.After(2 * time.Second):
+		t.Fatal("h2.Run() did not exit after Stop was closed")
+	}
+}
+
+// TestRun_ReSyncSendDoesNotBlockOnStoppedHandler verifies that handleResyncRequest
+// and handleCRDEvent do not block if Stop has already been signaled.
+func TestRun_ReSyncSendDoesNotBlockOnStoppedHandler(t *testing.T) {
+	h := newConfigTestHandler(t, config.PipelineConfigs{})
+	h.Log = testLogger(t)
+
+	stopCh := channels.NewStopChannel()
+	close(stopCh) // already stopped
+
+	resyncCh := channels.NewReSyncChannel()
+	h.channelPool = map[string]channels.GenericChannel{
+		channels.Stop:   stopCh,
+		channels.ReSync: resyncCh,
+	}
+
+	// handleResyncRequest must return without blocking
+	done := make(chan struct{})
+	go func() {
+		h.handleResyncRequest()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("handleResyncRequest blocked on stopped handler")
+	}
+
+	// handleCRDEvent with resync-triggering event must also return without blocking
+	crdDone := make(chan struct{})
+	go func() {
+		h.handleCRDEvent(crdEvent(watch.Added, testCRDGroup, testCRDPlural, testCRDVersion))
+		close(crdDone)
+	}()
+
+	select {
+	case <-crdDone:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("handleCRDEvent blocked on stopped handler")
+	}
+}
+
+// TestRun_ConcurrentReSyncRace verifies that rapid concurrent ReSync calls under -race
+// do not cause data races or WaitGroup panics.
+func TestRun_ConcurrentReSyncRace(t *testing.T) {
+	h := newConfigTestHandler(t, config.PipelineConfigs{})
+	h.Log = testLogger(t)
+	h.DebounceDuration = 20 * time.Millisecond
+
+	stopCh := channels.NewStopChannel()
+	resyncCh := channels.NewReSyncChannel()
+	h.channelPool = map[string]channels.GenericChannel{
+		channels.Stop:   stopCh,
+		channels.ReSync: resyncCh,
+	}
+
+	h.DiscoveryStarter = func(pipelineCh chan struct{}) {
+		<-pipelineCh
+	}
+	h.InformerUpdater = func() error {
+		return nil
+	}
+
+	runDone := make(chan struct{})
+	go func() {
+		h.Run()
+		close(runDone)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for j := 0; j < 3; j++ {
+				h.handleResyncRequest()
+				time.Sleep(5 * time.Millisecond)
+			}
+		}()
+	}
+
+	wg.Wait()
+	time.Sleep(60 * time.Millisecond)
+
+	close(stopCh)
+	select {
+	case <-runDone:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run() did not exit after Stop was closed")
 	}
 }
