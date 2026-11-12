@@ -198,7 +198,7 @@ func (h *Handler) restartDiscovery(stopCh channels.StopChannel) bool {
 
 func (h *Handler) UpdateInformer() error {
 	if h.kubeClient == nil {
-		return ErrKubeConfig(fmt.Errorf("failed to update informer: kubeClient is nil"))
+		return ErrNilClient()
 	}
 	dynamicClient, err := dynamic.NewForConfig(&h.kubeClient.RestConfig)
 	if err != nil {

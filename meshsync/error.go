@@ -29,6 +29,7 @@ var (
 	ErrCopyBufferCode       = "1011"
 	ErrInvalidRequestCode   = "1012"
 	ErrExecTerminalCode     = "1013"
+	ErrNilClientCode        = "1015"
 
 	ErrInvalidRequest = errors.New(ErrInvalidRequestCode, errors.Alert, []string{"Request is invalid"}, []string{}, []string{"Stale request on the broker"}, []string{"Make sure the request format is correctly configured"})
 )
@@ -67,4 +68,8 @@ func ErrExecTerminal(err error) error {
 
 func ErrCopyBuffer(err error) error {
 	return errors.New(ErrCopyBufferCode, errors.Alert, []string{"Error while copying log buffer"}, []string{err.Error()}, []string{}, []string{})
+}
+
+func ErrNilClient() error {
+	return errors.New(ErrNilClientCode, errors.Alert, []string{"Kubernetes client is nil"}, []string{"Handler has no active kubernetes client initialized"}, []string{"Handler was invoked with an uninitialized or nil Kubernetes client"}, []string{"Supply a valid Kubernetes client to meshsync.New"})
 }
