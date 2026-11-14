@@ -22,11 +22,12 @@ type KubernetesResource struct {
 	PatternResource        *uuid.UUID                    `json:"pattern_resource"`
 	ComponentMetadata      map[string]interface{}        `json:"component_metadata" gorm:"type:bytes;serializer:json"`
 	// Secondary fields for configsmaps and secrets
-	Immutable  string `json:"immutable,omitempty"`
-	Data       string `json:"data,omitempty"`
-	BinaryData string `json:"binaryData,omitempty"`
-	StringData string `json:"stringData,omitempty"`
-	Type       string `json:"type,omitempty"`
+	Immutable  string         `json:"immutable,omitempty"`
+	Data       string         `json:"data,omitempty"`
+	BinaryData string         `json:"binaryData,omitempty"`
+	StringData string         `json:"stringData,omitempty"`
+	Type       string         `json:"type,omitempty"`
+	DeletedAt  gorm.DeletedAt `json:"-" gorm:"index"`
 }
 
 type KubernetesKeyValue struct {
