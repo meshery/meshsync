@@ -205,6 +205,109 @@ func TestParseList_RedactionEnabledLeavesConfigMapUntouched(t *testing.T) {
 	})
 }
 
+const testSecretLastApplied = `{"apiVersion":"v1","kind":"Secret","metadata":{"name":"db-creds","namespace":"default"},` +
+	`"type":"Opaque","data":{"password":"cGFzc3dvcmQ="},"stringData":{"token":"plaintext-token"},"binaryData":{"cert":"YmluYXJ5"}}`
+
+// newSecretWithLastApplied returns a Secret as kubectl apply leaves it, with
+// the applied manifest stored in the last-applied-configuration annotation.
+func newSecretWithLastApplied(annotation string) unstructured.Unstructured {
+	return newUnstructured(map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "Secret",
+		"metadata": map[string]interface{}{
+			"name":      "db-creds",
+			"namespace": "default",
+			"annotations": map[string]interface{}{
+				lastAppliedConfigAnnotation: annotation,
+				"team":                      "payments",
+			},
+		},
+		"type": "Opaque",
+		"data": map[string]interface{}{
+			"password": "cGFzc3dvcmQ=",
+		},
+	})
+}
+
+func annotationValues(result KubernetesResource) map[string]string {
+	values := map[string]string{}
+	for _, a := range result.KubernetesResourceMeta.Annotations {
+		values[a.Key] = a.Value
+	}
+	return values
+}
+
+// TestParseList_SecretRedactionCoversLastAppliedConfiguration asserts that
+// redaction also reaches the kubectl.kubernetes.io/last-applied-configuration
+// annotation. kubectl apply stores the whole applied manifest there, so without
+// this the Secret's data, and its stringData in plain text, would still be
+// published in the annotation after the data fields themselves are redacted.
+func TestParseList_SecretRedactionCoversLastAppliedConfiguration(t *testing.T) {
+	t.Setenv(redactSecretsEnvKey, "true")
+
+	annotations := annotationValues(ParseList(newSecretWithLastApplied(testSecretLastApplied), broker.Add, "cluster-1"))
+	got := annotations[lastAppliedConfigAnnotation]
+
+	for _, secret := range []string{"cGFzc3dvcmQ=", "plaintext-token", "YmluYXJ5"} {
+		if strings.Contains(got, secret) {
+			t.Errorf("last-applied-configuration still contains Secret value %q: %s", secret, got)
+		}
+	}
+
+	var manifest map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(got), &manifest); err != nil {
+		t.Fatalf("redacted annotation is not valid JSON: %v (%q)", err, got)
+	}
+	assertJSONEqual(t, string(manifest["data"]), map[string]string{"password": redactedSecretPlaceholder})
+	assertJSONEqual(t, string(manifest["stringData"]), map[string]string{"token": redactedSecretPlaceholder})
+	assertJSONEqual(t, string(manifest["binaryData"]), map[string]string{"cert": redactedSecretPlaceholder})
+	if string(manifest["kind"]) != `"Secret"` || string(manifest["type"]) != `"Opaque"` {
+		t.Errorf("non-secret fields of the manifest should be kept, got %s", got)
+	}
+	if annotations["team"] != "payments" {
+		t.Errorf("other annotations should be untouched, got %q", annotations["team"])
+	}
+}
+
+func TestParseList_SecretRedactionReplacesUnparseableLastApplied(t *testing.T) {
+	t.Setenv(redactSecretsEnvKey, "true")
+
+	annotations := annotationValues(ParseList(newSecretWithLastApplied(`not json, password=hunter2`), broker.Add, "cluster-1"))
+	if got := annotations[lastAppliedConfigAnnotation]; got != redactedSecretPlaceholder {
+		t.Errorf("got %q, want %q", got, redactedSecretPlaceholder)
+	}
+}
+
+func TestParseList_LastAppliedUnchangedWithoutRedaction(t *testing.T) {
+	t.Setenv(redactSecretsEnvKey, "")
+
+	annotations := annotationValues(ParseList(newSecretWithLastApplied(testSecretLastApplied), broker.Add, "cluster-1"))
+	if got := annotations[lastAppliedConfigAnnotation]; got != testSecretLastApplied {
+		t.Errorf("annotation should pass through unchanged, got %q", got)
+	}
+}
+
+func TestParseList_RedactionLeavesConfigMapLastAppliedUntouched(t *testing.T) {
+	t.Setenv(redactSecretsEnvKey, "true")
+
+	const cmLastApplied = `{"apiVersion":"v1","kind":"ConfigMap","data":{"log_level":"debug"}}`
+	obj := newUnstructured(map[string]interface{}{
+		"apiVersion": "v1",
+		"kind":       "ConfigMap",
+		"metadata": map[string]interface{}{
+			"name":        "app-config",
+			"namespace":   "default",
+			"annotations": map[string]interface{}{lastAppliedConfigAnnotation: cmLastApplied},
+		},
+		"data": map[string]interface{}{"log_level": "debug"},
+	})
+
+	annotations := annotationValues(ParseList(obj, broker.Add, "cluster-1"))
+	if got := annotations[lastAppliedConfigAnnotation]; got != cmLastApplied {
+		t.Errorf("ConfigMap annotation should pass through unchanged, got %q", got)
+	}
+}
+
 func TestRedactSecretsEnabled(t *testing.T) {
 	cases := []struct {
 		value string
