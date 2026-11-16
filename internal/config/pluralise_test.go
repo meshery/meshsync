@@ -25,6 +25,11 @@ func TestPluralize(t *testing.T) {
 		{"bus", "buses"},
 		{"fox", "foxes"},
 		{"quiz", "quizes"}, // with respect to English it is not plural, but it fits in our logic
+		{"networkpolicy", "networkpolicies"},
+		{"csistoragecapacity", "csistoragecapacities"},
+		{"authorizationpolicy", "authorizationpolicies"},
+		{"gateway", "gateways"}, // vowel + y keeps the plain s
+		{"key", "keys"},
 	}
 
 	for _, test := range tests {

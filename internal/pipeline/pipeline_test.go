@@ -35,3 +35,28 @@ func TestNewDoesNotAccumulateSteps(t *testing.T) {
 		t.Fatalf("steps accumulated across New() calls: got %d on the second call, want 1", second)
 	}
 }
+
+func TestShouldFilterOutByName(t *testing.T) {
+	tests := []struct {
+		name      string
+		pipeline  string
+		resources []string
+		want      bool
+	}{
+		{"no restriction keeps everything", "services.v1.", nil, false},
+		{"singular configmap keeps configmaps", "configmaps.v1.", []string{"configmap"}, false},
+		{"singular networkpolicy keeps networkpolicies", "networkpolicies.v1.networking.k8s.io", []string{"networkpolicy"}, false},
+		{"singular authorizationpolicy keeps authorizationpolicies", "authorizationpolicies.v1.security.istio.io", []string{"AuthorizationPolicy"}, false},
+		{"singular gateway keeps gateways", "gateways.v1.gateway.networking.k8s.io", []string{"gateway"}, false},
+		{"unlisted resource is filtered out", "deployments.v1.apps", []string{"pod"}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			set := internalconfig.NewOutputResourceSet(tt.resources)
+			if got := shouldFilterOutByName(tt.pipeline, set); got != tt.want {
+				t.Errorf("shouldFilterOutByName(%q, %v) = %v, want %v", tt.pipeline, tt.resources, got, tt.want)
+			}
+		})
+	}
+}
