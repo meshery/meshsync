@@ -2,14 +2,19 @@ package utils
 
 import (
 	"context"
+	"sync"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
-// clusterID is a unique identifier for the cluster
-// to which MeshSync has access to
-var cachedMapOfClusterID = make(map[*kubernetes.Clientset]*string)
+// cachedMapOfClusterID maps each kubeClient to the unique identifier of the
+// cluster it reaches. MeshSync can run as a library once per cluster at the
+// same time, so every access goes through cachedMapOfClusterIDMu.
+var (
+	cachedMapOfClusterIDMu sync.Mutex
+	cachedMapOfClusterID   = make(map[*kubernetes.Clientset]*string)
+)
 
 // GetClusterID returns a unique identifier for the cluster in which
 // meshsync is running
@@ -25,23 +30,27 @@ var cachedMapOfClusterID = make(map[*kubernetes.Clientset]*string)
 // 3.2 There is no more "in cluster", rather clusters to which meshsync have access to
 // 3.3 cluster ID is still cached, but per kubeClient
 func GetClusterID(kubeClient *kubernetes.Clientset) string {
-	if cachedMapOfClusterID[kubeClient] != nil {
-		return *cachedMapOfClusterID[kubeClient]
+	cachedMapOfClusterIDMu.Lock()
+	cached := cachedMapOfClusterID[kubeClient]
+	cachedMapOfClusterIDMu.Unlock()
+	if cached != nil {
+		return *cached
 	}
 
-	if kubeClient == nil {
-		clusterID := ""
-		cachedMapOfClusterID[kubeClient] = &clusterID
-		return *cachedMapOfClusterID[kubeClient]
+	clusterID := ""
+	if kubeClient != nil {
+		// The API call runs without the lock, so a slow cluster does not block
+		// the others; two concurrent calls for a new client may both fetch the UID.
+		ksns, err := kubeClient.CoreV1().Namespaces().Get(context.TODO(), "kube-system", v1.GetOptions{})
+		if err != nil {
+			return ""
+		}
+		clusterID = string(ksns.GetUID())
 	}
 
-	ksns, err := kubeClient.CoreV1().Namespaces().Get(context.TODO(), "kube-system", v1.GetOptions{})
-	if err != nil {
-		return ""
-	}
+	cachedMapOfClusterIDMu.Lock()
+	cachedMapOfClusterID[kubeClient] = &clusterID
+	cachedMapOfClusterIDMu.Unlock()
 
-	uid := string(ksns.GetUID())
-	cachedMapOfClusterID[kubeClient] = &uid
-
-	return *cachedMapOfClusterID[kubeClient]
+	return clusterID
 }
