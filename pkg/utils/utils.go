@@ -49,7 +49,9 @@ func GetClusterID(kubeClient *kubernetes.Clientset) string {
 	}
 
 	cachedMapOfClusterIDMu.Lock()
-	cachedMapOfClusterID[kubeClient] = &clusterID
+	if cachedMapOfClusterID[kubeClient] == nil {
+		cachedMapOfClusterID[kubeClient] = &clusterID
+	}
 	cachedMapOfClusterIDMu.Unlock()
 
 	return clusterID
