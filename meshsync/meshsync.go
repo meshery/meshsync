@@ -38,6 +38,9 @@ type Handler struct {
 	outputWriter     output.Writer
 	outputFiltration internalconfig.OutputFiltrationContainer
 
+	// BlackList is the watch-list blacklist; the CRD watch skips the CRDs it names.
+	BlackList []string
+
 	// Debounce and discovery lifecycle fields
 	DebounceDuration  time.Duration
 	InformerUpdater   func() error

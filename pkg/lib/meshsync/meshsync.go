@@ -223,6 +223,9 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	if err != nil {
 		return err
 	}
+	if crdConfigs != nil {
+		meshsyncHandler.BlackList = crdConfigs.BlackList
+	}
 
 	if useCRDFlag {
 		go meshsyncHandler.WatchCRDs()

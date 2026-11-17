@@ -40,6 +40,7 @@ main.go --parses CLI flags--> pkg/lib/meshsync.Run(...)
 ## Config (`internal/config`)
 
 - `config.go` / `default_config.go` / `crd_config.go` define the discoverable resource set (global vs. local/namespaced), whitelist/blacklist, and pluralization (`pluralise.go`) needed to map a Kind to its API resource.
+- The watch-list blacklist also applies to CRDs found at runtime: `Run` copies it into `meshsync.Handler.BlackList`, and the CRD watch (`updatePipelineConfig`) never registers a blacklisted CRD. The whitelist does not restrict CRD discovery.
 - `OutputFiltrationContainer` / `OutputResourceSet` (referenced from `meshsync.Handler`) carry the `-outputNamespaces` / `-outputResources` CLI restrictions through to the pipeline and output writer.
 
 ## Output (`internal/output`)

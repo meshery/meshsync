@@ -196,6 +196,43 @@ func TestUpdatePipelineConfigRegistersBrokerEvents(t *testing.T) {
 	}
 }
 
+// TestUpdatePipelineConfigBlacklist checks that the CRD watch honours the
+// watch-list blacklist: a blacklisted CRD gets no pipeline and no resync, while
+// a CRD outside the blacklist is still registered.
+func TestUpdatePipelineConfigBlacklist(t *testing.T) {
+	tests := []struct {
+		name          string
+		blackList     []string
+		wantChanged   bool
+		wantPipelines []string
+	}{
+		{"blacklisted CRD is skipped", []string{testCRDPipeline}, false, nil},
+		{"other CRD is registered", []string{"issuers.v1.cert-manager.io"}, true, []string{testCRDPipeline}},
+		{"no blacklist registers the CRD", nil, true, []string{testCRDPipeline}},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			h := newConfigTestHandler(t, config.PipelineConfigs{})
+			h.BlackList = tc.blackList
+
+			changed, err := h.updatePipelineConfig(watch.Added, testCRDGVR())
+			if err != nil {
+				t.Fatalf("updatePipelineConfig: %v", err)
+			}
+			if changed != tc.wantChanged {
+				t.Errorf("changed = %v, want %v", changed, tc.wantChanged)
+			}
+			var names []string
+			for _, p := range globalPipelines(t, h) {
+				names = append(names, p.Name)
+			}
+			if !reflect.DeepEqual(names, tc.wantPipelines) {
+				t.Errorf("registered pipelines = %v, want %v", names, tc.wantPipelines)
+			}
+		})
+	}
+}
+
 // logInfoLevel is MeshKit's info log level. logger.Options.LogLevel is a plain
 // int mirroring logrus severity levels (info == 4); it is spelled out here so
 // the tests depend only on MeshKit for logging, not on logrus directly.
