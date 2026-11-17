@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand/v2"
+	"slices"
 	"time"
 
 	"github.com/meshery/meshkit/broker"
@@ -601,8 +602,9 @@ func (h *Handler) updatePipelineConfig(
 		// existing CRD as ADDED, so registering unconditionally would accumulate
 		// duplicate pipeline configs - which in turn register duplicate informer
 		// event handlers and double-publish every resource. Only register (and
-		// resync for) resources we are not already watching.
-		if pipelines.Contains(name) {
+		// resync for) resources we are not already watching. A CRD named in the
+		// watch-list blacklist is never registered.
+		if pipelines.Contains(name) || slices.Contains(h.BlackList, name) {
 			return false, nil
 		}
 		pipelines = pipelines.Add(config.PipelineConfig{
