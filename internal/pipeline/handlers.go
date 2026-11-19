@@ -101,8 +101,8 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 
 	}
 
-	if err := ri.outputWriter.Write(
-		k8sResource,
+	if err := ri.emit(
+		model.NewKubernetesResource(k8sResource, ri.clusterID),
 		evtype,
 		config,
 	); err != nil {
