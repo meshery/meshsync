@@ -20,9 +20,11 @@ import (
 	mesherykube "github.com/meshery/meshkit/utils/kubernetes"
 	"github.com/meshery/meshsync/internal/channels"
 	"github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/internal/discovery"
+	k8sdiscovery "github.com/meshery/meshsync/internal/discovery/kubernetes"
 	"github.com/meshery/meshsync/internal/file"
 	"github.com/meshery/meshsync/internal/output"
-	"github.com/meshery/meshsync/meshsync"
+	"github.com/meshery/meshsync/pkg/model"
 )
 
 // TODO fix cyclop error
@@ -43,6 +45,9 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 			options.OutputMode,
 			strings.Join(AllowedOutputModes, ", "),
 		)
+	}
+	if !slices.Contains(AllowedPlatforms, options.Platform) {
+		return discovery.ErrUnknownPlatform(options.Platform)
 	}
 
 	// Serve liveness/readiness endpoints as early as possible so that
@@ -208,39 +213,53 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	}
 
 	chPool := channels.NewChannelPool()
-	meshsyncHandler, err := meshsync.New(
-		cfg,
-		kubeClient,
-		log,
-		br,
-		outputProcessor,
-		chPool,
-		config.NewOutputFiltrationContainer(
-			config.NewOutputNamespaceSet(options.OnlyK8sNamespaces...),
-			config.NewOutputResourceSet(options.OnlyK8sResources),
-		),
-	)
+
+	var blackList []string
+	if crdConfigs != nil {
+		blackList = crdConfigs.BlackList
+	}
+
+	// Each platform registers a factory; Build constructs a fresh Discoverer.
+	registry := discovery.NewRegistry()
+	registry.Register(model.PlatformKubernetes, func() (discovery.Discoverer, error) {
+		return k8sdiscovery.New(k8sdiscovery.Options{
+			Config:     cfg,
+			KubeClient: kubeClient,
+			Log:        log,
+			Broker:     br,
+			// The Kubernetes Discoverer's Handler needs a writer at construction;
+			// Watch replaces its emit with the one passed below.
+			OutputWriter: outputProcessor,
+			ChannelPool:  chPool,
+			OutputFiltration: config.NewOutputFiltrationContainer(
+				config.NewOutputNamespaceSet(options.OnlyK8sNamespaces...),
+				config.NewOutputResourceSet(options.OnlyK8sResources),
+			),
+			BlackList: blackList,
+			WatchCRDs: useCRDFlag,
+			// even so the config param name starts with OutputMode
+			// it is not only output but also input
+			// in that case if  OutputMode is not OutputModeBroker
+			// there is no nats at all, so we do not subscribe to any topic
+			ListenToRequests: options.OutputMode == config.OutputModeBroker,
+		})
+	})
+	discoverer, err := registry.Build(options.Platform)
 	if err != nil {
 		return err
 	}
-	if crdConfigs != nil {
-		meshsyncHandler.BlackList = crdConfigs.BlackList
-	}
-
-	if useCRDFlag {
-		go meshsyncHandler.WatchCRDs()
-	}
 
 	// Start the main meshsync run
-	go meshsyncHandler.Run()
-
-	if options.OutputMode == config.OutputModeBroker {
-		// even so the config param name starts with OutputMode
-		// it is not only output but also input
-		// in that case if  OutputMode is not OutputModeBroker
-		// there is no nats at all, so we do not subscribe to any topic
-		go meshsyncHandler.ListenToRequests()
-	}
+	stopCh := chPool[channels.Stop].(channels.StopChannel)
+	go func() {
+		if errWatch := discoverer.Watch(
+			options.Context,
+			stopCh,
+			discovery.WriterEmitFunc(outputProcessor),
+		); errWatch != nil {
+			log.Error(errWatch)
+		}
+	}()
 
 	chTimeout := make(chan struct{})
 	if options.StopAfterDuration > -1 {
@@ -264,8 +283,8 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 
 	// close stop channel
 	// as there are many goroutines which wait for channels.Stop to be closed to stop their execution
-	close(chPool[channels.Stop].(channels.StopChannel))
-
+	close(stopCh)
+	discoverer.Shutdown()
 	log.Info("meshsync: shutting down")
 
 	return nil

@@ -5,7 +5,7 @@ import (
 
 	"github.com/meshery/meshkit/logger"
 	internalconfig "github.com/meshery/meshsync/internal/config"
-	"github.com/meshery/meshsync/internal/output"
+	"github.com/meshery/meshsync/internal/discovery"
 	"github.com/myntra/pipeline"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic/dynamicinformer"
@@ -17,7 +17,7 @@ type RegisterInformer struct {
 	log              logger.Handler
 	informer         dynamicinformer.DynamicSharedInformerFactory
 	config           internalconfig.PipelineConfig
-	outputWriter     output.Writer
+	emit             discovery.EmitFunc
 	clusterID        string
 	outputFiltration internalconfig.OutputFiltrationContainer
 }
@@ -26,7 +26,7 @@ func newRegisterInformerStep(
 	log logger.Handler,
 	informer dynamicinformer.DynamicSharedInformerFactory,
 	config internalconfig.PipelineConfig,
-	ow output.Writer,
+	emit discovery.EmitFunc,
 	clusterID string,
 	outputFiltration internalconfig.OutputFiltrationContainer,
 ) *RegisterInformer {
@@ -34,7 +34,7 @@ func newRegisterInformerStep(
 		log:              log,
 		informer:         informer,
 		config:           config,
-		outputWriter:     ow,
+		emit:             emit,
 		clusterID:        clusterID,
 		outputFiltration: outputFiltration,
 	}

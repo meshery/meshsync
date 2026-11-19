@@ -6,6 +6,7 @@ import (
 	"github.com/meshery/meshkit/broker"
 	"github.com/meshery/meshkit/logger"
 	internalconfig "github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/internal/discovery"
 	"github.com/meshery/meshsync/pkg/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,8 +39,8 @@ func newTestRegisterInformer(t *testing.T) (*RegisterInformer, *recordingWriter)
 
 	writer := &recordingWriter{}
 	ri := &RegisterInformer{
-		log:          log,
-		outputWriter: writer,
+		log:  log,
+		emit: discovery.WriterEmitFunc(writer),
 		config: internalconfig.PipelineConfig{
 			Name:   "pods.v1.",
 			Events: []string{string(broker.Delete)},
@@ -72,8 +73,8 @@ func newUpdateTestRegisterInformer(t *testing.T) (*RegisterInformer, *recordingW
 
 	writer := &recordingWriter{}
 	ri := &RegisterInformer{
-		log:          log,
-		outputWriter: writer,
+		log:  log,
+		emit: discovery.WriterEmitFunc(writer),
 		config: internalconfig.PipelineConfig{
 			Name:   "pods.v1.",
 			Events: []string{string(broker.Update)},
@@ -201,4 +202,39 @@ func TestDeleteFunc_UnexpectedType(t *testing.T) {
 			assert.Empty(t, writer.written, "nothing should be published for an unhandled object type")
 		})
 	}
+}
+
+// TestPublishItemWritesUnchangedPayload guards the Discoverer refactor:
+// publishItem now goes through an EmitFunc, and the writer must still receive
+// exactly what model.ParseList produces, as it did when publishItem called the
+// output writer directly.
+func TestPublishItemWritesUnchangedPayload(t *testing.T) {
+	ri, writer := newTestRegisterInformer(t)
+	ri.config.Events = []string{string(broker.Add)}
+	pod := newUnstructuredPod("web", "default")
+
+	require.NoError(t, ri.publishItem(pod, broker.Add, ri.config))
+
+	require.Len(t, writer.written, 1)
+	assert.Equal(t, model.ParseList(*pod, broker.Add, "test-cluster"), writer.written[0])
+	assert.Equal(t, []broker.EventType{broker.Add}, writer.events)
+}
+
+// TestPublishItemEmitsEnvelope checks the envelope publishItem hands to emit.
+func TestPublishItemEmitsEnvelope(t *testing.T) {
+	ri, _ := newTestRegisterInformer(t)
+	ri.config.Events = []string{string(broker.Add)}
+	var got []model.Resource
+	ri.emit = func(res model.Resource, _ broker.EventType, _ internalconfig.PipelineConfig) error {
+		got = append(got, res)
+		return nil
+	}
+
+	require.NoError(t, ri.publishItem(newUnstructuredPod("web", "default"), broker.Add, ri.config))
+
+	require.Len(t, got, 1)
+	assert.Equal(t, model.PlatformKubernetes, got[0].Platform)
+	assert.Equal(t, "test-cluster", got[0].ScopeID)
+	require.NotNil(t, got[0].Kubernetes)
+	assert.Equal(t, "test-cluster", got[0].Kubernetes.ClusterID)
 }
