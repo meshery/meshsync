@@ -397,10 +397,17 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	}
 	parsedObjects := make([]model.KubernetesResource, 0)
 	for _, obj := range objects {
+		resource, ok := obj.(*unstructured.Unstructured)
+		if !ok {
+			continue
+		}
+		if !h.outputFiltration.NamespaceSet.Allows(resource.GetNamespace()) {
+			continue
+		}
 		parsedObjects = append(
 			parsedObjects,
 			model.ParseList(
-				*obj.(*unstructured.Unstructured),
+				*resource,
 				broker.Add,
 				h.clusterID,
 			),

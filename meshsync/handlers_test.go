@@ -12,9 +12,12 @@ import (
 	"github.com/meshery/meshsync/internal/channels"
 	"github.com/meshery/meshsync/internal/config"
 	"github.com/meshery/meshsync/pkg/model"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/tools/cache"
 )
 
 // TestSplitIntoMultipleSlices tests the splitIntoMultipleSlices function
@@ -687,5 +690,40 @@ func TestRun_ConcurrentReSyncRace(t *testing.T) {
 	case <-runDone:
 	case <-time.After(2 * time.Second):
 		t.Fatal("Run() did not exit after Stop was closed")
+	}
+}
+
+func TestListStoreObjectsFiltersOutputNamespaces(t *testing.T) {
+	store := cache.NewStore(cache.MetaNamespaceKeyFunc)
+	for _, namespace := range []string{"allowed", "excluded"} {
+		obj := &unstructured.Unstructured{Object: map[string]interface{}{
+			"apiVersion": "v1",
+			"kind":       "ConfigMap",
+		}}
+		obj.SetName("settings")
+		obj.SetNamespace(namespace)
+		if err := store.Add(obj); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := store.Add(&corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "typed", Namespace: "allowed"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	h := &Handler{
+		stores: map[string]cache.Store{"configmaps": store},
+		outputFiltration: config.OutputFiltrationContainer{
+			NamespaceSet: config.NewOutputNamespaceSet("allowed"),
+		},
+	}
+	var namespaces []string
+	for _, obj := range h.listStoreObjects() {
+		namespaces = append(namespaces, obj.KubernetesResourceMeta.Namespace)
+	}
+	if !reflect.DeepEqual(namespaces, []string{"allowed"}) {
+		t.Fatalf("snapshot namespaces = %v, want [allowed]", namespaces)
 	}
 }
