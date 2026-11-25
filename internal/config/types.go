@@ -102,6 +102,10 @@ func (s OutputNamespaceSet) Contains(value string) bool {
 	return s[value]
 }
 
+func (s OutputNamespaceSet) Allows(namespace string) bool {
+	return len(s) == 0 || s.Contains(namespace)
+}
+
 type OutputResourceSet map[string]bool
 
 func (s OutputResourceSet) Contains(value string) bool {
