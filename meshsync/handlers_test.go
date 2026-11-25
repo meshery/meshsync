@@ -12,6 +12,8 @@ import (
 	"github.com/meshery/meshsync/internal/channels"
 	"github.com/meshery/meshsync/internal/config"
 	"github.com/meshery/meshsync/pkg/model"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
@@ -703,6 +705,12 @@ func TestListStoreObjectsFiltersOutputNamespaces(t *testing.T) {
 		if err := store.Add(obj); err != nil {
 			t.Fatal(err)
 		}
+	}
+
+	if err := store.Add(&corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{Name: "typed", Namespace: "allowed"},
+	}); err != nil {
+		t.Fatal(err)
 	}
 
 	h := &Handler{

@@ -397,7 +397,10 @@ func (h *Handler) listStoreObjects() []model.KubernetesResource {
 	}
 	parsedObjects := make([]model.KubernetesResource, 0)
 	for _, obj := range objects {
-		resource := obj.(*unstructured.Unstructured)
+		resource, ok := obj.(*unstructured.Unstructured)
+		if !ok {
+			continue
+		}
 		if !h.outputFiltration.NamespaceSet.Allows(resource.GetNamespace()) {
 			continue
 		}
