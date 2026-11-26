@@ -31,6 +31,11 @@ const redactedSecretPlaceholder = "[REDACTED]"
 // secretKind is the Kubernetes Kind for which Secret redaction applies.
 const secretKind = "Secret"
 
+// lastAppliedConfigAnnotation is the annotation kubectl apply writes with the
+// full manifest it applied. For a Secret that manifest includes data,
+// stringData and binaryData, so it has to be redacted along with them.
+const lastAppliedConfigAnnotation = "kubectl.kubernetes.io/last-applied-configuration"
+
 // redactSecretsEnabled reports whether Secret redaction has been opted into via
 // the MESHSYNC_REDACT_SECRETS environment variable. It mirrors the truthy
 // parsing used elsewhere in MeshSync (see DEBUG handling in main.go).
@@ -67,6 +72,45 @@ func redactSecretData(raw []byte) string {
 	return string(out)
 }
 
+// annotationValue returns an annotation value as it should be published. When
+// Secret redaction is on, the kubectl last-applied-configuration annotation is
+// redacted, since it holds a copy of the Secret's data, stringData and
+// binaryData. Every other annotation is returned unchanged.
+func annotationValue(key, value string, redactSecrets bool) string {
+	if redactSecrets && key == lastAppliedConfigAnnotation {
+		return redactLastAppliedConfiguration(value)
+	}
+	return value
+}
+
+// redactLastAppliedConfiguration redacts the Secret values inside a stored
+// last-applied-configuration manifest with redactSecretData, keeping the keys
+// and the rest of the manifest. A value that is not a JSON object cannot be
+// checked, so it is replaced whole with redactedSecretPlaceholder.
+func redactLastAppliedConfiguration(value string) string {
+	var manifest map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(value), &manifest); err != nil || manifest == nil {
+		return redactedSecretPlaceholder
+	}
+	for _, field := range []string{"data", "stringData", "binaryData"} {
+		raw, ok := manifest[field]
+		if !ok {
+			continue
+		}
+		var kv map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &kv); err != nil || kv == nil {
+			manifest[field] = json.RawMessage(`"` + redactedSecretPlaceholder + `"`)
+			continue
+		}
+		manifest[field] = json.RawMessage(redactSecretData(raw))
+	}
+	out, err := json.Marshal(manifest)
+	if err != nil {
+		return redactedSecretPlaceholder
+	}
+	return string(out)
+}
+
 // jsonStringValue returns the decoded form of a value returned by jsonparser.
 // jsonparser returns string values without the surrounding quotes but with
 // JSON escape sequences (\", \n, \\, \uXXXX) still in place, so they are
@@ -97,6 +141,20 @@ func ParseList(
 	_ = json.Unmarshal(data, &result)
 
 	processorInstance := GetProcessorInstance(result.Kind)
+
+	// Secret contents (data/stringData/binaryData) are captured and shipped
+	// over the broker. Meshery Server may consume this data, so the default
+	// behavior is unchanged (values pass through as-is). When an operator opts
+	// in via MESHSYNC_REDACT_SECRETS, Secret values are redacted here while the
+	// keys are preserved, keeping plaintext/base64 secrets from leaving the
+	// cluster. Redaction applies to Secret resources only; ConfigMap data is
+	// left untouched. The kubectl last-applied-configuration annotation, which
+	// holds a copy of the applied manifest, is redacted the same way.
+	// result.Kind is checked first so redactSecretsEnabled() (which reads the
+	// environment) is only evaluated for Secret resources, not on the hot path
+	// for every non-Secret resource.
+	redactSecrets := result.Kind == secretKind && redactSecretsEnabled()
+
 	// ObjectMeta internal models
 	labels := make([]*KubernetesKeyValue, 0)
 	_ = jsonparser.ObjectEach(data, func(key []byte, value []byte, dataType jsonparser.ValueType, offset int) error {
@@ -120,7 +178,7 @@ func ParseList(
 		annotations = append(annotations, &KubernetesKeyValue{
 			Kind:  KindAnnotation,
 			Key:   string(key),
-			Value: jsonStringValue(value, dataType),
+			Value: annotationValue(string(key), jsonStringValue(value, dataType), redactSecrets),
 		})
 		return nil
 	}, "metadata", "annotations")
@@ -155,18 +213,6 @@ func ParseList(
 	if immutable, _, _, err := jsonparser.Get(data, "immutable"); err == nil {
 		result.Immutable = string(immutable)
 	}
-
-	// Secret contents (data/stringData/binaryData) are captured and shipped
-	// over the broker. Meshery Server may consume this data, so the default
-	// behavior is unchanged (values pass through as-is). When an operator opts
-	// in via MESHSYNC_REDACT_SECRETS, Secret values are redacted here while the
-	// keys are preserved, keeping plaintext/base64 secrets from leaving the
-	// cluster. Redaction applies to Secret resources only; ConfigMap data is
-	// left untouched.
-	// result.Kind is checked first so redactSecretsEnabled() (which reads the
-	// environment) is only evaluated for Secret resources, not on the hot path
-	// for every non-Secret resource.
-	redactSecrets := result.Kind == secretKind && redactSecretsEnabled()
 
 	if objData, _, _, err := jsonparser.Get(data, "data"); err == nil {
 		if redactSecrets {
