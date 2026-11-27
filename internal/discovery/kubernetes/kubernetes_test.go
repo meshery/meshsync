@@ -145,6 +145,7 @@ func TestWatchEmitsUnchangedKubernetesPayload(t *testing.T) {
 	assert.Equal(t, model.PlatformKubernetes, got.Platform)
 	assert.Equal(t, "Pod", got.Kind)
 	assert.Equal(t, "web", got.Name)
+	assert.Equal(t, map[string]string{"app": "web"}, got.Labels)
 	require.NotNil(t, got.Kubernetes)
 	assert.Equal(t, got.ScopeID, got.Kubernetes.ClusterID)
 

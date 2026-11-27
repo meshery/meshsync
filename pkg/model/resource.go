@@ -6,9 +6,9 @@ const (
 	PlatformKubernetes = "kubernetes"
 
 	// ResourceSchemaVersion is the schema version of the Resource envelope,
-	// mirroring the platform-agnostic resource construct (v1beta1) in
+	// mirroring the platform-agnostic resource construct (v1beta3) in
 	// meshery/schemas.
-	ResourceSchemaVersion = "resources.meshery.io/v1beta1"
+	ResourceSchemaVersion = "resources.meshery.io/v1beta3"
 )
 
 // Resource is the platform-agnostic envelope every discovery.Discoverer emits.
@@ -61,10 +61,20 @@ type Resource struct {
 //
 // kr is stored as-is: the envelope never modifies the Kubernetes payload, so
 // what the output writers publish is identical to what ParseList produced.
+//
+// Labels is filled from the Kubernetes metadata labels (not annotations), so a
+// consumer reading the envelope directly sees the same labels the embedded
+// payload carries.
 func NewKubernetesResource(kr KubernetesResource, scopeID string) Resource {
 	name := ""
+	labels := map[string]string{}
 	if kr.KubernetesResourceMeta != nil {
 		name = kr.KubernetesResourceMeta.Name
+		for _, kv := range kr.KubernetesResourceMeta.Labels {
+			if kv != nil {
+				labels[kv.Key] = kv.Value
+			}
+		}
 	}
 
 	return Resource{
@@ -73,6 +83,7 @@ func NewKubernetesResource(kr KubernetesResource, scopeID string) Resource {
 		ScopeID:       scopeID,
 		Kind:          kr.Kind,
 		Name:          name,
+		Labels:        labels,
 		SchemaVersion: ResourceSchemaVersion,
 		Kubernetes:    &kr,
 	}

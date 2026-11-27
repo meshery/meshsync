@@ -14,6 +14,7 @@ const (
 	resourceTestKind    = "Deployment"
 	resourceTestName    = "frontend"
 	resourceTestCluster = "cluster-1"
+	resourceTestTier    = "storefront"
 )
 
 // newResourceTestObject builds an object with setters rather than a map
@@ -25,7 +26,7 @@ func newResourceTestObject() unstructured.Unstructured {
 	u.SetName(resourceTestName)
 	u.SetNamespace("shop")
 	u.SetUID("frontend-uid")
-	u.SetLabels(map[string]string{"tier": "storefront"})
+	u.SetLabels(map[string]string{"tier": resourceTestTier})
 	return u
 }
 
@@ -44,6 +45,9 @@ func TestNewKubernetesResource(t *testing.T) {
 	assert.Equal(t, resourceTestCluster, res.ScopeID)
 	assert.Equal(t, res.ScopeID, res.Kubernetes.ClusterID)
 
+	// Labels carry over from the Kubernetes metadata into the flat envelope map.
+	assert.Equal(t, map[string]string{"tier": resourceTestTier}, res.Labels)
+
 	// The envelope must not change the Kubernetes payload in any way.
 	assert.Equal(t, kr, *res.Kubernetes)
 }
@@ -52,6 +56,7 @@ func TestNewKubernetesResourceNilMeta(t *testing.T) {
 	res := NewKubernetesResource(KubernetesResource{Kind: resourceTestKind}, resourceTestCluster)
 
 	assert.Empty(t, res.Name)
+	assert.Empty(t, res.Labels)
 	assert.Equal(t, resourceTestKind, res.Kind)
 }
 
