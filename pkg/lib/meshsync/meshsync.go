@@ -3,6 +3,7 @@ package meshsync
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -147,64 +148,13 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	}
 
 	if options.OutputMode == config.OutputModeFile {
-		filename := options.OutputFileName
-		defaultFormat := "yaml"
-		if filename == "" {
-			fname, errGenerateUniqueFileNameForSnapshot := file.GenerateUniqueFileNameForSnapshot(defaultFormat)
-			if errGenerateUniqueFileNameForSnapshot != nil {
-				return errGenerateUniqueFileNameForSnapshot
-			}
-			filename = fname
+		fileWriter, closeFiles, errFileWriter := prepareFileOutputWriter(options)
+		if errFileWriter != nil {
+			return errFileWriter
 		}
-		ext := path.Ext(filename)
-		if ext == "" {
-			ext = "." + defaultFormat
-		}
+		defer closeFiles()
 
-		writerPool := make([]output.Writer, 0, 2)
-
-		if options.OutputExtendedFile {
-			// this is a file which contains all messages from nats
-			// (hence it also contains more than one yaml manifest for the same entity)
-			fw, errNewYAMLWriter := file.NewYAMLWriter(
-				fmt.Sprintf(
-					"%s-extended%s",
-					strings.TrimSuffix(filename, ext),
-					ext,
-				),
-			)
-			if errNewYAMLWriter != nil {
-				return errNewYAMLWriter
-			}
-			// if you do refactoring and move this in a separate function
-			// be sure this Close is called in the end of Run() function
-			defer fw.Close()
-
-			writerPool = append(
-				writerPool,
-				output.NewFileWriter(fw),
-			)
-		}
-
-		{
-			// this is a file which contains only unique resource's messages from nats
-			// it filters out duplicates and writes only unique message from nats per resource
-			fw, errNewYAMLWriter := file.NewYAMLWriter(filename)
-			if errNewYAMLWriter != nil {
-				return errNewYAMLWriter
-			}
-			outputInMemoryDeduplicatorWriter := output.NewInMemoryDeduplicatorStreamingWriter(
-				output.NewFileWriter(fw),
-			)
-
-			writerPool = append(writerPool, outputInMemoryDeduplicatorWriter)
-		}
-
-		outputProcessor.SetOutput(
-			output.NewCompositeWriter(
-				writerPool...,
-			),
-		)
+		outputProcessor.SetOutput(fileWriter)
 	}
 
 	chPool := channels.NewChannelPool()
@@ -231,8 +181,13 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 		go meshsyncHandler.WatchCRDs()
 	}
 
-	// Start the main meshsync run
-	go meshsyncHandler.Run()
+	// Start the main meshsync run and wait for it to finish shutting down
+	// informers before closing output files on return.
+	handlerDone := make(chan struct{})
+	go func() {
+		defer close(handlerDone)
+		meshsyncHandler.Run()
+	}()
 
 	if options.OutputMode == config.OutputModeBroker {
 		// even so the config param name starts with OutputMode
@@ -253,11 +208,13 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 
 	log.Info("meshsync: run started")
 	// Handle graceful shutdown
-	signal.Notify(chPool[channels.OS].(channels.OSChannel), syscall.SIGTERM, os.Interrupt)
+	osCh := chPool[channels.OS].(channels.OSChannel)
+	signal.Notify(osCh, syscall.SIGTERM, os.Interrupt)
+	defer signal.Stop(osCh)
 
 	select {
 	case <-chTimeout:
-	case <-chPool[channels.OS].(channels.OSChannel):
+	case <-osCh:
 	case <-options.Context.Done():
 		log.Debug("meshsync: cancellation signal received from client code")
 	}
@@ -265,10 +222,72 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	// close stop channel
 	// as there are many goroutines which wait for channels.Stop to be closed to stop their execution
 	close(chPool[channels.Stop].(channels.StopChannel))
+	<-handlerDone
 
 	log.Info("meshsync: shutting down")
 
 	return nil
+}
+
+func prepareFileOutputWriter(options Options) (output.Writer, func(), error) {
+	filename := options.OutputFileName
+	defaultFormat := "yaml"
+	if filename == "" {
+		fname, errGenerateUniqueFileNameForSnapshot := file.GenerateUniqueFileNameForSnapshot(defaultFormat)
+		if errGenerateUniqueFileNameForSnapshot != nil {
+			return nil, nil, errGenerateUniqueFileNameForSnapshot
+		}
+		filename = fname
+	}
+	ext := path.Ext(filename)
+	if ext == "" {
+		ext = "." + defaultFormat
+	}
+
+	writerPool := make([]output.Writer, 0, 2)
+	closers := make([]io.Closer, 0, 2)
+	closeAll := func() {
+		for _, c := range closers {
+			_ = c.Close()
+		}
+	}
+
+	if options.OutputExtendedFile {
+		// this is a file which contains all messages from nats
+		// (hence it also contains more than one yaml manifest for the same entity)
+		fw, errNewYAMLWriter := file.NewYAMLWriter(
+			fmt.Sprintf(
+				"%s-extended%s",
+				strings.TrimSuffix(filename, ext),
+				ext,
+			),
+		)
+		if errNewYAMLWriter != nil {
+			return nil, nil, errNewYAMLWriter
+		}
+		closers = append(closers, fw)
+
+		writerPool = append(
+			writerPool,
+			output.NewFileWriter(fw),
+		)
+	}
+
+	// this is a file which contains only unique resource's messages from nats
+	// it filters out duplicates and writes only unique message from nats per resource
+	fw, errNewYAMLWriter := file.NewYAMLWriter(filename)
+	if errNewYAMLWriter != nil {
+		closeAll()
+		return nil, nil, errNewYAMLWriter
+	}
+	closers = append(closers, fw)
+	outputInMemoryDeduplicatorWriter := output.NewInMemoryDeduplicatorStreamingWriter(
+		output.NewFileWriter(fw),
+	)
+
+	writerPool = append(writerPool, outputInMemoryDeduplicatorWriter)
+
+	return output.NewCompositeWriter(writerPool...), closeAll, nil
 }
 
 // brokerContentDedupEnabled reports whether the operator opted into broker

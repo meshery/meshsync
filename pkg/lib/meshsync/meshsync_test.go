@@ -1,6 +1,16 @@
 package meshsync
 
-import "testing"
+import (
+	"errors"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/meshery/meshkit/broker"
+	"github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/pkg/model"
+)
 
 // TestBrokerHost verifies that the host part of a broker URL is extracted
 // correctly regardless of scheme, credentials (userinfo) or port.
@@ -74,5 +84,131 @@ func TestBrokerHost(t *testing.T) {
 				t.Errorf("expected host %q for input %q, got %q", tc.expected, tc.input, host)
 			}
 		})
+	}
+}
+
+const (
+	testPrimarySnapshotName = "snapshot.yaml"
+	testPodName             = "pod-1"
+)
+
+func newTestResource(kind, uid, name string) model.KubernetesResource {
+	return model.KubernetesResource{
+		Kind: kind,
+		KubernetesResourceMeta: &model.KubernetesResourceObjectMeta{
+			UID:  uid,
+			Name: name,
+		},
+	}
+}
+
+func TestPrepareFileOutputWriterClosesPrimaryFile(t *testing.T) {
+	dir := t.TempDir()
+	primaryPath := filepath.Join(dir, testPrimarySnapshotName)
+
+	writer, cleanup, err := prepareFileOutputWriter(Options{
+		OutputFileName: primaryPath,
+	})
+	if err != nil {
+		t.Fatalf("prepareFileOutputWriter: %v", err)
+	}
+
+	res1 := newTestResource("Pod", "uid-1", testPodName)
+	res2 := newTestResource("Service", "uid-2", "svc-2")
+
+	if err := writer.Write(res1, broker.Add, config.PipelineConfig{}); err != nil {
+		t.Fatalf("write res1: %v", err)
+	}
+	if err := writer.Write(res1, broker.Update, config.PipelineConfig{}); err != nil {
+		t.Fatalf("write duplicate res1: %v", err)
+	}
+	if err := writer.Write(res2, broker.Add, config.PipelineConfig{}); err != nil {
+		t.Fatalf("write res2: %v", err)
+	}
+
+	cleanup()
+
+	data, err := os.ReadFile(primaryPath)
+	if err != nil {
+		t.Fatalf("read primary output: %v", err)
+	}
+	content := string(data)
+	if strings.Count(content, testPodName) != 1 {
+		t.Errorf("expected 1 deduplicated %s entry, got:\n%s", testPodName, content)
+	}
+	if strings.Count(content, "svc-2") != 1 {
+		t.Errorf("expected 1 svc-2 entry, got:\n%s", content)
+	}
+
+	res3 := newTestResource("ConfigMap", "uid-3", "cm-3")
+	if err := writer.Write(res3, broker.Add, config.PipelineConfig{}); !errors.Is(err, os.ErrClosed) {
+		t.Errorf("expected os.ErrClosed after cleanup, got %v", err)
+	}
+}
+
+func TestPrepareFileOutputWriterWithExtendedFile(t *testing.T) {
+	dir := t.TempDir()
+	primaryPath := filepath.Join(dir, testPrimarySnapshotName)
+	extendedPath := filepath.Join(dir, "snapshot-extended.yaml")
+
+	writer, cleanup, err := prepareFileOutputWriter(Options{
+		OutputFileName:     primaryPath,
+		OutputExtendedFile: true,
+	})
+	if err != nil {
+		t.Fatalf("prepareFileOutputWriter: %v", err)
+	}
+
+	res := newTestResource("Pod", "uid-1", testPodName)
+	if err := writer.Write(res, broker.Add, config.PipelineConfig{}); err != nil {
+		t.Fatalf("write add: %v", err)
+	}
+	if err := writer.Write(res, broker.Update, config.PipelineConfig{}); err != nil {
+		t.Fatalf("write update: %v", err)
+	}
+
+	cleanup()
+
+	primaryData, err := os.ReadFile(primaryPath)
+	if err != nil {
+		t.Fatalf("read primary output: %v", err)
+	}
+	extendedData, err := os.ReadFile(extendedPath)
+	if err != nil {
+		t.Fatalf("read extended output: %v", err)
+	}
+	if strings.Count(string(primaryData), testPodName) != 1 {
+		t.Errorf("expected 1 entry in primary output, got:\n%s", string(primaryData))
+	}
+	if strings.Count(string(extendedData), testPodName) != 2 {
+		t.Errorf("expected 2 entries in extended output, got:\n%s", string(extendedData))
+	}
+
+	res2 := newTestResource("Service", "uid-2", "svc-2")
+	if err := writer.Write(res2, broker.Add, config.PipelineConfig{}); !errors.Is(err, os.ErrClosed) {
+		t.Errorf("expected os.ErrClosed after cleanup, got %v", err)
+	}
+}
+
+func TestPrepareFileOutputWriterClosesExtendedOnPrimaryError(t *testing.T) {
+	dir := t.TempDir()
+	// Make primary path a directory so opening it as a file fails after the
+	// extended file has already been created.
+	primaryPath := filepath.Join(dir, testPrimarySnapshotName)
+	if err := os.Mkdir(primaryPath, 0755); err != nil {
+		t.Fatalf("mkdir primaryPath: %v", err)
+	}
+	extendedPath := filepath.Join(dir, "snapshot-extended.yaml")
+
+	_, _, err := prepareFileOutputWriter(Options{
+		OutputFileName:     primaryPath,
+		OutputExtendedFile: true,
+	})
+	if err == nil {
+		t.Fatal("expected error when primary output path is a directory")
+	}
+
+	if err := os.Remove(extendedPath); err != nil {
+		t.Fatalf("remove extended output after failed setup: %v", err)
 	}
 }
