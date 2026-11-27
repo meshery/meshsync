@@ -5,7 +5,7 @@
 // Each platform implements Discoverer in its own subpackage, for example
 // internal/discovery/kubernetes. A platform owns how it fans out internally
 // (Kubernetes registers one informer per resource kind); everything it finds is
-// handed to the EmitFunc as a model.Resource.
+// handed to the EmitFunc as a model.DiscoveredResource.
 package discovery
 
 import (
@@ -21,7 +21,7 @@ import (
 // platform scope (a Kubernetes cluster, a Docker daemon, a cloud account).
 type Discoverer interface {
 	// Platform returns a stable, lowercase platform discriminator such as
-	// "kubernetes". It is used as model.Resource.Platform.
+	// "kubernetes". It is used as model.DiscoveredResource.Platform.
 	Platform() string
 
 	// ScopeID returns the identity of the scope this Discoverer watches: a
@@ -48,7 +48,7 @@ type Discoverer interface {
 // EmitFunc receives every resource a Discoverer finds or sees change. cfg is
 // the pipeline configuration the resource was discovered under; output writers
 // use it to pick the publish subject.
-type EmitFunc func(res model.Resource, evtype broker.EventType, cfg config.PipelineConfig) error
+type EmitFunc func(res model.DiscoveredResource, evtype broker.EventType, cfg config.PipelineConfig) error
 
 // WriterEmitFunc adapts an output.Writer into an EmitFunc.
 //
@@ -57,7 +57,7 @@ type EmitFunc func(res model.Resource, evtype broker.EventType, cfg config.Pipel
 // without a Kubernetes payload are rejected until the output writers accept the
 // platform-agnostic envelope.
 func WriterEmitFunc(w output.Writer) EmitFunc {
-	return func(res model.Resource, evtype broker.EventType, cfg config.PipelineConfig) error {
+	return func(res model.DiscoveredResource, evtype broker.EventType, cfg config.PipelineConfig) error {
 		if res.Kubernetes == nil {
 			return ErrUnsupportedResource(res.Platform, res.Kind)
 		}

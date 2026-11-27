@@ -69,7 +69,7 @@ func TestWriterEmitFuncPassesKubernetesPayloadUnchanged(t *testing.T) {
 	kr := model.KubernetesResource{ID: "id-1", Kind: "Pod", ClusterID: "cluster-1"}
 	cfg := config.PipelineConfig{Name: "pods.v1.", PublishTo: "meshery.meshsync.core"}
 
-	err := WriterEmitFunc(w)(model.NewKubernetesResource(kr, "cluster-1"), broker.Update, cfg)
+	err := WriterEmitFunc(w)(model.NewKubernetesDiscoveredResource(kr, "cluster-1"), broker.Update, cfg)
 
 	require.NoError(t, err)
 	require.Len(t, w.written, 1)
@@ -81,7 +81,7 @@ func TestWriterEmitFuncPassesKubernetesPayloadUnchanged(t *testing.T) {
 func TestWriterEmitFuncRejectsNonKubernetesResource(t *testing.T) {
 	w := &recordingWriter{}
 
-	err := WriterEmitFunc(w)(model.Resource{Platform: "docker", Kind: "Container"}, broker.Add, config.PipelineConfig{})
+	err := WriterEmitFunc(w)(model.DiscoveredResource{Platform: "docker", Kind: "Container"}, broker.Add, config.PipelineConfig{})
 
 	require.Error(t, err)
 	assert.Equal(t, ErrUnsupportedResourceCode, meshkiterrors.GetCode(err))

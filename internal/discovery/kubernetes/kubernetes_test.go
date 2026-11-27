@@ -41,14 +41,14 @@ func newPod(name string) *unstructured.Unstructured {
 	}
 }
 
-// recordingEmit collects every Resource handed to it.
+// recordingEmit collects every DiscoveredResource handed to it.
 type recordingEmit struct {
 	mu        sync.Mutex
-	resources []model.Resource
+	resources []model.DiscoveredResource
 	events    []broker.EventType
 }
 
-func (r *recordingEmit) emit(res model.Resource, evtype broker.EventType, _ internalconfig.PipelineConfig) error {
+func (r *recordingEmit) emit(res model.DiscoveredResource, evtype broker.EventType, _ internalconfig.PipelineConfig) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.resources = append(r.resources, res)
@@ -56,10 +56,10 @@ func (r *recordingEmit) emit(res model.Resource, evtype broker.EventType, _ inte
 	return nil
 }
 
-func (r *recordingEmit) snapshot() ([]model.Resource, []broker.EventType) {
+func (r *recordingEmit) snapshot() ([]model.DiscoveredResource, []broker.EventType) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return append([]model.Resource(nil), r.resources...), append([]broker.EventType(nil), r.events...)
+	return append([]model.DiscoveredResource(nil), r.resources...), append([]broker.EventType(nil), r.events...)
 }
 
 func newTestDiscoverer(t *testing.T, objects ...runtime.Object) (*Discoverer, channels.StopChannel) {
@@ -112,7 +112,7 @@ func TestDiscovererIdentity(t *testing.T) {
 func TestDiscoverIsNotSupported(t *testing.T) {
 	d, _ := newTestDiscoverer(t)
 
-	err := d.Discover(context.Background(), func(model.Resource, broker.EventType, internalconfig.PipelineConfig) error {
+	err := d.Discover(context.Background(), func(model.DiscoveredResource, broker.EventType, internalconfig.PipelineConfig) error {
 		t.Fatal("Discover must not emit")
 		return nil
 	})

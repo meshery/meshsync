@@ -224,8 +224,8 @@ func TestPublishItemWritesUnchangedPayload(t *testing.T) {
 func TestPublishItemEmitsEnvelope(t *testing.T) {
 	ri, _ := newTestRegisterInformer(t)
 	ri.config.Events = []string{string(broker.Add)}
-	var got []model.Resource
-	ri.emit = func(res model.Resource, _ broker.EventType, _ internalconfig.PipelineConfig) error {
+	var got []model.DiscoveredResource
+	ri.emit = func(res model.DiscoveredResource, _ broker.EventType, _ internalconfig.PipelineConfig) error {
 		got = append(got, res)
 		return nil
 	}

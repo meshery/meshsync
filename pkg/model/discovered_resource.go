@@ -1,26 +1,25 @@
 package model
 
 const (
-	// PlatformKubernetes is the Resource.Platform discriminator for resources
+	// PlatformKubernetes is the DiscoveredResource.Platform discriminator for resources
 	// discovered on a Kubernetes cluster.
 	PlatformKubernetes = "kubernetes"
 
-	// ResourceSchemaVersion is the schema version of the Resource envelope,
-	// mirroring the platform-agnostic resource construct (v1beta3) in
-	// meshery/schemas.
-	ResourceSchemaVersion = "resources.meshery.io/v1beta3"
+	// DiscoveredResourceSchemaVersion is the schema version of the DiscoveredResource envelope,
+	// mirroring the discovered_resource construct (v1beta3) in meshery/schemas.
+	DiscoveredResourceSchemaVersion = "discoveredresources.meshery.io/v1beta3"
 )
 
-// Resource is the platform-agnostic envelope every discovery.Discoverer emits.
+// DiscoveredResource is the platform-agnostic envelope every discovery.Discoverer emits.
 //
-// It is a hand-written mirror of the resource construct in meshery/schemas;
-// replacing it with the generated type is a separate, later change. Fields are
-// camelCase on the wire per the ecosystem naming contract.
+// It is a hand-written mirror of the discovered_resource construct in
+// meshery/schemas; replacing it with the generated type is a separate, later
+// change. Fields are camelCase on the wire per the ecosystem naming contract.
 //
-// Phase 0 note: Resource is an in-process emit-time envelope only. The output
+// Phase 0 note: DiscoveredResource is an in-process emit-time envelope only. The output
 // writers still receive and publish the embedded KubernetesResource unchanged,
 // so the broker message and snapshot file formats are not affected.
-type Resource struct {
+type DiscoveredResource struct {
 	// ID is the platform-native identifier of the resource, when known.
 	ID string `json:"id,omitempty"`
 	// Platform is the discovery platform the resource was observed on
@@ -49,11 +48,11 @@ type Resource struct {
 	Kubernetes *KubernetesResource `json:"kubernetes,omitempty"`
 }
 
-// NewKubernetesResource wraps a parsed KubernetesResource in the
-// platform-agnostic Resource envelope.
+// NewKubernetesDiscoveredResource wraps a parsed KubernetesResource in the
+// platform-agnostic DiscoveredResource envelope.
 //
-// The scope identity is carried twice on purpose: Resource.ScopeID is the new
-// platform-agnostic field, and Resource.Kubernetes.ClusterID (set by ParseList
+// The scope identity is carried twice on purpose: DiscoveredResource.ScopeID is the new
+// platform-agnostic field, and DiscoveredResource.Kubernetes.ClusterID (set by ParseList
 // from the same cluster ID) keeps the legacy cluster_id field populated. Both
 // hold the same value for one migration window so consumers can move from
 // cluster_id to scopeId at their own pace. Do not drop either until every
@@ -65,7 +64,7 @@ type Resource struct {
 // Labels is filled from the Kubernetes metadata labels (not annotations), so a
 // consumer reading the envelope directly sees the same labels the embedded
 // payload carries.
-func NewKubernetesResource(kr KubernetesResource, scopeID string) Resource {
+func NewKubernetesDiscoveredResource(kr KubernetesResource, scopeID string) DiscoveredResource {
 	name := ""
 	labels := map[string]string{}
 	if kr.KubernetesResourceMeta != nil {
@@ -77,14 +76,14 @@ func NewKubernetesResource(kr KubernetesResource, scopeID string) Resource {
 		}
 	}
 
-	return Resource{
+	return DiscoveredResource{
 		ID:            kr.ID,
 		Platform:      PlatformKubernetes,
 		ScopeID:       scopeID,
 		Kind:          kr.Kind,
 		Name:          name,
 		Labels:        labels,
-		SchemaVersion: ResourceSchemaVersion,
+		SchemaVersion: DiscoveredResourceSchemaVersion,
 		Kubernetes:    &kr,
 	}
 }
