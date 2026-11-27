@@ -114,22 +114,5 @@ func (ri *RegisterInformer) publishItem(obj *unstructured.Unstructured, evtype b
 }
 
 func (ri *RegisterInformer) checkMustSkip(obj *unstructured.Unstructured) bool {
-	if obj == nil {
-		return true
-	}
-
-	conditions := []func() bool{
-		func() bool {
-			return len(ri.outputFiltration.NamespaceSet) > 0 &&
-				!ri.outputFiltration.NamespaceSet.Contains(obj.GetNamespace())
-		},
-	}
-
-	for _, condition := range conditions {
-		if condition() {
-			return true
-		}
-	}
-
-	return false
+	return obj == nil || !ri.outputFiltration.NamespaceSet.Allows(obj.GetNamespace())
 }
