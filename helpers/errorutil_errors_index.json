@@ -222,6 +222,34 @@
       },
       "numericCode": "1014",
       "severity": "alert"
+    },
+    {
+      "code": "meshsync-1015",
+      "moniker": "ErrWriteOutputCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1015",
+      "severity": "alert"
+    },
+    {
+      "code": "meshsync-1016",
+      "moniker": "ErrNilClientCode",
+      "component": {
+        "name": "meshsync",
+        "type": "controller"
+      },
+      "numericCode": "1016",
+      "severity": "alert",
+      "shortDescription": "Kubernetes client is nil",
+      "longDescription": "Handler has no active kubernetes client initialized",
+      "probableCause": [
+        "Handler was invoked with an uninitialized or nil Kubernetes client"
+      ],
+      "suggestedRemediation": [
+        "Supply a valid Kubernetes client to meshsync.New"
+      ]
     }
   ],
   "schemaVersion": 2
