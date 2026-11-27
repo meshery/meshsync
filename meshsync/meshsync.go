@@ -10,6 +10,7 @@ import (
 	mesherykube "github.com/meshery/meshkit/utils/kubernetes"
 	"github.com/meshery/meshsync/internal/channels"
 	internalconfig "github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/internal/discovery"
 	"github.com/meshery/meshsync/internal/output"
 	iutils "github.com/meshery/meshsync/pkg/utils"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,11 +32,14 @@ type Handler struct {
 	// channelPool holds the fixed system channels (Stop/OS/ReSync) and is
 	// read-only after construction. Dynamic exec/log-stream sessions live in
 	// sessions (guarded by sessionsMu), not here, so the two never race.
-	channelPool      map[string]channels.GenericChannel
-	sessions         map[string]channels.StructChannel
-	sessionsMu       sync.Mutex
-	stores           map[string]cache.Store
-	outputWriter     output.Writer
+	channelPool map[string]channels.GenericChannel
+	sessions    map[string]channels.StructChannel
+	sessionsMu  sync.Mutex
+	stores      map[string]cache.Store
+	// emit receives every discovered resource. New sets it to the given
+	// output.Writer (via discovery.WriterEmitFunc); the Kubernetes Discoverer
+	// replaces it with its own EmitFunc before Run starts.
+	emit             discovery.EmitFunc
 	outputFiltration internalconfig.OutputFiltrationContainer
 
 	// BlackList is the watch-list blacklist; the CRD watch skips the CRDs it names.
@@ -80,7 +84,7 @@ func New(
 		Config:           config,
 		Log:              log,
 		Broker:           br,
-		outputWriter:     ow,
+		emit:             discovery.WriterEmitFunc(ow),
 		informer:         informer,
 		kubeClient:       kubeClient,
 		clusterID:        clusterID,
@@ -88,6 +92,20 @@ func New(
 		sessions:         make(map[string]channels.StructChannel),
 		outputFiltration: outputFiltration,
 	}, nil
+}
+
+// ClusterID returns the identity of the cluster this Handler discovers, as
+// derived by pkg/utils.GetClusterID when the Handler was built.
+func (h *Handler) ClusterID() string {
+	return h.clusterID
+}
+
+// SetEmitFunc replaces the function every discovered resource is handed to.
+// It must be called before Run; a nil emit is ignored.
+func (h *Handler) SetEmitFunc(emit discovery.EmitFunc) {
+	if emit != nil {
+		h.emit = emit
+	}
 }
 
 func GetDynamicInformer(config config.Handler, dynamicKubeClient dynamic.Interface, listOptionsFunc func(*v1.ListOptions)) dynamicinformer.DynamicSharedInformerFactory {

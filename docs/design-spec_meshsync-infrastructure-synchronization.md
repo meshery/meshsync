@@ -305,6 +305,8 @@ There are 2 ways we can go about representing the cluster in the system:
 1. Create a custom model which will keep the underlying orchestrator and cloud native infrastructure constructs abstracted  
 2. Since we are mainly going to be working with cloud native infrastructurees on kubernetes, we can just not worry about adding any abstractions and just rely on Kubernetes model for representing the components including CRDs.
 
+**Decision (FD6, Phase 0):** both, layered. Discovery emits a platform-agnostic `model.DiscoveredResource` envelope (`platform`, `scopeId`, `kind`, `name`, `labels`, `metadata`), mirroring the planned schemas `discovered_resource` construct (`discoveredresources.meshery.io/v1beta3`), and the Kubernetes model is kept intact inside it as `DiscoveredResource.Kubernetes`. Kubernetes discovery sits behind the `discovery.Discoverer` interface as its first implementation. See [FD6](design/fd6-non-kubernetes-discovery.md) and [architecture](agent-instructions/architecture.md#discovery-abstraction-internaldiscovery).
+
 ## Questions {#questions}
 
 * How do we keep the Operator up to date with new cloud native infrastructure-specific custom resources (objects)? How do make MeshSync not fragile?  
@@ -1006,6 +1008,8 @@ There are 2 ways we can go about representing the cluster in the system:
 
 1. Create a custom model which will keep the underlying orchestrator and cloud native infrastructure constructs abstracted  
 2. Since we are mainly going to be working with cloud native infrastructurees on kubernetes, we can just not worry about adding any abstractions and just rely on Kubernetes model for representing the components including CRDs.
+
+**Decision (FD6, Phase 0):** both, layered. Discovery emits a platform-agnostic `model.DiscoveredResource` envelope (`platform`, `scopeId`, `kind`, `name`, `labels`, `metadata`), mirroring the planned schemas `discovered_resource` construct (`discoveredresources.meshery.io/v1beta3`), and the Kubernetes model is kept intact inside it as `DiscoveredResource.Kubernetes`. Kubernetes discovery sits behind the `discovery.Discoverer` interface as its first implementation. See [FD6](design/fd6-non-kubernetes-discovery.md) and [architecture](agent-instructions/architecture.md#discovery-abstraction-internaldiscovery).
 
 ## Questions {#questions}
 

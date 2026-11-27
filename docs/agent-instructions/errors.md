@@ -18,7 +18,7 @@ MeshSync uses MeshKit's structured error framework exclusively - never `fmt.Erro
   }
   ```
 
-- Codes are unique across the whole component, not just the package. Current registries: `meshsync/error.go` (1004-1013), `internal/pipeline/error.go`, `internal/config/error.go`.
+- Codes are unique across the whole component, not just the package. Current registries: `meshsync/error.go` (1004-1013), `internal/pipeline/error.go`, `internal/config/error.go`, `internal/discovery/error.go` (1016-1019).
 - Keep the short-description/probable-cause/remediation string literals as literals (the errorutil tool extracts them for the generated reference); the dynamic cause (`err.Error()`) goes only in the long description slot.
 
 ## The `errorutil` Workflow

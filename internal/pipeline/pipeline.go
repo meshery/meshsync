@@ -5,7 +5,7 @@ import (
 
 	"github.com/meshery/meshkit/logger"
 	internalconfig "github.com/meshery/meshsync/internal/config"
-	"github.com/meshery/meshsync/internal/output"
+	"github.com/meshery/meshsync/internal/discovery"
 	"github.com/myntra/pipeline"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 )
@@ -15,7 +15,7 @@ var Name = internalconfig.PipelineNameKey
 func New(
 	log logger.Handler,
 	informer dynamicinformer.DynamicSharedInformerFactory,
-	ow output.Writer,
+	emit discovery.EmitFunc,
 	plConfigs map[string]internalconfig.PipelineConfigs,
 	stopChan chan struct{},
 	clusterID string,
@@ -37,7 +37,7 @@ func New(
 			// do not register informer for this config
 			continue
 		}
-		gdstage.AddStep(newRegisterInformerStep(log, informer, config, ow, clusterID, outputFiltration)) // Register the informers for different resources
+		gdstage.AddStep(newRegisterInformerStep(log, informer, config, emit, clusterID, outputFiltration)) // Register the informers for different resources
 	}
 
 	// Local discovery
@@ -52,7 +52,7 @@ func New(
 			continue
 		}
 
-		ldstage.AddStep(newRegisterInformerStep(log, informer, config, ow, clusterID, outputFiltration)) // Register the informers for different resources
+		ldstage.AddStep(newRegisterInformerStep(log, informer, config, emit, clusterID, outputFiltration)) // Register the informers for different resources
 	}
 
 	// Start informers

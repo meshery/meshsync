@@ -7,9 +7,12 @@ import (
 	"github.com/meshery/meshkit/broker"
 	mcp "github.com/meshery/meshkit/config/provider"
 	"github.com/meshery/meshsync/internal/config"
+	"github.com/meshery/meshsync/pkg/model"
 )
 
 type Options struct {
+	// Platform selects the discovery platform; one of AllowedPlatforms.
+	Platform           string
 	OutputMode         string
 	StopAfterDuration  time.Duration
 	KubeConfig         []byte
@@ -26,6 +29,7 @@ type Options struct {
 }
 
 var DefautOptions = Options{
+	Platform:           model.PlatformKubernetes,
 	StopAfterDuration:  -1,    // -1 turns it off
 	KubeConfig:         nil,   // if nil, truies to detekt kube config by the means of github.com/meshery/meshkit/utils/kubernetes/client.go:DetectKubeConfig
 	OutputExtendedFile: false, // if true, then extended output file is generated in addition to general one
@@ -37,12 +41,24 @@ var DefautOptions = Options{
 	MeshkitConfigProvider: mcp.ViperKey,
 }
 
+// AllowedPlatforms lists the discovery platforms Run accepts.
+var AllowedPlatforms = []string{
+	model.PlatformKubernetes,
+}
+
 var AllowedOutputModes = []string{
 	config.OutputModeBroker,
 	config.OutputModeFile,
 }
 
 type OptionsSetter func(*Options)
+
+// value is one of the AllowedPlatforms
+func WithPlatform(value string) OptionsSetter {
+	return func(o *Options) {
+		o.Platform = value
+	}
+}
 
 // value is one of the AllowedOutputModes
 func WithOutputMode(value string) OptionsSetter {

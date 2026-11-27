@@ -8,6 +8,12 @@ MeshSync is a standalone Go binary, one instance per managed Kubernetes cluster.
 main.go --parses CLI flags--> pkg/lib/meshsync.Run(...)
                                       |
                                       v
+                          discovery.Registry.Build(Options.Platform)
+                                      |
+                                      v
+                 internal/discovery/kubernetes.Discoverer (Watch)
+                                      |
+                                      v
                               meshsync.Handler (meshsync/meshsync.go)
                                       |  dynamic informer factory (client-go)
                                       v
@@ -18,6 +24,7 @@ main.go --parses CLI flags--> pkg/lib/meshsync.Run(...)
                     | discovery stage  | discovery stage   | stage
                     +-----------------+------------------+
                                       |
+                                      v  discovery.EmitFunc (model.DiscoveredResource)
                                       v
                           internal/output.Writer  (broker | file | composite)
                                       |            with internal/output dedup
@@ -27,15 +34,24 @@ main.go --parses CLI flags--> pkg/lib/meshsync.Run(...)
 
 ## Entry Point and Handler
 
-- `main.go` parses flags (`-output`, `-outputFile`, `-outputNamespaces`, `-outputResources`, `-stopAfter`) and calls `pkg/lib/meshsync.Run(...)`.
-- `meshsync.Handler` (`meshsync/meshsync.go`) holds the config, logger, broker handle, dynamic informer factory, kube client, channel pool, output writer, and output-filtration config. `meshsync.New(...)` wires them together and derives the cluster ID via `pkg/utils.GetClusterID`.
+- `main.go` parses flags (`-output`, `-outputFile`, `-outputNamespaces`, `-outputResources`, `-stopAfter`) and calls `pkg/lib/meshsync.Run(...)`, which builds the platform's `Discoverer` through `internal/discovery` (see below).
+- `meshsync.Handler` (`meshsync/meshsync.go`) holds the config, logger, broker handle, dynamic informer factory, kube client, channel pool, emit function (`discovery.EmitFunc`, defaulting to the output writer passed to `New`), and output-filtration config. `meshsync.New(...)` wires them together and derives the cluster ID via `pkg/utils.GetClusterID`.
 - `GetDynamicInformer` builds a `dynamicinformer.DynamicSharedInformerFactory`. Resource filtering happens in the watch-list config (`internal/config/crd_config.go` decides which informers get registered); the factory's list-options hook (`GetListOptionsFunc`) is a deliberate no-op.
+
+## Discovery Abstraction (`internal/discovery`)
+
+- `discovery.Discoverer` is the seam between a platform's discovery and the output plumbing: `Platform()`, `ScopeID(ctx)`, `Discover(ctx, emit)`, `Watch(ctx, stopCh, emit)`, `Shutdown()`. Kubernetes is the only implementation today; Docker and public clouds are planned as further implementations (see [FD6](../design/fd6-non-kubernetes-discovery.md)).
+- `discovery.EmitFunc` receives every discovered resource as a `model.DiscoveredResource` envelope (`pkg/model/discovered_resource.go`): platform-agnostic fields (`platform`, `scopeId`, `kind`, `name`, ...) plus, for Kubernetes, the full `KubernetesResource` in `DiscoveredResource.Kubernetes`. The envelope is a hand-written mirror of the planned schemas `discovered_resource` construct (`discoveredresources.meshery.io/v1beta3`).
+- `discovery.WriterEmitFunc` adapts an `output.Writer`: it passes `DiscoveredResource.Kubernetes` to the writer unchanged, so broker messages and snapshot files keep the `KubernetesResource` wire shape. Widening `output.Writer` to `model.DiscoveredResource` changes that wire shape and must be coordinated with Meshery Server.
+- `scopeId` generalizes `cluster_id`. For Kubernetes both carry the same value (the `kube-system` namespace UID) for one migration window; do not drop either until consumers have migrated.
+- `discovery.Registry` maps a platform name to a factory. `Run` creates one per call and `Build` constructs a fresh `Discoverer` each time - there is no package-level registry or shared Discoverer state. `pkg/lib/meshsync.Options.Platform` (`WithPlatform`, default `kubernetes`, validated against `AllowedPlatforms`) selects the platform; there is no CLI flag for it.
+- `internal/discovery/kubernetes` wraps `meshsync.Handler` without changing it: `Watch` starts the CRD watch (when the MeshSync CRD exists) and the broker request listeners (broker mode only), then runs `Handler.Run` until `channels.Stop` closes. `Discover` returns `ErrDiscoverNotSupported` because informers list everything before watching, and `Shutdown` is a no-op because `Handler.Run` tears the informers down itself when `channels.Stop` closes.
 
 ## Discovery Pipeline (`internal/pipeline`)
 
 - Built on `github.com/myntra/pipeline`. `pipeline.New(...)` constructs **fresh stages on every call** - it runs once at startup and again on every resync, so stages/steps must never be cached in package-level state (a shared stage would retain a shut-down informer factory and a closed stop channel from a prior run).
 - Three stages, run in order: **global-resource discovery**, **local-resource discovery** (both register one informer step per configured resource kind, skipping any kind excluded by `outputFiltration.ResourceSet`), then **StartInformers** (starts every registered informer against the given stop channel).
-- `internal/pipeline/step.go` defines the per-resource-kind informer registration step; `internal/pipeline/handlers.go` are the Add/Update/Delete event callbacks that convert an informer event into a `model.KubernetesResource` and hand it to the output writer.
+- `internal/pipeline/step.go` defines the per-resource-kind informer registration step; `internal/pipeline/handlers.go` are the Add/Update/Delete event callbacks that convert an informer event into a `model.KubernetesResource`, wrap it in a `model.DiscoveredResource`, and hand it to the injected `discovery.EmitFunc`.
 
 ## Config (`internal/config`)
 
