@@ -229,7 +229,21 @@ func Run(log logger.Handler, optsSetters ...OptionsSetter) error {
 	return nil
 }
 
+type yamlWriteCloser interface {
+	file.Writer
+	io.Closer
+}
+
 func prepareFileOutputWriter(options Options) (output.Writer, func(), error) {
+	return prepareFileOutputWriterWithOpener(options, func(name string) (yamlWriteCloser, error) {
+		return file.NewYAMLWriter(name)
+	})
+}
+
+func prepareFileOutputWriterWithOpener(
+	options Options,
+	openWriter func(string) (yamlWriteCloser, error),
+) (output.Writer, func(), error) {
 	filename := options.OutputFileName
 	defaultFormat := "yaml"
 	if filename == "" {
@@ -255,7 +269,7 @@ func prepareFileOutputWriter(options Options) (output.Writer, func(), error) {
 	if options.OutputExtendedFile {
 		// this is a file which contains all messages from nats
 		// (hence it also contains more than one yaml manifest for the same entity)
-		fw, errNewYAMLWriter := file.NewYAMLWriter(
+		fw, errNewYAMLWriter := openWriter(
 			fmt.Sprintf(
 				"%s-extended%s",
 				strings.TrimSuffix(filename, ext),
@@ -275,7 +289,7 @@ func prepareFileOutputWriter(options Options) (output.Writer, func(), error) {
 
 	// this is a file which contains only unique resource's messages from nats
 	// it filters out duplicates and writes only unique message from nats per resource
-	fw, errNewYAMLWriter := file.NewYAMLWriter(filename)
+	fw, errNewYAMLWriter := openWriter(filename)
 	if errNewYAMLWriter != nil {
 		closeAll()
 		return nil, nil, errNewYAMLWriter

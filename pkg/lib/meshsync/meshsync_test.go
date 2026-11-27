@@ -190,25 +190,42 @@ func TestPrepareFileOutputWriterWithExtendedFile(t *testing.T) {
 	}
 }
 
+type recordingWriteCloser struct {
+	closeCount int
+}
+
+func (r *recordingWriteCloser) Write(_ any) (int, error) {
+	return 0, nil
+}
+
+func (r *recordingWriteCloser) Close() error {
+	r.closeCount++
+	return nil
+}
+
 func TestPrepareFileOutputWriterClosesExtendedOnPrimaryError(t *testing.T) {
 	dir := t.TempDir()
-	// Make primary path a directory so opening it as a file fails after the
-	// extended file has already been created.
 	primaryPath := filepath.Join(dir, testPrimarySnapshotName)
-	if err := os.Mkdir(primaryPath, 0755); err != nil {
-		t.Fatalf("mkdir primaryPath: %v", err)
-	}
 	extendedPath := filepath.Join(dir, "snapshot-extended.yaml")
 
-	_, _, err := prepareFileOutputWriter(Options{
-		OutputFileName:     primaryPath,
-		OutputExtendedFile: true,
-	})
-	if err == nil {
-		t.Fatal("expected error when primary output path is a directory")
-	}
+	extendedRecorder := &recordingWriteCloser{}
 
-	if err := os.Remove(extendedPath); err != nil {
-		t.Fatalf("remove extended output after failed setup: %v", err)
+	_, _, err := prepareFileOutputWriterWithOpener(
+		Options{
+			OutputFileName:     primaryPath,
+			OutputExtendedFile: true,
+		},
+		func(name string) (yamlWriteCloser, error) {
+			if name == extendedPath {
+				return extendedRecorder, nil
+			}
+			return nil, os.ErrPermission
+		},
+	)
+	if !errors.Is(err, os.ErrPermission) {
+		t.Fatalf("expected error %v, got %v", os.ErrPermission, err)
+	}
+	if extendedRecorder.closeCount != 1 {
+		t.Errorf("expected extended writer Close to be called once, got %d", extendedRecorder.closeCount)
 	}
 }
