@@ -29,7 +29,7 @@ var (
 	ErrCopyBufferCode       = "1011"
 	ErrInvalidRequestCode   = "1012"
 	ErrExecTerminalCode     = "1013"
-	ErrNilClientCode        = "1015"
+	ErrNilClientCode        = "1016"
 
 	ErrInvalidRequest = errors.New(ErrInvalidRequestCode, errors.Alert, []string{"Request is invalid"}, []string{}, []string{"Stale request on the broker"}, []string{"Make sure the request format is correctly configured"})
 )
